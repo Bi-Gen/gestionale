@@ -20,7 +20,7 @@ export type Fornitore = {
   updated_at: string
 }
 
-export async function getClienti(): Promise<Fornitore[]> {
+export async function getFornitori(): Promise<Fornitore[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
