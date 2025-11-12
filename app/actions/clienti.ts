@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { validateClienteFormData } from '@/lib/validations/clienti'
 
 export type Cliente = {
   id: string
@@ -71,17 +72,16 @@ export async function createCliente(formData: FormData) {
     redirect('/login')
   }
 
+  // Validazione con Zod
+  const validation = validateClienteFormData(formData)
+
+  if (!validation.success) {
+    const errors = validation.error.issues.map(err => err.message).join(', ')
+    redirect(`/dashboard/clienti/nuovo?error=${encodeURIComponent(errors)}`)
+  }
+
   const cliente = {
-    ragione_sociale: formData.get('ragione_sociale') as string,
-    partita_iva: formData.get('partita_iva') as string || null,
-    codice_fiscale: formData.get('codice_fiscale') as string || null,
-    email: formData.get('email') as string || null,
-    telefono: formData.get('telefono') as string || null,
-    indirizzo: formData.get('indirizzo') as string || null,
-    citta: formData.get('citta') as string || null,
-    cap: formData.get('cap') as string || null,
-    provincia: formData.get('provincia') as string || null,
-    note: formData.get('note') as string || null,
+    ...validation.data,
     user_id: user.id,
   }
 
@@ -91,7 +91,7 @@ export async function createCliente(formData: FormData) {
 
   if (error) {
     console.error('Error creating cliente:', error)
-    redirect(`/dashboard/clienti?error=${encodeURIComponent(error.message)}`)
+    redirect(`/dashboard/clienti/nuovo?error=${encodeURIComponent(error.message)}`)
   }
 
   revalidatePath('/dashboard/clienti')
@@ -106,28 +106,23 @@ export async function updateCliente(id: string, formData: FormData) {
     redirect('/login')
   }
 
-  const updates = {
-    ragione_sociale: formData.get('ragione_sociale') as string,
-    partita_iva: formData.get('partita_iva') as string || null,
-    codice_fiscale: formData.get('codice_fiscale') as string || null,
-    email: formData.get('email') as string || null,
-    telefono: formData.get('telefono') as string || null,
-    indirizzo: formData.get('indirizzo') as string || null,
-    citta: formData.get('citta') as string || null,
-    cap: formData.get('cap') as string || null,
-    provincia: formData.get('provincia') as string || null,
-    note: formData.get('note') as string || null,
+  // Validazione con Zod
+  const validation = validateClienteFormData(formData)
+
+  if (!validation.success) {
+    const errors = validation.error.issues.map(err => err.message).join(', ')
+    redirect(`/dashboard/clienti/${id}/modifica?error=${encodeURIComponent(errors)}`)
   }
 
   const { error } = await supabase
     .from('clienti')
-    .update(updates)
+    .update(validation.data)
     .eq('id', id)
     .eq('user_id', user.id)
 
   if (error) {
     console.error('Error updating cliente:', error)
-    redirect(`/dashboard/clienti?error=${encodeURIComponent(error.message)}`)
+    redirect(`/dashboard/clienti/${id}/modifica?error=${encodeURIComponent(error.message)}`)
   }
 
   revalidatePath('/dashboard/clienti')

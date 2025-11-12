@@ -1,7 +1,13 @@
 import { createCliente } from '@/app/actions/clienti'
 import Link from 'next/link'
 
-export default function NuovoClientePage() {
+export default async function NuovoClientePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const params = await searchParams
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -19,6 +25,25 @@ export default function NuovoClientePage() {
 
       {/* Main Content */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Error Message */}
+        {params.error && (
+          <div className="mb-4 rounded-md bg-red-50 p-4 border border-red-200">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Errore di validazione</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  {params.error}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white shadow-sm rounded-lg p-6">
           <form action={createCliente} className="space-y-6">
             {/* Ragione Sociale */}
@@ -45,9 +70,13 @@ export default function NuovoClientePage() {
                   type="text"
                   name="partita_iva"
                   id="partita_iva"
+                  pattern="\d{11}"
                   maxLength={11}
+                  title="Partita IVA deve essere di 11 cifre"
+                  placeholder="12345678901"
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
+                <p className="mt-1 text-xs text-gray-500">11 cifre numeriche</p>
               </div>
 
               <div>
@@ -58,9 +87,13 @@ export default function NuovoClientePage() {
                   type="text"
                   name="codice_fiscale"
                   id="codice_fiscale"
+                  pattern="[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]"
                   maxLength={16}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                  title="Codice Fiscale formato: RSSMRA80A01H501U"
+                  placeholder="RSSMRA80A01H501U"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 uppercase focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
+                <p className="mt-1 text-xs text-gray-500">16 caratteri alfanumerici</p>
               </div>
             </div>
 
@@ -114,6 +147,7 @@ export default function NuovoClientePage() {
                   type="text"
                   name="citta"
                   id="citta"
+                  placeholder="Milano"
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -126,9 +160,13 @@ export default function NuovoClientePage() {
                   type="text"
                   name="cap"
                   id="cap"
+                  pattern="\d{5}"
                   maxLength={5}
+                  title="CAP deve essere di 5 cifre"
+                  placeholder="20100"
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
+                <p className="mt-1 text-xs text-gray-500">5 cifre</p>
               </div>
             </div>
 
@@ -140,10 +178,13 @@ export default function NuovoClientePage() {
                 type="text"
                 name="provincia"
                 id="provincia"
+                pattern="[A-Z]{2}"
                 maxLength={2}
-                placeholder="ES: MI"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                title="Provincia in formato 2 lettere maiuscole (es. MI)"
+                placeholder="MI"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 uppercase focus:border-blue-500 focus:outline-none focus:ring-blue-500"
               />
+              <p className="mt-1 text-xs text-gray-500">2 lettere maiuscole (es. MI, RM, TO)</p>
             </div>
 
             {/* Note */}
