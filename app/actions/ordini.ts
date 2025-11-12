@@ -17,6 +17,12 @@ export type Ordine = {
   note?: string
   created_at: string
   updated_at: string
+  clienti?: {
+    ragione_sociale: string
+  }
+  fornitori?: {
+    ragione_sociale: string
+  }
 }
 
 export type DettaglioOrdine = {
@@ -42,7 +48,11 @@ export async function getOrdini(tipo?: 'vendita' | 'acquisto'): Promise<Ordine[]
 
   let query = supabase
     .from('ordini')
-    .select('*')
+    .select(`
+      *,
+      clienti(ragione_sociale),
+      fornitori(ragione_sociale)
+    `)
     .order('data_ordine', { ascending: false })
 
   if (tipo) {
@@ -112,7 +122,11 @@ export async function createOrdine(formData: FormData) {
 
   if (!validation.success) {
     const errors = validation.error.issues.map(err => err.message).join(', ')
-    redirect(`/dashboard/ordini/nuovo?error=${encodeURIComponent(errors)}`)
+    const tipoParam = formData.get('tipo') as string
+    const redirectPath = tipoParam === 'acquisto'
+      ? '/dashboard/ordini/acquisto/nuovo'
+      : '/dashboard/ordini/vendita/nuovo'
+    redirect(`${redirectPath}?error=${encodeURIComponent(errors)}`)
   }
 
   const ordine = {
@@ -135,10 +149,15 @@ export async function createOrdine(formData: FormData) {
 
   if (error) {
     console.error('Error creating ordine:', error)
-    redirect(`/dashboard/ordini/nuovo?error=${encodeURIComponent(error.message)}`)
+    const redirectPath = validation.data.tipo === 'acquisto'
+      ? '/dashboard/ordini/acquisto/nuovo'
+      : '/dashboard/ordini/vendita/nuovo'
+    redirect(`${redirectPath}?error=${encodeURIComponent(error.message)}`)
   }
 
   revalidatePath('/dashboard/ordini')
+  revalidatePath('/dashboard/ordini/vendita')
+  revalidatePath('/dashboard/ordini/acquisto')
   redirect(`/dashboard/ordini/${data.id}?success=Ordine creato con successo`)
 }
 
@@ -187,6 +206,14 @@ export async function deleteOrdine(id: string) {
     redirect('/login')
   }
 
+  // Prima recupera il tipo dell'ordine per il redirect corretto
+  const { data: ordine } = await supabase
+    .from('ordini')
+    .select('tipo')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+
   const { error } = await supabase
     .from('ordini')
     .delete()
@@ -198,8 +225,14 @@ export async function deleteOrdine(id: string) {
     redirect(`/dashboard/ordini?error=${encodeURIComponent(error.message)}`)
   }
 
+  const redirectPath = ordine?.tipo === 'acquisto'
+    ? '/dashboard/ordini/acquisto'
+    : '/dashboard/ordini/vendita'
+
   revalidatePath('/dashboard/ordini')
-  redirect('/dashboard/ordini?success=Ordine eliminato con successo')
+  revalidatePath('/dashboard/ordini/vendita')
+  revalidatePath('/dashboard/ordini/acquisto')
+  redirect(`${redirectPath}?success=Ordine eliminato con successo`)
 }
 
 export async function addDettaglioOrdine(ordineId: string, formData: FormData) {
