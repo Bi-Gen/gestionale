@@ -23,7 +23,7 @@ export default async function FornitoriPage({
               >
                 ← Torna alla Dashboard
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Anagrafica Clienti</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Anagrafica Fornitori</h1>
             </div>
             <Link
               href="/dashboard/fornitori/nuovo"
