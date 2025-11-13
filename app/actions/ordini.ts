@@ -129,6 +129,43 @@ export async function createOrdine(formData: FormData) {
     redirect(`${redirectPath}?error=${encodeURIComponent(errors)}`)
   }
 
+  // Estrai i dettagli dei prodotti dalla FormData
+  const dettagli: Array<{
+    prodotto_id: string
+    quantita: number
+    prezzo_unitario: number
+    subtotale: number
+  }> = []
+
+  let index = 0
+  while (formData.get(`dettagli[${index}][prodotto_id]`)) {
+    const prodotto_id = formData.get(`dettagli[${index}][prodotto_id]`) as string
+    const quantita = parseFloat(formData.get(`dettagli[${index}][quantita]`) as string)
+    const prezzo_unitario = parseFloat(formData.get(`dettagli[${index}][prezzo_unitario]`) as string)
+
+    if (prodotto_id && quantita > 0 && prezzo_unitario >= 0) {
+      const subtotale = quantita * prezzo_unitario
+      dettagli.push({
+        prodotto_id,
+        quantita,
+        prezzo_unitario,
+        subtotale
+      })
+    }
+    index++
+  }
+
+  // Verifica che ci sia almeno un prodotto
+  if (dettagli.length === 0) {
+    const redirectPath = validation.data.tipo === 'acquisto'
+      ? '/dashboard/ordini/acquisto/nuovo'
+      : '/dashboard/ordini/vendita/nuovo'
+    redirect(`${redirectPath}?error=${encodeURIComponent('Devi aggiungere almeno un prodotto')}`)
+  }
+
+  // Calcola il totale
+  const totale = dettagli.reduce((sum, d) => sum + d.subtotale, 0)
+
   const ordine = {
     numero_ordine: validation.data.numero_ordine,
     tipo: validation.data.tipo,
@@ -136,11 +173,12 @@ export async function createOrdine(formData: FormData) {
     cliente_id: validation.data.cliente_id || null,
     fornitore_id: validation.data.fornitore_id || null,
     stato: validation.data.stato || 'bozza',
-    totale: 0,
+    totale,
     note: validation.data.note || null,
     user_id: user.id,
   }
 
+  // Crea l'ordine
   const { data, error } = await supabase
     .from('ordini')
     .insert([ordine])
@@ -153,6 +191,26 @@ export async function createOrdine(formData: FormData) {
       ? '/dashboard/ordini/acquisto/nuovo'
       : '/dashboard/ordini/vendita/nuovo'
     redirect(`${redirectPath}?error=${encodeURIComponent(error.message)}`)
+  }
+
+  // Aggiungi i dettagli all'ordine
+  const dettagliConOrdineId = dettagli.map(d => ({
+    ...d,
+    ordine_id: data.id
+  }))
+
+  const { error: dettagliError } = await supabase
+    .from('dettagli_ordini')
+    .insert(dettagliConOrdineId)
+
+  if (dettagliError) {
+    console.error('Error creating dettagli:', dettagliError)
+    // Elimina l'ordine se i dettagli falliscono
+    await supabase.from('ordini').delete().eq('id', data.id)
+    const redirectPath = validation.data.tipo === 'acquisto'
+      ? '/dashboard/ordini/acquisto/nuovo'
+      : '/dashboard/ordini/vendita/nuovo'
+    redirect(`${redirectPath}?error=${encodeURIComponent('Errore nella creazione dei dettagli: ' + dettagliError.message)}`)
   }
 
   revalidatePath('/dashboard/ordini')

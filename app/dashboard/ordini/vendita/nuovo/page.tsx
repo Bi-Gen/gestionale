@@ -1,4 +1,5 @@
 import { getClienti } from '@/app/actions/clienti'
+import { getProdotti } from '@/app/actions/prodotti'
 import Link from 'next/link'
 import VenditaForm from './VenditaForm'
 
@@ -9,6 +10,7 @@ export default async function NuovoOrdineVenditaPage({
 }) {
   const params = await searchParams
   const clienti = await getClienti()
+  const prodotti = await getProdotti()
 
   // Genera numero ordine automatico
   const numeroOrdine = `ORD-V-${Date.now()}`
@@ -27,7 +29,7 @@ export default async function NuovoOrdineVenditaPage({
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {params.error && (
           <div className="mb-4 rounded-md bg-red-50 p-4 border border-red-200">
             <p className="text-sm text-red-700">{params.error}</p>
@@ -35,7 +37,7 @@ export default async function NuovoOrdineVenditaPage({
         )}
 
         <div className="bg-white shadow-sm rounded-lg p-6">
-          <VenditaForm clienti={clienti} numeroOrdine={numeroOrdine} />
+          <VenditaForm clienti={clienti} prodotti={prodotti} numeroOrdine={numeroOrdine} />
         </div>
       </main>
     </div>
