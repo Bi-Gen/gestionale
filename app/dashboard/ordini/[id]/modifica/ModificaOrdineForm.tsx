@@ -15,6 +15,9 @@ export default function ModificaOrdineForm({
 
   return (
     <form action={updateOrdineWithId} className="space-y-6">
+      {/* Campo hidden per il tipo - obbligatorio per la validazione */}
+      <input type="hidden" name="tipo" value={ordine.tipo} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="numero_ordine" className="block text-sm font-medium text-gray-700">
