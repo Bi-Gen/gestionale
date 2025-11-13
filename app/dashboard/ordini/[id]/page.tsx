@@ -35,28 +35,11 @@ export default async function DettaglioOrdinePage({
           >
             ← Torna agli Ordini
           </Link>
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Ordine {ordine.numero_ordine}
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                ordine.stato === 'confermato' ? 'bg-green-100 text-green-800' :
-                ordine.stato === 'evaso' ? 'bg-blue-100 text-blue-800' :
-                ordine.stato === 'annullato' ? 'bg-red-100 text-red-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {ordine.stato}
-              </span>
-              <Link
-                href={`/dashboard/ordini/${id}/modifica`}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Modifica Ordine
-              </Link>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Dettaglio Ordine
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Visualizzazione in sola lettura</p>
           </div>
         </div>
       </header>
@@ -73,35 +56,75 @@ export default async function DettaglioOrdinePage({
           </div>
         )}
 
-        {/* Informazioni Ordine */}
+        {/* Informazioni Ordine - SOLA LETTURA */}
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Informazioni Ordine</h2>
+          <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">Informazioni Ordine</h2>
+            <Link
+              href={`/dashboard/ordini/${id}/modifica`}
+              className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+            >
+              ✏️ Modifica Info
+            </Link>
+          </div>
           <dl className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <dt className="text-sm font-medium text-gray-500">Tipo</dt>
-              <dd className="mt-1 text-sm text-gray-900 capitalize">{ordine.tipo}</dd>
+              <dt className="text-sm font-medium text-gray-500">Numero Ordine</dt>
+              <dd className="mt-1 text-sm font-semibold text-gray-900">{ordine.numero_ordine}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">Data</dt>
+              <dt className="text-sm font-medium text-gray-500">Tipo</dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {new Date(ordine.data_ordine).toLocaleDateString('it-IT')}
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  ordine.tipo === 'vendita' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+                }`}>
+                  {ordine.tipo === 'vendita' ? 'Vendita' : 'Acquisto'}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Data Ordine</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {new Date(ordine.data_ordine).toLocaleDateString('it-IT', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
               </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">
                 {ordine.tipo === 'vendita' ? 'Cliente' : 'Fornitore'}
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm font-semibold text-gray-900">
                 {ordine.tipo === 'vendita'
                   ? (ordine.clienti as any)?.ragione_sociale || '-'
                   : (ordine.fornitori as any)?.ragione_sociale || '-'
                 }
               </dd>
             </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Stato</dt>
+              <dd className="mt-1">
+                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                  ordine.stato === 'confermato' ? 'bg-green-100 text-green-800' :
+                  ordine.stato === 'evaso' ? 'bg-blue-100 text-blue-800' :
+                  ordine.stato === 'annullato' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {ordine.stato.charAt(0).toUpperCase() + ordine.stato.slice(1)}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Totale Ordine</dt>
+              <dd className="mt-1 text-lg font-bold text-gray-900">€ {ordine.totale.toFixed(2)}</dd>
+            </div>
             {ordine.note && (
               <div className="md:col-span-3">
                 <dt className="text-sm font-medium text-gray-500">Note</dt>
-                <dd className="mt-1 text-sm text-gray-900">{ordine.note}</dd>
+                <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{ordine.note}</dd>
               </div>
             )}
           </dl>
@@ -109,8 +132,9 @@ export default async function DettaglioOrdinePage({
 
         {/* Prodotti */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Prodotti</h2>
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-lg font-medium text-gray-900">Prodotti Ordine</h2>
+            <p className="text-sm text-gray-600 mt-1">Elenco dei prodotti in questo ordine</p>
           </div>
 
           {ordine.dettagli && ordine.dettagli.length > 0 ? (
@@ -178,12 +202,30 @@ export default async function DettaglioOrdinePage({
           )}
         </div>
 
-        {/* Form Aggiungi Prodotto */}
-        <AddProdottoForm
-          prodotti={prodottiSerialized}
-          tipoOrdine={ordine.tipo}
-          addDettaglioAction={addDettaglioWithId}
-        />
+        {/* Gestione Prodotti - Solo se ordine non è evaso/annullato */}
+        {ordine.stato !== 'evaso' && ordine.stato !== 'annullato' && (
+          <div className="bg-white shadow-sm rounded-lg p-6">
+            <div className="mb-4 pb-4 border-b border-gray-200">
+              <h2 className="text-lg font-medium text-gray-900">Gestione Prodotti</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Aggiungi o rimuovi prodotti da questo ordine
+              </p>
+            </div>
+            <AddProdottoForm
+              prodotti={prodottiSerialized}
+              tipoOrdine={ordine.tipo}
+              addDettaglioAction={addDettaglioWithId}
+            />
+          </div>
+        )}
+
+        {(ordine.stato === 'evaso' || ordine.stato === 'annullato') && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-800">
+              ⚠️ <strong>Ordine {ordine.stato}:</strong> Non è possibile modificare i prodotti di un ordine evaso o annullato.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   )
