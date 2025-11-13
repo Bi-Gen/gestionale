@@ -138,12 +138,18 @@ export default async function OrdiniVenditaPage({
                           € {ordine.totale.toFixed(2)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                         <Link
                           href={`/dashboard/ordini/${ordine.id}`}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          className="text-blue-600 hover:text-blue-900"
                         >
-                          Dettaglio
+                          Dettagli
+                        </Link>
+                        <Link
+                          href={`/dashboard/ordini/${ordine.id}/modifica`}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          Modifica
                         </Link>
                         <DeleteOrdineButton id={ordine.id} />
                       </td>

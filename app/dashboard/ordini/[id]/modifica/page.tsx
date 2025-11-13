@@ -1,7 +1,10 @@
 import { getOrdine } from '@/app/actions/ordini'
+import { getClienti } from '@/app/actions/clienti'
+import { getFornitori } from '@/app/actions/fornitori'
+import { getProdotti } from '@/app/actions/prodotti'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import ModificaOrdineForm from './ModificaOrdineForm'
+import ModificaOrdineCompleto from './ModificaOrdineCompleto'
 
 export default async function ModificaOrdinePage({
   params,
@@ -18,19 +21,25 @@ export default async function ModificaOrdinePage({
     redirect('/dashboard/ordini?error=Ordine non trovato')
   }
 
-  const redirectPath = ordine.tipo === 'acquisto'
-    ? '/dashboard/ordini/acquisto'
-    : '/dashboard/ordini/vendita'
+  const clienti = await getClienti()
+  const fornitori = await getFornitori()
+  const prodotti = await getProdotti()
+
+  // Serializza i dati per il Client Component
+  const clientiSerialized = JSON.parse(JSON.stringify(clienti))
+  const fornitoriSerialized = JSON.parse(JSON.stringify(fornitori))
+  const prodottiSerialized = JSON.parse(JSON.stringify(prodotti))
+  const dettagliSerialized = JSON.parse(JSON.stringify(ordine.dettagli || []))
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link
-            href={`/dashboard/ordini/${id}`}
+            href={ordine.tipo === 'vendita' ? '/dashboard/ordini/vendita' : '/dashboard/ordini/acquisto'}
             className="text-blue-600 hover:text-blue-700 text-sm mb-2 inline-block"
           >
-            ← Torna all&apos;Ordine
+            ← Torna agli Ordini {ordine.tipo === 'vendita' ? 'di Vendita' : 'di Acquisto'}
           </Link>
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">
@@ -45,41 +54,21 @@ export default async function ModificaOrdinePage({
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {query.error && (
           <div className="mb-4 rounded-md bg-red-50 p-4 border border-red-200">
             <p className="text-sm text-red-700">{query.error}</p>
           </div>
         )}
 
-        <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
-          <div className="mb-4 pb-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Informazioni Cliente/Fornitore</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              <span className="font-medium">
-                {ordine.tipo === 'vendita' ? 'Cliente:' : 'Fornitore:'}
-              </span>{' '}
-              {ordine.tipo === 'vendita'
-                ? (ordine.clienti as any)?.ragione_sociale || '-'
-                : (ordine.fornitori as any)?.ragione_sociale || '-'
-              }
-            </p>
-            <p className="mt-1 text-sm text-gray-500">
-              Cliente/Fornitore non può essere modificato. Per cambiarlo, crea un nuovo ordine.
-            </p>
-          </div>
-
-          <ModificaOrdineForm ordine={ordine} redirectPath={redirectPath} />
-        </div>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-700">
-            <strong>Nota:</strong> Questa pagina permette di modificare solo le informazioni base dell&apos;ordine.
-            Per modificare i prodotti, usa il form nella{' '}
-            <Link href={`/dashboard/ordini/${id}`} className="underline font-medium">
-              pagina di dettaglio
-            </Link>.
-          </p>
+        <div className="bg-white shadow-sm rounded-lg p-6">
+          <ModificaOrdineCompleto
+            ordine={ordine}
+            clienti={clientiSerialized}
+            fornitori={fornitoriSerialized}
+            prodotti={prodottiSerialized}
+            dettagliEsistenti={dettagliSerialized}
+          />
         </div>
       </main>
     </div>
