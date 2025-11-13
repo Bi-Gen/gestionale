@@ -17,7 +17,7 @@ export default async function Home() {
           Gestionale
         </h1>
         <p className="text-xl text-gray-600 mb-8">
-          Sistema di gestione aziendale con Supabase
+          Sistema di gestione aziendale
         </p>
 
         <div className="flex gap-4 justify-center">
@@ -33,28 +33,6 @@ export default async function Home() {
           >
             Registrati
           </Link>
-        </div>
-
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-2">Clienti e Fornitori</h2>
-            <p className="text-gray-600">Gestione completa anagrafiche</p>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-2">Prodotti</h2>
-            <p className="text-gray-600">Catalogo e gestione magazzino</p>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-2">Ordini</h2>
-            <p className="text-gray-600">Simulazione e gestione ordini</p>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-2">Sicurezza</h2>
-            <p className="text-gray-600">Dati protetti e privati per ogni utente</p>
-          </div>
         </div>
       </div>
     </main>
