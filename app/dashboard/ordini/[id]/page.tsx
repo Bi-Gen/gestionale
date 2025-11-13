@@ -197,6 +197,22 @@ export default async function DettaglioOrdinePage({
           )}
         </div>
 
+        {/* Azioni */}
+        <div className="flex gap-4 justify-end">
+          <Link
+            href={ordine.tipo === 'vendita' ? '/dashboard/ordini/vendita' : '/dashboard/ordini/acquisto'}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Chiudi
+          </Link>
+          <Link
+            href={`/dashboard/ordini/${id}/modifica`}
+            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Modifica Ordine
+          </Link>
+        </div>
+
       </main>
     </div>
   )
