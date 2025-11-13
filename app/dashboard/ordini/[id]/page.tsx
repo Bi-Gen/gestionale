@@ -1,9 +1,6 @@
-import { getOrdine, addDettaglioOrdine, removeDettaglioOrdine } from '@/app/actions/ordini'
-import { getProdotti } from '@/app/actions/prodotti'
+import { getOrdine } from '@/app/actions/ordini'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import RemoveDettaglioButton from './RemoveDettaglioButton'
-import AddProdottoForm from './AddProdottoForm'
 
 export default async function DettaglioOrdinePage({
   params,
@@ -15,15 +12,10 @@ export default async function DettaglioOrdinePage({
   const { id } = await params
   const query = await searchParams
   const ordine = await getOrdine(id)
-  const prodotti = await getProdotti()
 
   if (!ordine) {
     redirect('/dashboard/ordini?error=Ordine non trovato')
   }
-
-  // Serializza i dati per il Client Component
-  const prodottiSerialized = JSON.parse(JSON.stringify(prodotti))
-  const addDettaglioWithId = addDettaglioOrdine.bind(null, id)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -58,14 +50,8 @@ export default async function DettaglioOrdinePage({
 
         {/* Informazioni Ordine - SOLA LETTURA */}
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+          <div className="mb-4 pb-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">Informazioni Ordine</h2>
-            <Link
-              href={`/dashboard/ordini/${id}/modifica`}
-              className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-            >
-              ✏️ Modifica Info
-            </Link>
           </div>
           <dl className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -156,9 +142,6 @@ export default async function DettaglioOrdinePage({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Subtotale
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Azioni
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -179,9 +162,6 @@ export default async function DettaglioOrdinePage({
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       € {dettaglio.subtotale.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <RemoveDettaglioButton ordineId={id} dettaglioId={dettaglio.id} />
-                    </td>
                   </tr>
                 ))}
                 <tr className="bg-gray-50">
@@ -191,41 +171,32 @@ export default async function DettaglioOrdinePage({
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                     € {ordine.totale.toFixed(2)}
                   </td>
-                  <td></td>
                 </tr>
               </tbody>
             </table>
           ) : (
             <div className="px-6 py-12 text-center text-gray-500">
-              Nessun prodotto aggiunto. Usa il form qui sotto per aggiungere prodotti.
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Nessun prodotto</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Questo ordine non contiene ancora prodotti.
+              </p>
             </div>
           )}
         </div>
 
-        {/* Gestione Prodotti - Solo se ordine non è evaso/annullato */}
-        {ordine.stato !== 'evaso' && ordine.stato !== 'annullato' && (
-          <div className="bg-white shadow-sm rounded-lg p-6">
-            <div className="mb-4 pb-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">Gestione Prodotti</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Aggiungi o rimuovi prodotti da questo ordine
-              </p>
-            </div>
-            <AddProdottoForm
-              prodotti={prodottiSerialized}
-              tipoOrdine={ordine.tipo}
-              addDettaglioAction={addDettaglioWithId}
-            />
-          </div>
-        )}
-
-        {(ordine.stato === 'evaso' || ordine.stato === 'annullato') && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">
-              ⚠️ <strong>Ordine {ordine.stato}:</strong> Non è possibile modificare i prodotti di un ordine evaso o annullato.
-            </p>
-          </div>
-        )}
       </main>
     </div>
   )
