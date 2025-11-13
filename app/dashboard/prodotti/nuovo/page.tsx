@@ -1,4 +1,5 @@
 import { createProdotto } from '@/app/actions/prodotti'
+import { getFornitori } from '@/app/actions/fornitori'
 import Link from 'next/link'
 
 export default async function NuovoProdottoPage({
@@ -7,6 +8,7 @@ export default async function NuovoProdottoPage({
   searchParams: Promise<{ error?: string }>
 }) {
   const params = await searchParams
+  const fornitori = await getFornitori()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -120,7 +122,7 @@ export default async function NuovoProdottoPage({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label htmlFor="quantita_magazzino" className="block text-sm font-medium text-gray-700">
                   Quantità Magazzino
@@ -151,6 +153,24 @@ export default async function NuovoProdottoPage({
                   <option value="mt">Metri (mt)</option>
                   <option value="mq">Metri quadri (mq)</option>
                   <option value="cf">Confezioni (cf)</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="fornitore_id" className="block text-sm font-medium text-gray-700">
+                  Fornitore Principale
+                </label>
+                <select
+                  name="fornitore_id"
+                  id="fornitore_id"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                >
+                  <option value="">Nessun fornitore</option>
+                  {fornitori.map((fornitore) => (
+                    <option key={fornitore.id} value={fornitore.id}>
+                      {fornitore.ragione_sociale}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

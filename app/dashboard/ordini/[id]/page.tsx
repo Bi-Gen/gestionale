@@ -36,17 +36,27 @@ export default async function DettaglioOrdinePage({
             ← Torna agli Ordini
           </Link>
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Ordine {ordine.numero_ordine}
-            </h1>
-            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-              ordine.stato === 'confermato' ? 'bg-green-100 text-green-800' :
-              ordine.stato === 'evaso' ? 'bg-blue-100 text-blue-800' :
-              ordine.stato === 'annullato' ? 'bg-red-100 text-red-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {ordine.stato}
-            </span>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Ordine {ordine.numero_ordine}
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                ordine.stato === 'confermato' ? 'bg-green-100 text-green-800' :
+                ordine.stato === 'evaso' ? 'bg-blue-100 text-blue-800' :
+                ordine.stato === 'annullato' ? 'bg-red-100 text-red-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {ordine.stato}
+              </span>
+              <Link
+                href={`/dashboard/ordini/${id}/modifica`}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Modifica Ordine
+              </Link>
+            </div>
           </div>
         </div>
       </header>
