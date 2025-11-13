@@ -15,6 +15,10 @@ export default async function NuovoOrdineVenditaPage({
   // Genera numero ordine automatico
   const numeroOrdine = `ORD-V-${Date.now()}`
 
+  // Serializza i dati per assicurarci che siano passabili al Client Component
+  const clientiSerialized = JSON.parse(JSON.stringify(clienti))
+  const prodottiSerialized = JSON.parse(JSON.stringify(prodotti))
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
@@ -37,7 +41,7 @@ export default async function NuovoOrdineVenditaPage({
         )}
 
         <div className="bg-white shadow-sm rounded-lg p-6">
-          <VenditaForm clienti={clienti} prodotti={prodotti} numeroOrdine={numeroOrdine} />
+          <VenditaForm clienti={clientiSerialized} prodotti={prodottiSerialized} numeroOrdine={numeroOrdine} />
         </div>
       </main>
     </div>
