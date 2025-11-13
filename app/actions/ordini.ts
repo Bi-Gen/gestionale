@@ -231,16 +231,54 @@ export async function updateOrdine(id: string, formData: FormData) {
 
   if (!validation.success) {
     const errors = validation.error.issues.map(err => err.message).join(', ')
-    redirect(`/dashboard/ordini/${id}?error=${encodeURIComponent(errors)}`)
+    redirect(`/dashboard/ordini/${id}/modifica?error=${encodeURIComponent(errors)}`)
   }
+
+  // Estrai i dettagli dei prodotti dalla FormData
+  const dettagli: Array<{
+    prodotto_id: string
+    quantita: number
+    prezzo_unitario: number
+    subtotale: number
+  }> = []
+
+  let index = 0
+  while (formData.get(`dettagli[${index}][prodotto_id]`)) {
+    const prodotto_id = formData.get(`dettagli[${index}][prodotto_id]`) as string
+    const quantita = parseFloat(formData.get(`dettagli[${index}][quantita]`) as string)
+    const prezzo_unitario = parseFloat(formData.get(`dettagli[${index}][prezzo_unitario]`) as string)
+
+    if (prodotto_id && quantita > 0 && prezzo_unitario >= 0) {
+      const subtotale = quantita * prezzo_unitario
+      dettagli.push({
+        prodotto_id,
+        quantita,
+        prezzo_unitario,
+        subtotale
+      })
+    }
+    index++
+  }
+
+  // Verifica che ci sia almeno un prodotto
+  if (dettagli.length === 0) {
+    redirect(`/dashboard/ordini/${id}/modifica?error=${encodeURIComponent('Devi aggiungere almeno un prodotto')}`)
+  }
+
+  // Calcola il totale
+  const totale = dettagli.reduce((sum, d) => sum + d.subtotale, 0)
 
   const updates = {
     numero_ordine: validation.data.numero_ordine,
     data_ordine: validation.data.data_ordine,
+    cliente_id: validation.data.cliente_id || null,
+    fornitore_id: validation.data.fornitore_id || null,
     stato: validation.data.stato || 'bozza',
+    totale,
     note: validation.data.note || null,
   }
 
+  // Aggiorna l'ordine
   const { error } = await supabase
     .from('ordini')
     .update(updates)
@@ -249,11 +287,39 @@ export async function updateOrdine(id: string, formData: FormData) {
 
   if (error) {
     console.error('Error updating ordine:', error)
-    redirect(`/dashboard/ordini/${id}?error=${encodeURIComponent(error.message)}`)
+    redirect(`/dashboard/ordini/${id}/modifica?error=${encodeURIComponent(error.message)}`)
   }
 
+  // Elimina i vecchi dettagli
+  await supabase
+    .from('dettagli_ordini')
+    .delete()
+    .eq('ordine_id', id)
+
+  // Inserisci i nuovi dettagli
+  const dettagliConOrdineId = dettagli.map(d => ({
+    ...d,
+    ordine_id: id
+  }))
+
+  const { error: dettagliError } = await supabase
+    .from('dettagli_ordini')
+    .insert(dettagliConOrdineId)
+
+  if (dettagliError) {
+    console.error('Error updating dettagli:', dettagliError)
+    redirect(`/dashboard/ordini/${id}/modifica?error=${encodeURIComponent('Errore nell\'aggiornamento dei dettagli')}`)
+  }
+
+  const redirectPath = validation.data.tipo === 'acquisto'
+    ? '/dashboard/ordini/acquisto'
+    : '/dashboard/ordini/vendita'
+
   revalidatePath('/dashboard/ordini')
-  redirect(`/dashboard/ordini/${id}?success=Ordine aggiornato con successo`)
+  revalidatePath('/dashboard/ordini/vendita')
+  revalidatePath('/dashboard/ordini/acquisto')
+  revalidatePath(`/dashboard/ordini/${id}`)
+  redirect(`${redirectPath}?success=Ordine aggiornato con successo`)
 }
 
 export async function deleteOrdine(id: string) {
