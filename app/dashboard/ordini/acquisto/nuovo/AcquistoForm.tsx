@@ -21,9 +21,15 @@ export default function AcquistoForm({
   prodotti: Prodotto[]
   numeroOrdine: string
 }) {
+  const [fornitoreSelezionato, setFornitoreSelezionato] = useState<string>('')
   const [dettagli, setDettagli] = useState<DettaglioRiga[]>([
     { prodotto_id: '', quantita: 1, prezzo_unitario: 0 }
   ])
+
+  // Filtra i prodotti in base al fornitore selezionato
+  const prodottiFiltrati = fornitoreSelezionato
+    ? prodotti.filter(p => p.fornitore_id === fornitoreSelezionato)
+    : prodotti
 
   const aggiungiRiga = () => {
     setDettagli([...dettagli, { prodotto_id: '', quantita: 1, prezzo_unitario: 0 }])
@@ -109,6 +115,8 @@ export default function AcquistoForm({
           name="fornitore_id"
           id="fornitore_id"
           required
+          value={fornitoreSelezionato}
+          onChange={(e) => setFornitoreSelezionato(e.target.value)}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
         >
           <option value="">Seleziona un fornitore</option>
@@ -118,6 +126,11 @@ export default function AcquistoForm({
             </option>
           ))}
         </select>
+        {fornitoreSelezionato && (
+          <p className="mt-1 text-sm text-gray-600">
+            Mostrando solo prodotti di questo fornitore
+          </p>
+        )}
       </div>
 
       {/* Sezione Prodotti */}
@@ -150,12 +163,17 @@ export default function AcquistoForm({
                     className="block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                   >
                     <option value="">Seleziona prodotto</option>
-                    {prodotti.map((p) => (
+                    {prodottiFiltrati.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.codice} - {p.nome}
                       </option>
                     ))}
                   </select>
+                  {fornitoreSelezionato && prodottiFiltrati.length === 0 && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Nessun prodotto associato a questo fornitore
+                    </p>
+                  )}
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-gray-700 mb-1">
