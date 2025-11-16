@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSidebarContext } from './DashboardLayoutWrapper'
 
 interface NavItem {
   name: string
@@ -19,6 +20,7 @@ interface NavSection {
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { isCollapsed, setIsCollapsed } = useSidebarContext()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'area centrale': true,
@@ -28,10 +30,17 @@ export default function Sidebar() {
   })
 
   const toggleSection = (section: string) => {
+    if (isCollapsed) {
+      setIsCollapsed(false)
+    }
     setOpenSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }))
+  }
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed)
   }
 
   const navSections: NavSection[] = [
@@ -214,37 +223,66 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-40 h-screen w-64 bg-gray-900 text-white
-          transform transition-transform duration-300 ease-in-out
+          fixed top-0 left-0 z-40 h-screen bg-gray-900 text-white
+          transform transition-all duration-300 ease-in-out
           lg:translate-x-0
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
+          w-64
         `}
       >
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
-          <div className="p-6 border-b border-gray-800">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="text-2xl">📊</div>
-              <h1 className="text-xl font-bold">Gestionale</h1>
+          <div className="p-6 border-b border-gray-800 flex items-center justify-between">
+            <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
+              <div className="text-2xl flex-shrink-0">📊</div>
+              <h1 className={`text-xl font-bold transition-all duration-300 ${isCollapsed ? 'lg:hidden' : ''}`}>
+                Gestionale
+              </h1>
             </Link>
+
+            {/* Desktop Toggle Button */}
+            <button
+              onClick={toggleCollapse}
+              className="hidden lg:flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-800 transition-colors flex-shrink-0"
+              title={isCollapsed ? 'Espandi sidebar' : 'Riduci sidebar'}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isCollapsed ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                )}
+              </svg>
+            </button>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4 space-y-2">
             {navSections.map((section) => (
               <div key={section.title}>
+                {/* Section Header */}
                 <button
                   onClick={() => toggleSection(section.title.toLowerCase())}
-                  className="w-full flex items-center justify-between p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors text-sm font-semibold"
+                  className={`
+                    w-full flex items-center justify-between p-2 text-gray-400
+                    hover:text-white hover:bg-gray-800 rounded-md transition-colors text-sm font-semibold
+                    ${isCollapsed ? 'lg:justify-center' : ''}
+                  `}
+                  title={isCollapsed ? section.title : ''}
                 >
                   <span className="flex items-center gap-2">
-                    <span>{section.icon}</span>
-                    <span>{section.title}</span>
+                    <span className="text-lg">{section.icon}</span>
+                    <span className={`transition-all duration-300 ${isCollapsed ? 'lg:hidden' : ''}`}>
+                      {section.title}
+                    </span>
                   </span>
                   <svg
-                    className={`w-4 h-4 transform transition-transform ${
-                      openSections[section.title.toLowerCase()] ? 'rotate-180' : ''
-                    }`}
+                    className={`
+                      w-4 h-4 transform transition-all duration-300
+                      ${openSections[section.title.toLowerCase()] ? 'rotate-180' : ''}
+                      ${isCollapsed ? 'lg:hidden' : ''}
+                    `}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -253,7 +291,8 @@ export default function Sidebar() {
                   </svg>
                 </button>
 
-                {openSections[section.title.toLowerCase()] && (
+                {/* Section Items */}
+                {openSections[section.title.toLowerCase()] && !isCollapsed && (
                   <div className="ml-4 mt-1 space-y-1">
                     {section.items.map((item) => (
                       <Link
@@ -271,6 +310,30 @@ export default function Sidebar() {
                       >
                         {item.icon}
                         <span>{item.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {/* Collapsed: Show only icons as quick links */}
+                {isCollapsed && (
+                  <div className="hidden lg:block mt-1 space-y-1">
+                    {section.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsMobileOpen(false)}
+                        className={`
+                          flex items-center justify-center p-2 rounded-md text-sm transition-colors
+                          ${
+                            isActive(item.href)
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                          }
+                        `}
+                        title={item.name}
+                      >
+                        {item.icon}
                       </Link>
                     ))}
                   </div>
