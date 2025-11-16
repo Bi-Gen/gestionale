@@ -11,30 +11,29 @@ export default async function OrdiniAcquistoPage({
   const ordini = await getOrdini('acquisto')
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link
-                href="/dashboard/ordini"
-                className="text-blue-600 hover:text-blue-700 text-sm mb-2 inline-block"
-              >
-                ← Torna a Gestione Ordini
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Ordini di Acquisto</h1>
-            </div>
-            <Link
-              href="/dashboard/ordini/acquisto/nuovo"
-              className="px-4 py-2 bg-orange-600 text-white font-medium rounded-md hover:bg-orange-700 transition-colors"
-            >
-              + Nuovo Ordine di Acquisto
+    <div className="p-6">
+      {/* Page Header */}
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+            <Link href="/dashboard/ordini" className="hover:text-blue-600">
+              Ordini
             </Link>
+            <span>›</span>
+            <span>Acquisto</span>
           </div>
+          <h1 className="text-2xl font-bold text-gray-900">Ordini di Acquisto</h1>
         </div>
-      </header>
+        <Link
+          href="/dashboard/ordini/acquisto/nuovo"
+          className="px-4 py-2 bg-orange-600 text-white font-medium rounded-md hover:bg-orange-700 transition-colors"
+        >
+          + Nuovo Ordine di Acquisto
+        </Link>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Content */}
+      <div>
         {params.success && (
           <div className="mb-4 rounded-md bg-green-50 p-4">
             <p className="text-sm text-green-700">{params.success}</p>
@@ -169,7 +168,7 @@ export default async function OrdiniAcquistoPage({
             </div>
           )}
         </div>
-      </main>
+      </div>
     </div>
   )
 }
