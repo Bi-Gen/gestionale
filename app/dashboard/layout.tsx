@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
-import { DashboardLayoutWrapper, MainContentWrapper } from '@/components/DashboardLayoutWrapper'
+import { DashboardLayoutWrapper, MainContentWrapper, HamburgerButton } from '@/components/DashboardLayoutWrapper'
 import { logout } from '@/app/actions/auth'
 
 export default async function DashboardLayout({
@@ -27,8 +27,9 @@ export default async function DashboardLayout({
           {/* Top Header */}
           <header className="bg-white shadow-sm border-b border-gray-200">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <div className="lg:ml-0 ml-12">
-                {/* Spazio per mobile menu button */}
+              <div className="flex items-center gap-3">
+                <HamburgerButton />
+                <h2 className="text-lg font-semibold text-gray-900 hidden sm:block">Gestionale</h2>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">{user.email}</span>
