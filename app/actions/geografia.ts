@@ -170,93 +170,81 @@ export async function syncGeografiaFromAPI() {
       throw new Error('Failed to fetch from API')
     }
 
-    const comuni = await response.json()
+    const comuniData = await response.json()
 
-    let insertedRegioni = 0
-    let insertedProvince = 0
+    // Step 1: Estrai e inserisci tutte le regioni uniche (BATCH)
+    const regioniUniche = new Map<string, any>()
+    comuniData.forEach((c: any) => {
+      if (!regioniUniche.has(c.regione.codice)) {
+        regioniUniche.set(c.regione.codice, {
+          codice: c.regione.codice,
+          nome: c.regione.nome
+        })
+      }
+    })
+
+    const regioniArray = Array.from(regioniUniche.values())
+    const { data: insertedRegioni } = await supabase
+      .from('regioni')
+      .upsert(regioniArray, { onConflict: 'codice' })
+      .select('id, codice')
+
+    // Crea mappa codice -> id per regioni
+    const regioniMap = new Map<string, number>()
+    insertedRegioni?.forEach((r: any) => regioniMap.set(r.codice, r.id))
+
+    // Step 2: Estrai e inserisci tutte le province uniche (BATCH)
+    const provinceUniche = new Map<string, any>()
+    comuniData.forEach((c: any) => {
+      if (!provinceUniche.has(c.provincia.codice)) {
+        const regioneId = regioniMap.get(c.regione.codice)
+        if (regioneId) {
+          provinceUniche.set(c.provincia.codice, {
+            codice: c.provincia.codice,
+            nome: c.provincia.nome,
+            sigla: c.sigla,
+            regione_id: regioneId
+          })
+        }
+      }
+    })
+
+    const provinceArray = Array.from(provinceUniche.values())
+    const { data: insertedProvince } = await supabase
+      .from('province')
+      .upsert(provinceArray, { onConflict: 'codice' })
+      .select('id, codice')
+
+    // Crea mappa codice -> id per province
+    const provinceMap = new Map<string, number>()
+    insertedProvince?.forEach((p: any) => provinceMap.set(p.codice, p.id))
+
+    // Step 3: Inserisci comuni in batch da 500
+    const BATCH_SIZE = 500
     let insertedComuni = 0
 
-    // Mappa per tenere traccia di regioni e province già inserite
-    const regioniMap = new Map<string, number>()
-    const provinceMap = new Map<string, number>()
+    for (let i = 0; i < comuniData.length; i += BATCH_SIZE) {
+      const batch = comuniData.slice(i, i + BATCH_SIZE)
+      const comuniBatch = batch
+        .map((c: any) => {
+          const provinciaId = provinceMap.get(c.provincia.codice)
+          if (!provinciaId) return null
 
-    // Process comuni dal dataset
-    for (const comune of comuni) {
-      // 1. Inserisci/ottieni regione
-      if (!regioniMap.has(comune.regione.codice)) {
-        const { data: existingRegione } = await supabase
-          .from('regioni')
-          .select('id')
-          .eq('codice', comune.regione.codice)
-          .single()
-
-        if (existingRegione) {
-          regioniMap.set(comune.regione.codice, existingRegione.id)
-        } else {
-          const { data: newRegione, error } = await supabase
-            .from('regioni')
-            .insert({
-              codice: comune.regione.codice,
-              nome: comune.regione.nome
-            })
-            .select('id')
-            .single()
-
-          if (!error && newRegione) {
-            regioniMap.set(comune.regione.codice, newRegione.id)
-            insertedRegioni++
-          }
-        }
-      }
-
-      // 2. Inserisci/ottieni provincia
-      const provinceKey = `${comune.provincia.codice}-${comune.provincia.nome}`
-      if (!provinceMap.has(provinceKey)) {
-        const { data: existingProvincia } = await supabase
-          .from('province')
-          .select('id')
-          .eq('codice', comune.provincia.codice)
-          .single()
-
-        if (existingProvincia) {
-          provinceMap.set(provinceKey, existingProvincia.id)
-        } else {
-          const regioneId = regioniMap.get(comune.regione.codice)
-          if (regioneId) {
-            const { data: newProvincia, error } = await supabase
-              .from('province')
-              .insert({
-                codice: comune.provincia.codice,
-                nome: comune.provincia.nome,
-                sigla: comune.sigla,
-                regione_id: regioneId
-              })
-              .select('id')
-              .single()
-
-            if (!error && newProvincia) {
-              provinceMap.set(provinceKey, newProvincia.id)
-              insertedProvince++
-            }
-          }
-        }
-      }
-
-      // 3. Inserisci comune
-      const provinciaId = provinceMap.get(provinceKey)
-      if (provinciaId) {
-        const { error } = await supabase
-          .from('comuni')
-          .upsert({
-            codice: comune.codice,
-            nome: comune.nome,
+          return {
+            codice: c.codice,
+            nome: c.nome,
             provincia_id: provinciaId,
-            cap: comune.cap ? comune.cap[0] : null // Prendi il primo CAP se array
-          }, {
-            onConflict: 'codice'
-          })
+            cap: Array.isArray(c.cap) ? c.cap[0] : c.cap
+          }
+        })
+        .filter(Boolean)
 
-        if (!error) insertedComuni++
+      const { error, count } = await supabase
+        .from('comuni')
+        .upsert(comuniBatch, { onConflict: 'codice' })
+
+      if (!error) {
+        insertedComuni += count || comuniBatch.length
       }
     }
 
@@ -265,8 +253,8 @@ export async function syncGeografiaFromAPI() {
     return {
       success: true,
       stats: {
-        regioni: insertedRegioni,
-        province: insertedProvince,
+        regioni: regioniArray.length,
+        province: provinceArray.length,
         comuni: insertedComuni
       }
     }
