@@ -161,8 +161,8 @@ export async function syncGeografiaFromAPI() {
   const supabase = await createClient()
 
   try {
-    // Fetch data from external API (esempio con dataset italiano)
-    const response = await fetch('https://axqvoqvbfjpaamphztgd.functions.supabase.co/comuni-json', {
+    // Fetch da GitHub - dataset comuni italiani aggiornato
+    const response = await fetch('https://raw.githubusercontent.com/matteocontrini/comuni-json/master/comuni.json', {
       cache: 'no-store'
     })
 
@@ -170,58 +170,88 @@ export async function syncGeografiaFromAPI() {
       throw new Error('Failed to fetch from API')
     }
 
-    const data = await response.json()
+    const comuni = await response.json()
 
-    // Process and insert data
-    // Questo è un esempio - adatta in base alla struttura dell'API
     let insertedRegioni = 0
     let insertedProvince = 0
     let insertedComuni = 0
 
-    // Inserisci regioni (esempio)
-    if (data.regioni) {
-      for (const regione of data.regioni) {
-        const { error } = await supabase
+    // Mappa per tenere traccia di regioni e province già inserite
+    const regioniMap = new Map<string, number>()
+    const provinceMap = new Map<string, number>()
+
+    // Process comuni dal dataset
+    for (const comune of comuni) {
+      // 1. Inserisci/ottieni regione
+      if (!regioniMap.has(comune.regione.codice)) {
+        const { data: existingRegione } = await supabase
           .from('regioni')
-          .upsert({
-            codice: regione.codice,
-            nome: regione.nome
-          }, {
-            onConflict: 'codice'
-          })
+          .select('id')
+          .eq('codice', comune.regione.codice)
+          .single()
 
-        if (!error) insertedRegioni++
+        if (existingRegione) {
+          regioniMap.set(comune.regione.codice, existingRegione.id)
+        } else {
+          const { data: newRegione, error } = await supabase
+            .from('regioni')
+            .insert({
+              codice: comune.regione.codice,
+              nome: comune.regione.nome
+            })
+            .select('id')
+            .single()
+
+          if (!error && newRegione) {
+            regioniMap.set(comune.regione.codice, newRegione.id)
+            insertedRegioni++
+          }
+        }
       }
-    }
 
-    // Inserisci province
-    if (data.province) {
-      for (const provincia of data.province) {
-        const { error } = await supabase
+      // 2. Inserisci/ottieni provincia
+      const provinceKey = `${comune.provincia.codice}-${comune.provincia.nome}`
+      if (!provinceMap.has(provinceKey)) {
+        const { data: existingProvincia } = await supabase
           .from('province')
-          .upsert({
-            codice: provincia.codice,
-            nome: provincia.nome,
-            sigla: provincia.sigla,
-            regione_id: provincia.regione_id
-          }, {
-            onConflict: 'codice'
-          })
+          .select('id')
+          .eq('codice', comune.provincia.codice)
+          .single()
 
-        if (!error) insertedProvince++
+        if (existingProvincia) {
+          provinceMap.set(provinceKey, existingProvincia.id)
+        } else {
+          const regioneId = regioniMap.get(comune.regione.codice)
+          if (regioneId) {
+            const { data: newProvincia, error } = await supabase
+              .from('province')
+              .insert({
+                codice: comune.provincia.codice,
+                nome: comune.provincia.nome,
+                sigla: comune.sigla,
+                regione_id: regioneId
+              })
+              .select('id')
+              .single()
+
+            if (!error && newProvincia) {
+              provinceMap.set(provinceKey, newProvincia.id)
+              insertedProvince++
+            }
+          }
+        }
       }
-    }
 
-    // Inserisci comuni
-    if (data.comuni) {
-      for (const comune of data.comuni) {
+      // 3. Inserisci comune
+      const provinciaId = provinceMap.get(provinceKey)
+      if (provinciaId) {
         const { error } = await supabase
           .from('comuni')
           .upsert({
             codice: comune.codice,
             nome: comune.nome,
-            provincia_id: comune.provincia_id,
-            cap: comune.cap
+            provincia_id: provinciaId,
+            cap: comune.cap ? comune.cap[0] : null // Prendi il primo CAP se array
           }, {
             onConflict: 'codice'
           })
