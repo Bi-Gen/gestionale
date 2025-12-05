@@ -30,10 +30,84 @@ export default async function SignupPage({
         )}
 
         <form className="mt-8 space-y-6" action={signup}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          {/* Dati Azienda */}
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email
+              <label htmlFor="nome_azienda" className="block text-sm font-medium text-gray-700 mb-1">
+                Nome Azienda *
+              </label>
+              <input
+                id="nome_azienda"
+                name="nome_azienda"
+                type="text"
+                required
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Es: Acme SRL"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="ragione_sociale" className="block text-sm font-medium text-gray-700 mb-1">
+                Ragione Sociale
+              </label>
+              <input
+                id="ragione_sociale"
+                name="ragione_sociale"
+                type="text"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Opzionale"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="partita_iva" className="block text-sm font-medium text-gray-700 mb-1">
+                Partita IVA
+              </label>
+              <input
+                id="partita_iva"
+                name="partita_iva"
+                type="text"
+                maxLength={11}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="11 cifre (opzionale)"
+              />
+            </div>
+          </div>
+
+          {/* Dati Utente */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome *
+                </label>
+                <input
+                  id="nome"
+                  name="nome"
+                  type="text"
+                  required
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="Nome"
+                />
+              </div>
+              <div>
+                <label htmlFor="cognome" className="block text-sm font-medium text-gray-700 mb-1">
+                  Cognome *
+                </label>
+                <input
+                  id="cognome"
+                  name="cognome"
+                  type="text"
+                  required
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="Cognome"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email *
               </label>
               <input
                 id="email"
@@ -41,13 +115,14 @@ export default async function SignupPage({
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="tua@email.com"
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password *
               </label>
               <input
                 id="password"
@@ -56,8 +131,8 @@ export default async function SignupPage({
                 autoComplete="new-password"
                 required
                 minLength={6}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password (minimo 6 caratteri)"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Minimo 6 caratteri"
               />
             </div>
           </div>

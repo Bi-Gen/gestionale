@@ -1,5 +1,6 @@
 import { getFornitori } from '@/app/actions/fornitori'
 import { getProdotti } from '@/app/actions/prodotti'
+import { getMagazzini } from '@/app/actions/magazzino'
 import Link from 'next/link'
 import AcquistoForm from './AcquistoForm'
 
@@ -11,6 +12,7 @@ export default async function NuovoOrdineAcquistoPage({
   const params = await searchParams
   const fornitori = await getFornitori()
   const prodotti = await getProdotti()
+  const magazzini = await getMagazzini()
 
   // Genera numero ordine automatico
   const numeroOrdine = `ORD-A-${Date.now()}`
@@ -18,6 +20,7 @@ export default async function NuovoOrdineAcquistoPage({
   // Serializza i dati per assicurarci che siano passabili al Client Component
   const fornitoriSerialized = JSON.parse(JSON.stringify(fornitori))
   const prodottiSerialized = JSON.parse(JSON.stringify(prodotti))
+  const magazziniSerialized = JSON.parse(JSON.stringify(magazzini))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,7 +44,12 @@ export default async function NuovoOrdineAcquistoPage({
         )}
 
         <div className="bg-white shadow-sm rounded-lg p-6">
-          <AcquistoForm fornitori={fornitoriSerialized} prodotti={prodottiSerialized} numeroOrdine={numeroOrdine} />
+          <AcquistoForm
+            fornitori={fornitoriSerialized}
+            prodotti={prodottiSerialized}
+            magazzini={magazziniSerialized}
+            numeroOrdine={numeroOrdine}
+          />
         </div>
       </main>
     </div>

@@ -1,0 +1,928 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import type { Fornitore } from '@/app/actions/fornitori'
+
+interface ProdottoFormProps {
+  action: any
+  fornitori: Fornitore[]
+  initialData?: any
+  submitLabel?: string
+}
+
+export default function ProdottoForm({ action, fornitori, initialData, submitLabel = 'Salva Prodotto' }: ProdottoFormProps) {
+  // Stati per validazione client-side
+  const [eanError, setEanError] = useState('')
+  const [showListini, setShowListini] = useState(false)
+
+  // Validazione Codice EAN
+  const validateEAN = (value: string) => {
+    if (!value) {
+      setEanError('')
+      return
+    }
+    const eanRegex = /^\d{8}$|^\d{13}$/
+    if (!eanRegex.test(value)) {
+      setEanError('Codice EAN non valido (8 o 13 cifre)')
+    } else {
+      setEanError('')
+    }
+  }
+
+  return (
+    <form action={action} className="space-y-8">
+      {/* ========================================= */}
+      {/* SEZIONE 1: IDENTIFICAZIONE PRODOTTO */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          📦 Identificazione Prodotto
+        </h2>
+
+        <div className="space-y-6">
+          {/* Codice e SKU */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="codice" className="block text-sm font-medium text-gray-700">
+                Codice Prodotto *
+              </label>
+              <input
+                type="text"
+                name="codice"
+                id="codice"
+                required
+                placeholder="PROD001"
+                defaultValue={initialData?.codice}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="sku" className="block text-sm font-medium text-gray-700">
+                SKU
+              </label>
+              <input
+                type="text"
+                name="sku"
+                id="sku"
+                placeholder="SKU-001"
+                defaultValue={initialData?.sku}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Nome */}
+          <div>
+            <label htmlFor="nome" className="block text-sm font-medium text-gray-700">
+              Nome Prodotto *
+            </label>
+            <input
+              type="text"
+              name="nome"
+              id="nome"
+              required
+              placeholder="Nome del prodotto"
+              defaultValue={initialData?.nome}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Descrizione Breve */}
+          <div>
+            <label htmlFor="descrizione_breve" className="block text-sm font-medium text-gray-700">
+              Descrizione Breve
+            </label>
+            <input
+              type="text"
+              name="descrizione_breve"
+              id="descrizione_breve"
+              maxLength={500}
+              placeholder="Descrizione breve per cataloghi (max 500 caratteri)"
+              defaultValue={initialData?.descrizione_breve}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Descrizione Completa */}
+          <div>
+            <label htmlFor="descrizione" className="block text-sm font-medium text-gray-700">
+              Descrizione Completa
+            </label>
+            <textarea
+              name="descrizione"
+              id="descrizione"
+              rows={4}
+              placeholder="Descrizione dettagliata del prodotto"
+              defaultValue={initialData?.descrizione}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Classificazione */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label htmlFor="categoria" className="block text-sm font-medium text-gray-700">
+                Categoria
+              </label>
+              <input
+                type="text"
+                name="categoria"
+                id="categoria"
+                placeholder="Elettronica"
+                defaultValue={initialData?.categoria}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="sottocategoria" className="block text-sm font-medium text-gray-700">
+                Sottocategoria
+              </label>
+              <input
+                type="text"
+                name="sottocategoria"
+                id="sottocategoria"
+                placeholder="Mouse"
+                defaultValue={initialData?.sottocategoria}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="famiglia" className="block text-sm font-medium text-gray-700">
+                Famiglia
+              </label>
+              <input
+                type="text"
+                name="famiglia"
+                id="famiglia"
+                placeholder="Periferiche PC"
+                defaultValue={initialData?.famiglia}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Codici Alternativi */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="codice_ean" className="block text-sm font-medium text-gray-700">
+                Codice EAN (Barcode)
+              </label>
+              <input
+                type="text"
+                name="codice_ean"
+                id="codice_ean"
+                placeholder="8001234567890 (8 o 13 cifre)"
+                defaultValue={initialData?.codice_ean}
+                onBlur={(e) => validateEAN(e.target.value)}
+                className={`mt-1 block w-full rounded-md border ${eanError ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500`}
+              />
+              {eanError && <p className="mt-1 text-sm text-red-600">{eanError}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="codice_fornitore" className="block text-sm font-medium text-gray-700">
+                Codice Fornitore
+              </label>
+              <input
+                type="text"
+                name="codice_fornitore"
+                id="codice_fornitore"
+                placeholder="Codice usato dal fornitore"
+                defaultValue={initialData?.codice_fornitore}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE 2: PREZZI E COSTI */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          💰 Prezzi e Costi
+        </h2>
+
+        <div className="space-y-6">
+          {/* Costi */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="costo_ultimo" className="block text-sm font-medium text-gray-700">
+                Costo Ultimo Acquisto (€)
+              </label>
+              <input
+                type="number"
+                name="costo_ultimo"
+                id="costo_ultimo"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                defaultValue={initialData?.costo_ultimo}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Ultimo costo di acquisto effettivo</p>
+            </div>
+
+            <div>
+              <label htmlFor="costo_medio" className="block text-sm font-medium text-gray-700">
+                Costo Medio Ponderato (€)
+              </label>
+              <input
+                type="number"
+                name="costo_medio"
+                id="costo_medio"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                defaultValue={initialData?.costo_medio}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-gray-50 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Calcolato automaticamente</p>
+            </div>
+          </div>
+
+          {/* Prezzi Base */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="prezzo_acquisto" className="block text-sm font-medium text-gray-700">
+                Prezzo Acquisto Standard (€)
+              </label>
+              <input
+                type="number"
+                name="prezzo_acquisto"
+                id="prezzo_acquisto"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                defaultValue={initialData?.prezzo_acquisto}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="prezzo_vendita" className="block text-sm font-medium text-gray-700">
+                Prezzo Vendita Base (€) *
+              </label>
+              <input
+                type="number"
+                name="prezzo_vendita"
+                id="prezzo_vendita"
+                step="0.01"
+                min="0"
+                required
+                placeholder="0.00"
+                defaultValue={initialData?.prezzo_vendita}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Margine, IVA e Valuta */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label htmlFor="valuta" className="block text-sm font-medium text-gray-700">
+                Valuta
+              </label>
+              <select
+                name="valuta"
+                id="valuta"
+                defaultValue={initialData?.valuta || 'EUR'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              >
+                <option value="EUR">EUR (€)</option>
+                <option value="USD">USD ($)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="CHF">CHF (Fr)</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="margine_percentuale" className="block text-sm font-medium text-gray-700">
+                Margine %
+              </label>
+              <input
+                type="number"
+                name="margine_percentuale"
+                id="margine_percentuale"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="0.00"
+                defaultValue={initialData?.margine_percentuale}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-gray-50 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Calcolato automaticamente</p>
+            </div>
+
+            <div>
+              <label htmlFor="sconto_massimo" className="block text-sm font-medium text-gray-700">
+                Sconto Massimo %
+              </label>
+              <input
+                type="number"
+                name="sconto_massimo"
+                id="sconto_massimo"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="0.00"
+                defaultValue={initialData?.sconto_massimo}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="aliquota_iva" className="block text-sm font-medium text-gray-700">
+                Aliquota IVA %
+              </label>
+              <input
+                type="number"
+                name="aliquota_iva"
+                id="aliquota_iva"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="22.00"
+                defaultValue={initialData?.aliquota_iva || '22'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Listini Multipli (opzionale collassabile) */}
+          <div className="border-t border-gray-200 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowListini(!showListini)}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              {showListini ? '▼' : '▶'} Listini Vendita (opzionale)
+            </button>
+
+            {showListini && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                <div>
+                  <label htmlFor="prezzo_listino1" className="block text-sm font-medium text-gray-700">
+                    Listino 1 (€)
+                  </label>
+                  <input
+                    type="number"
+                    name="prezzo_listino1"
+                    id="prezzo_listino1"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    defaultValue={initialData?.prezzo_listino1}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="prezzo_listino2" className="block text-sm font-medium text-gray-700">
+                    Listino 2 (€)
+                  </label>
+                  <input
+                    type="number"
+                    name="prezzo_listino2"
+                    id="prezzo_listino2"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    defaultValue={initialData?.prezzo_listino2}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="prezzo_listino3" className="block text-sm font-medium text-gray-700">
+                    Listino 3 (€)
+                  </label>
+                  <input
+                    type="number"
+                    name="prezzo_listino3"
+                    id="prezzo_listino3"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    defaultValue={initialData?.prezzo_listino3}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE 3: FORNITORE */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          🚚 Fornitore
+        </h2>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <label htmlFor="fornitore_principale_id" className="block text-sm font-medium text-gray-700">
+                Fornitore Principale
+              </label>
+              <select
+                name="fornitore_principale_id"
+                id="fornitore_principale_id"
+                defaultValue={initialData?.fornitore_principale_id}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              >
+                <option value="">Nessun fornitore</option>
+                {fornitori.map((fornitore) => (
+                  <option key={fornitore.id} value={fornitore.id}>
+                    {fornitore.ragione_sociale}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="tempo_riordino_giorni" className="block text-sm font-medium text-gray-700">
+                Lead Time (giorni)
+              </label>
+              <input
+                type="number"
+                name="tempo_riordino_giorni"
+                id="tempo_riordino_giorni"
+                min="0"
+                placeholder="7"
+                defaultValue={initialData?.tempo_riordino_giorni || '7'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Tempo di riordino</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="quantita_minima_ordine" className="block text-sm font-medium text-gray-700">
+                Quantità Minima Ordine (MOQ)
+              </label>
+              <input
+                type="number"
+                name="quantita_minima_ordine"
+                id="quantita_minima_ordine"
+                min="1"
+                placeholder="1"
+                defaultValue={initialData?.quantita_minima_ordine || '1'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE 4: MAGAZZINO */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          📊 Magazzino e Giacenze
+        </h2>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label htmlFor="unita_misura" className="block text-sm font-medium text-gray-700">
+                Unità di Misura
+              </label>
+              <select
+                name="unita_misura"
+                id="unita_misura"
+                defaultValue={initialData?.unita_misura || 'PZ'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              >
+                <option value="PZ">Pezzi (PZ)</option>
+                <option value="KG">Kilogrammi (KG)</option>
+                <option value="LT">Litri (LT)</option>
+                <option value="MT">Metri (MT)</option>
+                <option value="MQ">Metri quadri (MQ)</option>
+                <option value="CF">Confezioni (CF)</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="quantita_magazzino" className="block text-sm font-medium text-gray-700">
+                Quantità Attuale
+              </label>
+              <input
+                type="number"
+                name="quantita_magazzino"
+                id="quantita_magazzino"
+                step="0.001"
+                min="0"
+                placeholder="0"
+                defaultValue={initialData?.quantita_magazzino || '0'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="ubicazione" className="block text-sm font-medium text-gray-700">
+                Ubicazione Magazzino
+              </label>
+              <input
+                type="text"
+                name="ubicazione"
+                id="ubicazione"
+                placeholder="A-12-3"
+                defaultValue={initialData?.ubicazione}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label htmlFor="giacenza_minima" className="block text-sm font-medium text-gray-700">
+                Giacenza Minima
+              </label>
+              <input
+                type="number"
+                name="giacenza_minima"
+                id="giacenza_minima"
+                step="0.001"
+                min="0"
+                placeholder="0"
+                defaultValue={initialData?.giacenza_minima}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Scorta minima di sicurezza</p>
+            </div>
+
+            <div>
+              <label htmlFor="punto_riordino" className="block text-sm font-medium text-gray-700">
+                Punto di Riordino
+              </label>
+              <input
+                type="number"
+                name="punto_riordino"
+                id="punto_riordino"
+                step="0.001"
+                min="0"
+                placeholder="0"
+                defaultValue={initialData?.punto_riordino}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Soglia per riordinare</p>
+            </div>
+
+            <div>
+              <label htmlFor="giacenza_massima" className="block text-sm font-medium text-gray-700">
+                Giacenza Massima
+              </label>
+              <input
+                type="number"
+                name="giacenza_massima"
+                id="giacenza_massima"
+                step="0.001"
+                min="0"
+                placeholder="0"
+                defaultValue={initialData?.giacenza_massima}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Scorta massima consigliata</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE 5: MISURE E DIMENSIONI */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          📏 Misure e Dimensioni
+        </h2>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label htmlFor="peso_kg" className="block text-sm font-medium text-gray-700">
+                Peso (kg)
+              </label>
+              <input
+                type="number"
+                name="peso_kg"
+                id="peso_kg"
+                step="0.001"
+                min="0"
+                placeholder="0.000"
+                defaultValue={initialData?.peso_kg}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="volume_m3" className="block text-sm font-medium text-gray-700">
+                Volume (m³)
+              </label>
+              <input
+                type="number"
+                name="volume_m3"
+                id="volume_m3"
+                step="0.0001"
+                min="0"
+                placeholder="0.0000"
+                defaultValue={initialData?.volume_m3}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="colli" className="block text-sm font-medium text-gray-700">
+                N° Colli
+              </label>
+              <input
+                type="number"
+                name="colli"
+                id="colli"
+                min="1"
+                placeholder="1"
+                defaultValue={initialData?.colli || '1'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label htmlFor="lunghezza_cm" className="block text-sm font-medium text-gray-700">
+                Lunghezza (cm)
+              </label>
+              <input
+                type="number"
+                name="lunghezza_cm"
+                id="lunghezza_cm"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                defaultValue={initialData?.lunghezza_cm}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="larghezza_cm" className="block text-sm font-medium text-gray-700">
+                Larghezza (cm)
+              </label>
+              <input
+                type="number"
+                name="larghezza_cm"
+                id="larghezza_cm"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                defaultValue={initialData?.larghezza_cm}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="altezza_cm" className="block text-sm font-medium text-gray-700">
+                Altezza (cm)
+              </label>
+              <input
+                type="number"
+                name="altezza_cm"
+                id="altezza_cm"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                defaultValue={initialData?.altezza_cm}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE 6: GESTIONE AVANZATA */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          ⚙️ Gestione Avanzata
+        </h2>
+
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="gestione_lotti"
+              id="gestione_lotti"
+              defaultChecked={initialData?.gestione_lotti}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="gestione_lotti" className="ml-2 block text-sm text-gray-900">
+              Gestione Lotti
+            </label>
+            <span className="ml-2 text-xs text-gray-500">(Tracciabilità lotti di produzione)</span>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="gestione_seriali"
+              id="gestione_seriali"
+              defaultChecked={initialData?.gestione_seriali}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="gestione_seriali" className="ml-2 block text-sm text-gray-900">
+              Gestione Numeri Seriali
+            </label>
+            <span className="ml-2 text-xs text-gray-500">(Per elettronica, garanzie)</span>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="gestione_scadenze"
+              id="gestione_scadenze"
+              defaultChecked={initialData?.gestione_scadenze}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="gestione_scadenze" className="ml-2 block text-sm text-gray-900">
+              Gestione Scadenze
+            </label>
+            <span className="ml-2 text-xs text-gray-500">(Prodotti deperibili)</span>
+          </div>
+
+          <div className="ml-6">
+            <label htmlFor="giorni_scadenza" className="block text-sm font-medium text-gray-700">
+              Giorni Validità dalla Produzione
+            </label>
+            <input
+              type="number"
+              name="giorni_scadenza"
+              id="giorni_scadenza"
+              min="1"
+              placeholder="30"
+              defaultValue={initialData?.giorni_scadenza}
+              className="mt-1 w-40 rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE 7: VENDITA E VISIBILITÀ */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          🛒 Vendita e Visibilità
+        </h2>
+
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="vendibile"
+              id="vendibile"
+              defaultChecked={initialData?.vendibile !== false}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="vendibile" className="ml-2 block text-sm text-gray-900">
+              Vendibile
+            </label>
+            <span className="ml-2 text-xs text-gray-500">(Prodotto può essere venduto)</span>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="acquistabile"
+              id="acquistabile"
+              defaultChecked={initialData?.acquistabile !== false}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="acquistabile" className="ml-2 block text-sm text-gray-900">
+              Acquistabile
+            </label>
+            <span className="ml-2 text-xs text-gray-500">(Prodotto può essere acquistato)</span>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="visibile_catalogo"
+              id="visibile_catalogo"
+              defaultChecked={initialData?.visibile_catalogo !== false}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="visibile_catalogo" className="ml-2 block text-sm text-gray-900">
+              Visibile in Catalogo
+            </label>
+            <span className="ml-2 text-xs text-gray-500">(Mostra nei cataloghi)</span>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="visibile_ecommerce"
+              id="visibile_ecommerce"
+              defaultChecked={initialData?.visibile_ecommerce}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="visibile_ecommerce" className="ml-2 block text-sm text-gray-900">
+              Visibile in E-commerce
+            </label>
+            <span className="ml-2 text-xs text-gray-500">(Pubblica su e-commerce)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE 8: NOTE E IMMAGINI */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          📝 Note e Immagini
+        </h2>
+
+        <div className="space-y-6">
+          <div>
+            <label htmlFor="note" className="block text-sm font-medium text-gray-700">
+              Note (pubbliche)
+            </label>
+            <textarea
+              name="note"
+              id="note"
+              rows={3}
+              placeholder="Note visibili al cliente"
+              defaultValue={initialData?.note}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="note_interne" className="block text-sm font-medium text-gray-700">
+              Note Interne (riservate)
+            </label>
+            <textarea
+              name="note_interne"
+              id="note_interne"
+              rows={3}
+              placeholder="Note riservate uso interno"
+              defaultValue={initialData?.note_interne}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-gray-50 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="immagine_url" className="block text-sm font-medium text-gray-700">
+              URL Immagine Principale
+            </label>
+            <input
+              type="url"
+              name="immagine_url"
+              id="immagine_url"
+              placeholder="https://esempio.it/immagine.jpg"
+              defaultValue={initialData?.immagine_url}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Error Summary Popup */}
+      {eanError && (
+        <div className="fixed bottom-4 right-4 bg-red-50 border-2 border-red-200 rounded-lg p-4 shadow-lg max-w-md">
+          <h3 className="font-semibold text-red-900 mb-2">⚠️ Correggi gli errori:</h3>
+          <ul className="text-sm text-red-700">
+            {eanError && <li>• Codice EAN: {eanError}</li>}
+          </ul>
+        </div>
+      )}
+
+      {/* Buttons */}
+      <div className="flex gap-4 justify-end">
+        <Link
+          href="/dashboard/prodotti"
+          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          Annulla
+        </Link>
+        <button
+          type="submit"
+          disabled={!!eanError}
+          className="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {submitLabel}
+        </button>
+      </div>
+    </form>
+  )
+}

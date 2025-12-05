@@ -1,4 +1,5 @@
 import { createFornitore } from '@/app/actions/fornitori'
+import { getCategorieFornitoreAttive } from '@/app/actions/categorie-fornitore'
 import FornitoreForm from '@/components/FornitoreForm'
 import Link from 'next/link'
 
@@ -8,6 +9,7 @@ export default async function NuovoFornitorePage({
   searchParams: Promise<{ error?: string }>
 }) {
   const params = await searchParams
+  const categorieFornitore = await getCategorieFornitoreAttive()
 
   return (
     <div className="p-6">
@@ -44,7 +46,7 @@ export default async function NuovoFornitorePage({
         )}
 
         <div className="bg-white shadow-sm rounded-lg p-6">
-          <FornitoreForm action={createFornitore} />
+          <FornitoreForm action={createFornitore} categorieFornitore={categorieFornitore} />
         </div>
       </div>
     </div>

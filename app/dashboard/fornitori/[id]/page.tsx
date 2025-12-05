@@ -48,12 +48,18 @@ export default async function DettaglioFornitorePage({
           </div>
         )}
 
-        {/* Informazioni Fornitore */}
+        {/* SEZIONE 1: DATI ANAGRAFICI */}
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
           <div className="mb-4 pb-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Informazioni Fornitore</h2>
+            <h2 className="text-lg font-semibold text-gray-900">📋 Dati Anagrafici</h2>
           </div>
           <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Tipo Soggetto</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {fornitore.tipo_persona === 'fisica' ? 'Persona Fisica' : 'Persona Giuridica (Azienda)'}
+              </dd>
+            </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Ragione Sociale</dt>
               <dd className="mt-1 text-sm font-semibold text-gray-900">{fornitore.ragione_sociale}</dd>
@@ -63,6 +69,36 @@ export default async function DettaglioFornitorePage({
               <dd className="mt-1 text-sm text-gray-900">{fornitore.partita_iva || '-'}</dd>
             </div>
             <div>
+              <dt className="text-sm font-medium text-gray-500">Codice Fiscale</dt>
+              <dd className="mt-1 text-sm text-gray-900">{fornitore.codice_fiscale || '-'}</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* SEZIONE 2: FATTURAZIONE ELETTRONICA */}
+        <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+          <div className="mb-4 pb-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">📄 Fatturazione Elettronica</h2>
+          </div>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Codice Univoco SDI</dt>
+              <dd className="mt-1 text-sm text-gray-900 font-mono">{fornitore.codice_univoco || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Email PEC</dt>
+              <dd className="mt-1 text-sm text-gray-900">{fornitore.pec || '-'}</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* SEZIONE 3: CONTATTI */}
+        <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+          <div className="mb-4 pb-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">📞 Contatti</h2>
+          </div>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
               <dt className="text-sm font-medium text-gray-500">Email</dt>
               <dd className="mt-1 text-sm text-gray-900">{fornitore.email || '-'}</dd>
             </div>
@@ -71,6 +107,29 @@ export default async function DettaglioFornitorePage({
               <dd className="mt-1 text-sm text-gray-900">{fornitore.telefono || '-'}</dd>
             </div>
             <div>
+              <dt className="text-sm font-medium text-gray-500">Cellulare</dt>
+              <dd className="mt-1 text-sm text-gray-900">{fornitore.cellulare || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Sito Web</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {fornitore.sito_web ? (
+                  <a href={fornitore.sito_web} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 hover:underline">
+                    {fornitore.sito_web}
+                  </a>
+                ) : '-'}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* SEZIONE 4: INDIRIZZO */}
+        <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+          <div className="mb-4 pb-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">📍 Indirizzo</h2>
+          </div>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
               <dt className="text-sm font-medium text-gray-500">Indirizzo</dt>
               <dd className="mt-1 text-sm text-gray-900">{fornitore.indirizzo || '-'}</dd>
             </div>
@@ -86,14 +145,107 @@ export default async function DettaglioFornitorePage({
               <dt className="text-sm font-medium text-gray-500">Provincia</dt>
               <dd className="mt-1 text-sm text-gray-900">{fornitore.provincia || '-'}</dd>
             </div>
-            {fornitore.note && (
-              <div className="md:col-span-2">
-                <dt className="text-sm font-medium text-gray-500">Note</dt>
-                <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{fornitore.note}</dd>
-              </div>
-            )}
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Paese</dt>
+              <dd className="mt-1 text-sm text-gray-900">{fornitore.paese || 'IT'}</dd>
+            </div>
           </dl>
         </div>
+
+        {/* SEZIONE 5: DATI COMMERCIALI */}
+        <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+          <div className="mb-4 pb-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">💼 Dati Commerciali</h2>
+          </div>
+          <dl className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Categoria Fornitore</dt>
+              <dd className="mt-1 text-sm text-gray-900">{fornitore.categoria_fornitore || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Giorni Consegna</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {fornitore.giorni_consegna ? `${fornitore.giorni_consegna} giorni` : '-'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Sconto Abituale</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {fornitore.sconto_fornitore ? `${fornitore.sconto_fornitore}%` : '-'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Valuta Predefinita</dt>
+              <dd className="mt-1 text-sm font-semibold text-blue-700">{fornitore.valuta || 'EUR'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Aliquota IVA</dt>
+              <dd className="mt-1 text-sm text-gray-900">{fornitore.aliquota_iva || 22}%</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* SEZIONE 6: PAGAMENTI */}
+        <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+          <div className="mb-4 pb-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">💰 Dati Pagamento</h2>
+          </div>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Giorni Pagamento</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {fornitore.giorni_pagamento ? `${fornitore.giorni_pagamento} giorni` : '30 giorni (default)'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Banca</dt>
+              <dd className="mt-1 text-sm text-gray-900">{fornitore.banca || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">IBAN</dt>
+              <dd className="mt-1 text-sm text-gray-900 font-mono">{fornitore.iban || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">SWIFT/BIC</dt>
+              <dd className="mt-1 text-sm text-gray-900 font-mono">{fornitore.swift_bic || '-'}</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* SEZIONE 7: REFERENTE */}
+        {(fornitore.referente || fornitore.referente_telefono || fornitore.referente_email) && (
+          <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+            <div className="mb-4 pb-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">👤 Referente</h2>
+            </div>
+            <dl className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Nome Referente</dt>
+                <dd className="mt-1 text-sm text-gray-900">{fornitore.referente || '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Telefono Referente</dt>
+                <dd className="mt-1 text-sm text-gray-900">{fornitore.referente_telefono || '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Email Referente</dt>
+                <dd className="mt-1 text-sm text-gray-900">{fornitore.referente_email || '-'}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
+
+        {/* SEZIONE 8: NOTE */}
+        {fornitore.note && (
+          <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+            <div className="mb-4 pb-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">📝 Note</h2>
+            </div>
+            <div className="text-sm text-gray-900 bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
+              {fornitore.note}
+            </div>
+          </div>
+        )}
 
         {/* Azioni */}
         <div className="flex gap-4 justify-end">

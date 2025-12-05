@@ -1,6 +1,7 @@
 import { getOrdine } from '@/app/actions/ordini'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import EvadiOrdineButton from '@/components/EvadiOrdineButton'
 
 export default async function DettaglioOrdinePage({
   params,
@@ -85,8 +86,8 @@ export default async function DettaglioOrdinePage({
               </dt>
               <dd className="mt-1 text-sm font-semibold text-gray-900">
                 {ordine.tipo === 'vendita'
-                  ? (ordine.clienti as any)?.ragione_sociale || '-'
-                  : (ordine.fornitori as any)?.ragione_sociale || '-'
+                  ? (ordine.cliente as any)?.ragione_sociale || '-'
+                  : (ordine.fornitore as any)?.ragione_sociale || '-'
                 }
               </dd>
             </div>
@@ -140,32 +141,45 @@ export default async function DettaglioOrdinePage({
                     Prezzo Unit.
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Sconto %
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Subtotale
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {ordine.dettagli.map((dettaglio: any) => (
-                  <tr key={dettaglio.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {dettaglio.prodotti?.codice}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {dettaglio.prodotti?.nome}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {dettaglio.quantita} {dettaglio.prodotti?.unita_misura}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      € {dettaglio.prezzo_unitario.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      € {dettaglio.subtotale.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
+                {ordine.dettagli.map((dettaglio: any) => {
+                  const sconto = dettaglio.sconto_percentuale || 0
+                  return (
+                    <tr key={dettaglio.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {dettaglio.prodotto?.codice}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {dettaglio.prodotto?.nome}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {dettaglio.quantita} {dettaglio.prodotto?.unita_misura}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        € {dettaglio.prezzo_unitario.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {sconto > 0 ? (
+                          <span className="text-red-600 font-medium">{sconto.toFixed(2)}%</span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        € {dettaglio.subtotale.toFixed(2)}
+                      </td>
+                    </tr>
+                  )
+                })}
                 <tr className="bg-gray-50">
-                  <td colSpan={4} className="px-6 py-4 text-right text-sm font-bold text-gray-900">
+                  <td colSpan={5} className="px-6 py-4 text-right text-sm font-bold text-gray-900">
                     TOTALE:
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
@@ -205,12 +219,25 @@ export default async function DettaglioOrdinePage({
           >
             Chiudi
           </Link>
-          <Link
-            href={`/dashboard/ordini/${id}/modifica`}
-            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Modifica Ordine
-          </Link>
+          {ordine.stato !== 'evaso' && ordine.stato !== 'annullato' && (
+            <>
+              <EvadiOrdineButton ordineId={parseInt(id)} tipo={ordine.tipo} />
+              <Link
+                href={`/dashboard/ordini/${id}/modifica`}
+                className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Modifica Ordine
+              </Link>
+            </>
+          )}
+          {ordine.stato === 'evaso' && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-md cursor-not-allowed" title="Gli ordini evasi non possono essere modificati">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              Ordine Evaso - Non Modificabile
+            </div>
+          )}
         </div>
 
       </main>

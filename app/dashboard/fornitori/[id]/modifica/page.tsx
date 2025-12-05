@@ -1,4 +1,5 @@
 import { getFornitore, updateFornitore } from '@/app/actions/fornitori'
+import { getCategorieFornitoreAttive } from '@/app/actions/categorie-fornitore'
 import FornitoreForm from '@/components/FornitoreForm'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -12,7 +13,10 @@ export default async function ModificaFornitorePage({
 }) {
   const { id } = await params
   const query = await searchParams
-  const fornitore = await getFornitore(id)
+  const [fornitore, categorieFornitore] = await Promise.all([
+    getFornitore(id),
+    getCategorieFornitoreAttive()
+  ])
 
   if (!fornitore) {
     redirect('/dashboard/fornitori?error=Fornitore non trovato')
@@ -55,7 +59,7 @@ export default async function ModificaFornitorePage({
         )}
 
         <div className="bg-white shadow-sm rounded-lg p-6">
-          <FornitoreForm action={updateFornitoreWithId} initialData={fornitore} submitLabel="Salva Modifiche" />
+          <FornitoreForm action={updateFornitoreWithId} initialData={fornitore} submitLabel="Salva Modifiche" categorieFornitore={categorieFornitore} />
         </div>
       </div>
     </div>

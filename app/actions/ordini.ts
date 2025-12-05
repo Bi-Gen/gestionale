@@ -12,16 +12,22 @@ export type Ordine = {
   data_ordine: string
   cliente_id?: string
   fornitore_id?: string
+  magazzino_id?: number
   stato: string
   totale: number
   note?: string
   created_at: string
   updated_at: string
-  clienti?: {
+  cliente?: {
     ragione_sociale: string
   }
-  fornitori?: {
+  fornitore?: {
     ragione_sociale: string
+  }
+  magazzino?: {
+    id: number
+    nome: string
+    codice: string
   }
 }
 
@@ -32,9 +38,10 @@ export type DettaglioOrdine = {
   quantita: number
   prezzo_unitario: number
   subtotale: number
-  prodotti?: {
+  prodotto?: {
     codice: string
     nome: string
+    unita_misura?: string
   }
 }
 
@@ -50,8 +57,9 @@ export async function getOrdini(tipo?: 'vendita' | 'acquisto'): Promise<Ordine[]
     .from('ordini')
     .select(`
       *,
-      clienti(ragione_sociale),
-      fornitori(ragione_sociale)
+      cliente:soggetto!cliente_id(ragione_sociale),
+      fornitore:soggetto!fornitore_id(ragione_sociale),
+      magazzino(id, nome, codice)
     `)
     .order('data_ordine', { ascending: false })
 
@@ -81,8 +89,9 @@ export async function getOrdine(id: string) {
     .from('ordini')
     .select(`
       *,
-      clienti(ragione_sociale),
-      fornitori(ragione_sociale)
+      cliente:soggetto!cliente_id(ragione_sociale),
+      fornitore:soggetto!fornitore_id(ragione_sociale),
+      magazzino(id, nome, codice)
     `)
     .eq('id', id)
     .single()
@@ -96,7 +105,7 @@ export async function getOrdine(id: string) {
     .from('dettagli_ordini')
     .select(`
       *,
-      prodotti(codice, nome, unita_misura)
+      prodotto(codice, nome, unita_misura)
     `)
     .eq('ordine_id', id)
 
@@ -134,6 +143,8 @@ export async function createOrdine(formData: FormData) {
     prodotto_id: string
     quantita: number
     prezzo_unitario: number
+    sconto_percentuale: number
+    aggiorna_prezzo_listino: boolean
     subtotale: number
   }> = []
 
@@ -142,13 +153,20 @@ export async function createOrdine(formData: FormData) {
     const prodotto_id = formData.get(`dettagli[${index}][prodotto_id]`) as string
     const quantita = parseFloat(formData.get(`dettagli[${index}][quantita]`) as string)
     const prezzo_unitario = parseFloat(formData.get(`dettagli[${index}][prezzo_unitario]`) as string)
+    const sconto_percentuale = parseFloat(formData.get(`dettagli[${index}][sconto_percentuale]`) as string) || 0
+    const aggiorna_prezzo_listino = formData.get(`dettagli[${index}][aggiorna_prezzo_listino]`) === 'on'
 
     if (prodotto_id && quantita > 0 && prezzo_unitario >= 0) {
-      const subtotale = quantita * prezzo_unitario
+      const lordo = quantita * prezzo_unitario
+      const sconto_importo = lordo * (sconto_percentuale / 100)
+      const subtotale = lordo - sconto_importo
+
       dettagli.push({
         prodotto_id,
         quantita,
         prezzo_unitario,
+        sconto_percentuale,
+        aggiorna_prezzo_listino,
         subtotale
       })
     }
@@ -166,16 +184,52 @@ export async function createOrdine(formData: FormData) {
   // Calcola il totale
   const totale = dettagli.reduce((sum, d) => sum + d.subtotale, 0)
 
+  // Get azienda_id from utente_azienda
+  const { data: utenteAzienda } = await supabase
+    .from('utente_azienda')
+    .select('azienda_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!utenteAzienda) {
+    const redirectPath = validation.data.tipo === 'acquisto'
+      ? '/dashboard/ordini/acquisto/nuovo'
+      : '/dashboard/ordini/vendita/nuovo'
+    redirect(`${redirectPath}?error=${encodeURIComponent('Nessuna azienda associata')}`)
+  }
+
+  // Get magazzino_id from form or use principale
+  let magazzinoId = formData.get('magazzino_id')
+    ? parseInt(formData.get('magazzino_id') as string)
+    : null
+
+  // Se non specificato, usa magazzino principale
+  if (!magazzinoId) {
+    const { data: magazzinoPrincipale } = await supabase
+      .from('magazzino')
+      .select('id')
+      .eq('azienda_id', utenteAzienda.azienda_id)
+      .eq('principale', true)
+      .eq('attivo', true)
+      .single()
+
+    if (magazzinoPrincipale) {
+      magazzinoId = magazzinoPrincipale.id
+    }
+  }
+
   const ordine = {
+    azienda_id: utenteAzienda.azienda_id,
     numero_ordine: validation.data.numero_ordine,
     tipo: validation.data.tipo,
     data_ordine: validation.data.data_ordine,
     cliente_id: validation.data.cliente_id || null,
     fornitore_id: validation.data.fornitore_id || null,
+    magazzino_id: magazzinoId,
     stato: validation.data.stato || 'bozza',
     totale,
     note: validation.data.note || null,
-    user_id: user.id,
+    created_by: user.id,
   }
 
   // Crea l'ordine
@@ -239,6 +293,8 @@ export async function updateOrdine(id: string, formData: FormData) {
     prodotto_id: string
     quantita: number
     prezzo_unitario: number
+    sconto_percentuale: number
+    aggiorna_prezzo_listino: boolean
     subtotale: number
   }> = []
 
@@ -247,13 +303,20 @@ export async function updateOrdine(id: string, formData: FormData) {
     const prodotto_id = formData.get(`dettagli[${index}][prodotto_id]`) as string
     const quantita = parseFloat(formData.get(`dettagli[${index}][quantita]`) as string)
     const prezzo_unitario = parseFloat(formData.get(`dettagli[${index}][prezzo_unitario]`) as string)
+    const sconto_percentuale = parseFloat(formData.get(`dettagli[${index}][sconto_percentuale]`) as string) || 0
+    const aggiorna_prezzo_listino = formData.get(`dettagli[${index}][aggiorna_prezzo_listino]`) === 'on'
 
     if (prodotto_id && quantita > 0 && prezzo_unitario >= 0) {
-      const subtotale = quantita * prezzo_unitario
+      const lordo = quantita * prezzo_unitario
+      const sconto_importo = lordo * (sconto_percentuale / 100)
+      const subtotale = lordo - sconto_importo
+
       dettagli.push({
         prodotto_id,
         quantita,
         prezzo_unitario,
+        sconto_percentuale,
+        aggiorna_prezzo_listino,
         subtotale
       })
     }
@@ -268,11 +331,17 @@ export async function updateOrdine(id: string, formData: FormData) {
   // Calcola il totale
   const totale = dettagli.reduce((sum, d) => sum + d.subtotale, 0)
 
+  // Get magazzino_id from form if provided
+  const magazzinoId = formData.get('magazzino_id')
+    ? parseInt(formData.get('magazzino_id') as string)
+    : undefined
+
   const updates = {
     numero_ordine: validation.data.numero_ordine,
     data_ordine: validation.data.data_ordine,
     cliente_id: validation.data.cliente_id || null,
     fornitore_id: validation.data.fornitore_id || null,
+    magazzino_id: magazzinoId,
     stato: validation.data.stato || 'bozza',
     totale,
     note: validation.data.note || null,
@@ -283,7 +352,6 @@ export async function updateOrdine(id: string, formData: FormData) {
     .from('ordini')
     .update(updates)
     .eq('id', id)
-    .eq('user_id', user.id)
 
   if (error) {
     console.error('Error updating ordine:', error)
@@ -335,14 +403,12 @@ export async function deleteOrdine(id: string) {
     .from('ordini')
     .select('tipo')
     .eq('id', id)
-    .eq('user_id', user.id)
     .single()
 
   const { error } = await supabase
     .from('ordini')
     .delete()
     .eq('id', id)
-    .eq('user_id', user.id)
 
   if (error) {
     console.error('Error deleting ordine:', error)
