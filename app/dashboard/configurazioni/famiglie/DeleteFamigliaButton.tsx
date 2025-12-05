@@ -35,7 +35,7 @@ export default function DeleteFamigliaButton({
               Conferma eliminazione
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Sei sicuro di voler eliminare la famiglia "{nome}"? Questa azione
+              Sei sicuro di voler eliminare la famiglia &quot;{nome}&quot;? Questa azione
               non può essere annullata.
             </p>
             <div className="flex gap-3">

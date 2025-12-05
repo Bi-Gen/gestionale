@@ -35,7 +35,7 @@ export default function DeleteAliquotaIvaButton({
               Conferma eliminazione
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Sei sicuro di voler eliminare l'aliquota IVA "{descrizione}"? Questa
+              Sei sicuro di voler eliminare l&apos;aliquota IVA &quot;{descrizione}&quot;? Questa
               azione non può essere annullata.
             </p>
             <div className="flex gap-3">

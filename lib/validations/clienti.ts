@@ -19,8 +19,7 @@ export const clienteSchema = z.object({
   // === DATI ANAGRAFICI ===
   tipo_persona: z
     .enum(['fisica', 'giuridica'], {
-      required_error: 'Tipo persona è obbligatorio',
-      invalid_type_error: 'Tipo persona non valido'
+      message: 'Tipo persona non valido'
     })
     .default('giuridica'),
 

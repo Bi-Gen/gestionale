@@ -52,7 +52,7 @@ export default function TipoSoggettoForm({
           placeholder="es: Broker"
         />
         <p className="mt-1 text-sm text-gray-500">
-          Nome visualizzato dell'interfaccia
+          Nome visualizzato dell&apos;interfaccia
         </p>
       </div>
 
@@ -94,7 +94,7 @@ export default function TipoSoggettoForm({
             />
           </div>
           <p className="mt-1 text-sm text-gray-500">
-            Colore utilizzato per evidenziare questo tipo nell'interfaccia
+            Colore utilizzato per evidenziare questo tipo nell&apos;interfaccia
           </p>
         </div>
 

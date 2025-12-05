@@ -41,7 +41,7 @@ export default function MovimentoForm({
     watch,
     formState: { errors },
   } = useForm<MovimentoFormData>({
-    resolver: zodResolver(movimentoSchema),
+    resolver: zodResolver(movimentoSchema) as any,
     defaultValues: {
       data_movimento: new Date().toISOString().split('T')[0],
     },

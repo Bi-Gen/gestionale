@@ -704,7 +704,7 @@ export async function getOrdiniPerReso(
     return []
   }
 
-  return data || []
+  return (data || []) as unknown as OrdinePerReso[]
 }
 
 // =====================================================

@@ -42,7 +42,7 @@ export default async function AnalyticsPage() {
                 Dashboard Power BI non configurata
               </h3>
               <p className="text-gray-600 mb-4">
-                Aggiungi l'URL embed del tuo report Power BI nelle variabili d'ambiente
+                Aggiungi l&apos;URL embed del tuo report Power BI nelle variabili d&apos;ambiente
               </p>
               <code className="text-sm bg-gray-100 px-3 py-1 rounded">
                 NEXT_PUBLIC_POWERBI_EMBED_URL

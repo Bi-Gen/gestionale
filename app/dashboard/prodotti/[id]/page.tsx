@@ -20,7 +20,7 @@ export default async function DettaglioProdottoPage({
   }
 
   // Trova il fornitore associato
-  const fornitore = fornitori.find(f => f.id === prodotto.fornitore_principale_id)
+  const fornitore = fornitori.find(f => String(f.id) === String(prodotto.fornitore_principale_id))
 
   return (
     <div className="min-h-screen bg-gray-50">

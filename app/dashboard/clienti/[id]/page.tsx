@@ -193,7 +193,7 @@ export default async function DettaglioClientePage({
             <div>
               <dt className="text-sm font-medium text-gray-500">Fido Massimo</dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {cliente.fido_massimo ? `€ ${parseFloat(cliente.fido_massimo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}` : '-'}
+                {cliente.fido_massimo ? `€ ${Number(cliente.fido_massimo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}` : '-'}
               </dd>
             </div>
             <div>

@@ -35,7 +35,7 @@ export default function DeleteCausaleMovimentoButton({
               Conferma eliminazione
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Sei sicuro di voler eliminare la causale movimento "{descrizione}"? Questa
+              Sei sicuro di voler eliminare la causale movimento &quot;{descrizione}&quot;? Questa
               azione non può essere annullata.
             </p>
             <div className="flex gap-3">

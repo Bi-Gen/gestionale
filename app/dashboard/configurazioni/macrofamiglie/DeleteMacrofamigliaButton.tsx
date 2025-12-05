@@ -35,7 +35,7 @@ export default function DeleteMacrofamigliaButton({
               Conferma eliminazione
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Sei sicuro di voler eliminare la macrofamiglia "{nome}"? Questa
+              Sei sicuro di voler eliminare la macrofamiglia &quot;{nome}&quot;? Questa
               azione eliminerà anche tutte le famiglie associate e non può essere
               annullata.
             </p>

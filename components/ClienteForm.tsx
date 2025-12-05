@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getRegioni, getProvinceByRegione, getComuniByProvincia, type Regione, type Provincia, type Comune } from '@/app/actions/geografia'
-import { getAgentiAttivi, type Agente } from '@/app/actions/agenti'
+import { getAgentiAttivi, type AgenteLista } from '@/app/actions/agenti'
 import { getCategorieClienteAttive } from '@/app/actions/categorie-cliente'
 import { getListiniAttivi } from '@/app/actions/listini'
 
@@ -33,7 +33,7 @@ export default function ClienteForm({ action, initialData, submitLabel = 'Salva 
   const [regioni, setRegioni] = useState<Regione[]>([])
   const [province, setProvince] = useState<Provincia[]>([])
   const [comuni, setComuni] = useState<Comune[]>([])
-  const [agenti, setAgenti] = useState<Agente[]>([])
+  const [agenti, setAgenti] = useState<AgenteLista[]>([])
   const [categorieCliente, setCategorieCliente] = useState<CategoriaCliente[]>([])
   const [listini, setListini] = useState<Listino[]>([])
   const [isInitialLoad, setIsInitialLoad] = useState(true)

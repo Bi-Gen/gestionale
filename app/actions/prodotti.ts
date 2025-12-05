@@ -10,20 +10,58 @@ export type Prodotto = {
   codice: string
   nome: string
   descrizione?: string
+  descrizione_breve?: string
+  sku?: string
+  barcode?: string
+  codice_ean?: string
+  codice_fornitore?: string
+  famiglia?: string
+  macrofamiglia?: string
+  categoria?: string
+  sottocategoria?: string
   costo_ultimo?: number
   costo_medio?: number
   prezzo_acquisto?: number
   prezzo_vendita: number
+  prezzo_listino1?: number
+  prezzo_listino2?: number
+  prezzo_listino3?: number
+  prezzo_listino4?: number
+  prezzo_listino5?: number
+  aliquota_iva?: number
+  valuta?: string
   quantita_magazzino?: number
   giacenza_minima?: number
   giacenza_massima?: number
   punto_riordino?: number
   quantita_minima_ordine?: number
+  tempo_riordino_giorni?: number
   sconto_massimo?: number
+  margine_percentuale?: number
   unita_misura?: string
+  ubicazione?: string
   fornitore_principale_id?: number
-  categoria?: string
+  // Dimensioni e peso
+  peso_kg?: number
+  volume_m3?: number
+  colli?: number
+  lunghezza_cm?: number
+  larghezza_cm?: number
+  altezza_cm?: number
+  // Gestione tracciabilità
+  gestione_lotti?: boolean
+  gestione_seriali?: boolean
+  gestione_scadenze?: boolean
+  giorni_scadenza?: number
+  // Flag visibilità
+  vendibile?: boolean
+  acquistabile?: boolean
+  visibile_catalogo?: boolean
+  visibile_ecommerce?: boolean
+  // Note e immagini
   note?: string
+  note_interne?: string
+  immagine_url?: string
   created_at: string
   updated_at: string
 }

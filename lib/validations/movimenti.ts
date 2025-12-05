@@ -6,9 +6,9 @@ export const movimentoSchema = z.object({
   magazzino_id: z.coerce.number().positive('Seleziona un magazzino'),
   quantita: z.coerce.number().positive('La quantità deve essere maggiore di zero'),
   data_movimento: z.string().min(1, 'Inserisci la data del movimento'),
-  costo_unitario: z.coerce.number().optional(),
-  magazzino_destinazione_id: z.coerce.number().optional(),
-  soggetto_id: z.coerce.number().optional(),
+  costo_unitario: z.coerce.number().positive().optional(),
+  magazzino_destinazione_id: z.coerce.number().positive().optional(),
+  soggetto_id: z.coerce.number().positive().optional(),
   note: z.string().optional(),
 })
 

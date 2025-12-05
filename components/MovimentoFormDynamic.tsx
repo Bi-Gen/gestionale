@@ -46,7 +46,7 @@ export default function MovimentoFormDynamic({
     setValue,
     formState: { errors },
   } = useForm<MovimentoFormData>({
-    resolver: zodResolver(movimentoSchema),
+    resolver: zodResolver(movimentoSchema) as any,
     defaultValues: {
       data_movimento: new Date().toISOString().split('T')[0],
     },

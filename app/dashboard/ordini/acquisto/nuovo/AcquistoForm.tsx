@@ -431,7 +431,7 @@ export default function AcquistoForm({
           <option value="confermato">Confermato</option>
         </select>
         <p className="mt-1 text-xs text-gray-500">
-          Per evadere l'ordine e caricare il magazzino, usa il bottone "Ricevi Merce" dalla pagina di dettaglio dopo aver salvato l'ordine
+          Per evadere l&apos;ordine e caricare il magazzino, usa il bottone &quot;Ricevi Merce&quot; dalla pagina di dettaglio dopo aver salvato l&apos;ordine
         </p>
       </div>
 

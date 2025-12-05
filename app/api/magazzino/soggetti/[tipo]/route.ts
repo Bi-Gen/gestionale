@@ -3,10 +3,11 @@ import { getSoggettiByTipo } from '@/app/actions/magazzino'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tipo: string } }
+  { params }: { params: Promise<{ tipo: string }> }
 ) {
   try {
-    const tipo = params.tipo as 'cliente' | 'fornitore' | 'tutti'
+    const { tipo: tipoParam } = await params
+    const tipo = tipoParam as 'cliente' | 'fornitore' | 'tutti'
     const soggetti = await getSoggettiByTipo(tipo === 'tutti' ? undefined : tipo)
     return NextResponse.json(soggetti)
   } catch (error) {

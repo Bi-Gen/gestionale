@@ -32,7 +32,7 @@ export default async function NuovoMovimentoPage() {
           <MovimentoFormAdvanced
             causali={causali}
             prodotti={prodotti.map(p => ({
-              id: p.id,
+              id: Number(p.id),
               codice: p.codice,
               nome: p.nome,
             }))}

@@ -160,7 +160,7 @@ export default async function DettaglioFornitorePage({
           <dl className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <dt className="text-sm font-medium text-gray-500">Categoria Fornitore</dt>
-              <dd className="mt-1 text-sm text-gray-900">{fornitore.categoria_fornitore || '-'}</dd>
+              <dd className="mt-1 text-sm text-gray-900">{fornitore.categoria_fornitore_id || '-'}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Giorni Consegna</dt>

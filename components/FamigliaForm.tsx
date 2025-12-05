@@ -55,7 +55,7 @@ export default function FamigliaForm({
           placeholder="es: Tovaglie"
         />
         <p className="mt-1 text-sm text-gray-500">
-          Nome visualizzato nell'interfaccia
+          Nome visualizzato nell&apos;interfaccia
         </p>
       </div>
 

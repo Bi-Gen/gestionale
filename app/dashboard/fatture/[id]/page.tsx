@@ -9,9 +9,10 @@ import EliminaFatturaButton from './EliminaFatturaButton'
 export default async function FatturaDettaglioPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const fatturaId = parseInt(params.id)
+  const { id } = await params
+  const fatturaId = parseInt(id)
 
   if (isNaN(fatturaId)) {
     notFound()

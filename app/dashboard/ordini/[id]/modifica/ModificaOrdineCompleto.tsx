@@ -442,7 +442,7 @@ export default function ModificaOrdineCompleto({
               <option value="annullato">Annullato</option>
             </select>
             <p className="mt-1 text-xs text-gray-500">
-              💡 Per evadere l'ordine, usa il pulsante "📦 Evadi Ordine" o "📥 Ricevi Merce"
+              Per evadere l&apos;ordine, usa il pulsante &quot;Evadi Ordine&quot; o &quot;Ricevi Merce&quot;
             </p>
           </>
         )}

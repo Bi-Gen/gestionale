@@ -35,7 +35,7 @@ export default function DeleteTipoSoggettoButton({
               Conferma eliminazione
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Sei sicuro di voler eliminare il tipo "{nome}"? Questa azione non
+              Sei sicuro di voler eliminare il tipo &quot;{nome}&quot;? Questa azione non
               può essere annullata.
             </p>
             <div className="flex gap-3">

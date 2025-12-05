@@ -147,7 +147,7 @@ export default function ProfiloForm({ user }: { user: UserData }) {
 
           <div>
             <p className="text-sm text-gray-600 mb-2">
-              Clicca sull'immagine per caricare una nuova foto
+              Clicca sull&apos;immagine per caricare una nuova foto
             </p>
             <p className="text-xs text-gray-400">
               JPG, PNG o GIF. Max 2MB.
@@ -181,7 +181,7 @@ export default function ProfiloForm({ user }: { user: UserData }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500"
             />
             <p className="mt-1 text-xs text-gray-400">
-              L'email non può essere modificata
+              L&apos;email non può essere modificata
             </p>
           </div>
 

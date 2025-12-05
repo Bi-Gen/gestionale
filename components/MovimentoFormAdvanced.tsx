@@ -51,7 +51,7 @@ export default function MovimentoFormAdvanced({
     setValue,
     formState: { errors },
   } = useForm<MovimentoFormData & { ordine_id?: number }>({
-    resolver: zodResolver(movimentoSchema),
+    resolver: zodResolver(movimentoSchema) as any,
     defaultValues: {
       data_movimento: new Date().toISOString().split('T')[0],
     },
@@ -146,7 +146,7 @@ export default function MovimentoFormAdvanced({
     }))
 
     setProdottiFiltrati(prodottiOrdine)
-    setValue('prodotto_id', undefined)
+    setValue('prodotto_id', undefined as any)
   }, [ordineId, ordiniDisponibili, isReso, setValue, prodottiIniziali])
 
   // Pre-compila prezzo e quantità quando si seleziona prodotto da ordine
@@ -299,7 +299,7 @@ export default function MovimentoFormAdvanced({
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Seleziona l'ordine da cui stai facendo il reso per pre-compilare prodotti e prezzi
+              Seleziona l&apos;ordine da cui stai facendo il reso per pre-compilare prodotti e prezzi
             </p>
           </div>
         )}
@@ -310,7 +310,7 @@ export default function MovimentoFormAdvanced({
             Prodotto * {loadingProdotti && '(Caricamento...)'}
             {isReso && ordineSelezionato && (
               <span className="ml-2 text-xs text-blue-600">
-                (Prodotti dell'ordine {ordineSelezionato.numero_ordine})
+                (Prodotti dell&apos;ordine {ordineSelezionato.numero_ordine})
               </span>
             )}
           </label>
@@ -363,7 +363,7 @@ export default function MovimentoFormAdvanced({
             Quantità *
             {ordineSelezionato && prodottoId && (
               <span className="ml-2 text-xs text-green-600">
-                ✓ Pre-compilato dall'ordine
+                Pre-compilato dall&apos;ordine
               </span>
             )}
           </label>
@@ -385,7 +385,7 @@ export default function MovimentoFormAdvanced({
               Costo Unitario
               {ordineSelezionato && prodottoId && (
                 <span className="ml-2 text-xs text-green-600">
-                  ✓ Pre-compilato dall'ordine
+                  Pre-compilato dall&apos;ordine
                 </span>
               )}
             </label>

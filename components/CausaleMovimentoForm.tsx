@@ -120,7 +120,7 @@ export default function CausaleMovimentoForm({
               Richiede documento
             </label>
             <p className="text-xs text-gray-500">
-              Obbliga l'inserimento di riferimenti documentali
+              Obbliga l&apos;inserimento di riferimenti documentali
             </p>
           </div>
         </div>

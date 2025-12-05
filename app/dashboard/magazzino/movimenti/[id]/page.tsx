@@ -7,9 +7,10 @@ import { it } from 'date-fns/locale'
 export default async function MovimentoDettaglioPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const movimentoId = parseInt(params.id)
+  const { id } = await params
+  const movimentoId = parseInt(id)
 
   if (isNaN(movimentoId)) {
     notFound()

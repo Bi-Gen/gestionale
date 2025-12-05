@@ -37,7 +37,7 @@ export default function DeleteSoggettoButton({
               Conferma eliminazione
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Sei sicuro di voler eliminare "{nome}"? Questa azione non può essere annullata.
+              Sei sicuro di voler eliminare &quot;{nome}&quot;? Questa azione non può essere annullata.
             </p>
             <div className="flex gap-3">
               <button

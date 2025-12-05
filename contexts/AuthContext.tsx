@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .rpc('is_superadmin')
         .single()
 
-      setIsSuperadmin(superadminData || false)
+      setIsSuperadmin(Boolean(superadminData))
 
       // 3. Get utente_azienda data
       const { data: utenteAziendaData, error: utenteError } = await supabase

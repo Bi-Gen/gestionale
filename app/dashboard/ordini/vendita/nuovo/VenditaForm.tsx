@@ -319,7 +319,7 @@ export default function VenditaForm({
                     {/* Warning giacenza insufficiente */}
                     {giacenzaInsufficiente && (
                       <div className="p-2 bg-red-50 border border-red-200 rounded text-red-800">
-                        ⚠️ ATTENZIONE: Giacenza insufficiente! Disponibile: {giacenzaDisponibile} {prodotto.unita_misura || 'PZ'}, Richiesto: {dettaglio.quantita}. L'evasione dell'ordine fallirà.
+                        ATTENZIONE: Giacenza insufficiente! Disponibile: {giacenzaDisponibile} {prodotto.unita_misura || 'PZ'}, Richiesto: {dettaglio.quantita}. L&apos;evasione dell&apos;ordine fallirà.
                       </div>
                     )}
 
@@ -371,7 +371,7 @@ export default function VenditaForm({
           <option value="confermato">Confermato</option>
         </select>
         <p className="mt-1 text-xs text-gray-500">
-          Per evadere l'ordine e scaricare il magazzino, usa il bottone "Evadi Ordine" dalla pagina di dettaglio dopo aver salvato l'ordine
+          Per evadere l&apos;ordine e scaricare il magazzino, usa il bottone &quot;Evadi Ordine&quot; dalla pagina di dettaglio dopo aver salvato l&apos;ordine
         </p>
       </div>
 

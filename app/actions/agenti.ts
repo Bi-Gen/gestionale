@@ -79,6 +79,8 @@ export type Agente = {
   updated_at: string
 }
 
+export type AgenteLista = Pick<Agente, 'id' | 'codice_agente' | 'ragione_sociale' | 'nome' | 'cognome' | 'area_geografica' | 'provvigione_percentuale'>
+
 export async function getAgenti(): Promise<Agente[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -101,7 +103,7 @@ export async function getAgenti(): Promise<Agente[]> {
   return data || []
 }
 
-export async function getAgentiAttivi(): Promise<Agente[]> {
+export async function getAgentiAttivi(): Promise<AgenteLista[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
