@@ -180,8 +180,11 @@ export async function createProdotto(formData: FormData) {
     categoria: validation.data.categoria || null,
     sottocategoria: validation.data.sottocategoria || null,
     famiglia: validation.data.famiglia || null,
+    famiglia_id: validation.data.famiglia_id ? parseInt(validation.data.famiglia_id) : null,
     macrofamiglia: validation.data.macrofamiglia || null,
+    macrofamiglia_id: validation.data.macrofamiglia_id ? parseInt(validation.data.macrofamiglia_id) : null,
     linea: validation.data.linea || null,
+    linea_id: validation.data.linea_id ? parseInt(validation.data.linea_id) : null,
     misura: validation.data.misura || null,
 
     // Prezzi e costi
@@ -320,8 +323,11 @@ export async function updateProdotto(id: string, formData: FormData) {
     categoria: validation.data.categoria || null,
     sottocategoria: validation.data.sottocategoria || null,
     famiglia: validation.data.famiglia || null,
+    famiglia_id: validation.data.famiglia_id ? parseInt(validation.data.famiglia_id) : null,
     macrofamiglia: validation.data.macrofamiglia || null,
+    macrofamiglia_id: validation.data.macrofamiglia_id ? parseInt(validation.data.macrofamiglia_id) : null,
     linea: validation.data.linea || null,
+    linea_id: validation.data.linea_id ? parseInt(validation.data.linea_id) : null,
     misura: validation.data.misura || null,
 
     // Prezzi e costi

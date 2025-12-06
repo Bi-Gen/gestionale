@@ -79,9 +79,21 @@ export const prodottoSchema = z.object({
     .max(100, 'Macrofamiglia troppo lunga')
     .optional(),
 
+  macrofamiglia_id: z
+    .string()
+    .optional(),
+
+  famiglia_id: z
+    .string()
+    .optional(),
+
   linea: z
     .string()
     .max(100, 'Linea troppo lunga')
+    .optional(),
+
+  linea_id: z
+    .string()
     .optional(),
 
   misura: z
@@ -407,8 +419,11 @@ export function validateProdottoFormData(formData: FormData) {
     categoria: (formData.get('categoria') as string) || undefined,
     sottocategoria: (formData.get('sottocategoria') as string) || undefined,
     famiglia: (formData.get('famiglia') as string) || undefined,
+    famiglia_id: (formData.get('famiglia_id') as string) || undefined,
     macrofamiglia: (formData.get('macrofamiglia') as string) || undefined,
+    macrofamiglia_id: (formData.get('macrofamiglia_id') as string) || undefined,
     linea: (formData.get('linea') as string) || undefined,
+    linea_id: (formData.get('linea_id') as string) || undefined,
     misura: (formData.get('misura') as string) || undefined,
 
     // Prezzi e costi

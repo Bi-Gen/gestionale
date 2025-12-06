@@ -3,18 +3,38 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Fornitore } from '@/app/actions/fornitori'
+import type { Macrofamiglia } from '@/app/actions/macrofamiglie'
+import type { Famiglia } from '@/app/actions/famiglie'
+import type { LineaProdotto } from '@/app/actions/linee'
 
 interface ProdottoFormProps {
   action: any
   fornitori: Fornitore[]
+  macrofamiglie?: Macrofamiglia[]
+  famiglie?: Famiglia[]
+  linee?: LineaProdotto[]
   initialData?: any
   submitLabel?: string
 }
 
-export default function ProdottoForm({ action, fornitori, initialData, submitLabel = 'Salva Prodotto' }: ProdottoFormProps) {
+export default function ProdottoForm({
+  action,
+  fornitori,
+  macrofamiglie = [],
+  famiglie = [],
+  linee = [],
+  initialData,
+  submitLabel = 'Salva Prodotto'
+}: ProdottoFormProps) {
   // Stati per validazione client-side
   const [eanError, setEanError] = useState('')
   const [showListini, setShowListini] = useState(false)
+  const [selectedMacrofamiglia, setSelectedMacrofamiglia] = useState<number | undefined>(initialData?.macrofamiglia_id)
+
+  // Filtra famiglie in base alla macrofamiglia selezionata
+  const famiglieFiltrate = selectedMacrofamiglia
+    ? famiglie.filter(f => f.macrofamiglia_id === selectedMacrofamiglia)
+    : famiglie
 
   // Validazione Codice EAN
   const validateEAN = (value: string) => {
@@ -123,45 +143,64 @@ export default function ProdottoForm({ action, fornitori, initialData, submitLab
           {/* Classificazione Estesa */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-              <label htmlFor="macrofamiglia" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="macrofamiglia_id" className="block text-sm font-medium text-gray-700">
                 Macrofamiglia
               </label>
-              <input
-                type="text"
-                name="macrofamiglia"
-                id="macrofamiglia"
-                placeholder="Tovaglie"
-                defaultValue={initialData?.macrofamiglia}
+              <select
+                name="macrofamiglia_id"
+                id="macrofamiglia_id"
+                defaultValue={initialData?.macrofamiglia_id || ''}
+                onChange={(e) => setSelectedMacrofamiglia(e.target.value ? parseInt(e.target.value) : undefined)}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
+              >
+                <option value="">Seleziona macrofamiglia</option>
+                {macrofamiglie.map((mf) => (
+                  <option key={mf.id} value={mf.id}>
+                    {mf.nome}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
-              <label htmlFor="famiglia" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="famiglia_id" className="block text-sm font-medium text-gray-700">
                 Famiglia
               </label>
-              <input
-                type="text"
-                name="famiglia"
-                id="famiglia"
-                placeholder="100x100"
-                defaultValue={initialData?.famiglia}
+              <select
+                name="famiglia_id"
+                id="famiglia_id"
+                defaultValue={initialData?.famiglia_id || ''}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
+              >
+                <option value="">Seleziona famiglia</option>
+                {famiglieFiltrate.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.nome}
+                  </option>
+                ))}
+              </select>
+              {selectedMacrofamiglia && famiglieFiltrate.length === 0 && (
+                <p className="mt-1 text-xs text-amber-600">Nessuna famiglia per questa macrofamiglia</p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="linea" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="linea_id" className="block text-sm font-medium text-gray-700">
                 Linea
               </label>
-              <input
-                type="text"
-                name="linea"
-                id="linea"
-                placeholder="Premium"
-                defaultValue={initialData?.linea}
+              <select
+                name="linea_id"
+                id="linea_id"
+                defaultValue={initialData?.linea_id || ''}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
+              >
+                <option value="">Seleziona linea</option>
+                {linee.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.nome}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

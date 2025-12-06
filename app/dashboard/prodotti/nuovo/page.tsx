@@ -1,5 +1,8 @@
 import { createProdotto } from '@/app/actions/prodotti'
 import { getFornitori } from '@/app/actions/fornitori'
+import { getMacrofamiglie } from '@/app/actions/macrofamiglie'
+import { getFamiglie } from '@/app/actions/famiglie'
+import { getLinee } from '@/app/actions/linee'
 import ProdottoForm from '@/components/ProdottoForm'
 import Link from 'next/link'
 
@@ -9,7 +12,14 @@ export default async function NuovoProdottoPage({
   searchParams: Promise<{ error?: string }>
 }) {
   const params = await searchParams
-  const fornitori = await getFornitori()
+
+  // Carica tutti i dati necessari in parallelo
+  const [fornitori, macrofamiglie, famiglie, linee] = await Promise.all([
+    getFornitori(),
+    getMacrofamiglie(),
+    getFamiglie(),
+    getLinee(),
+  ])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -32,7 +42,14 @@ export default async function NuovoProdottoPage({
           </div>
         )}
 
-        <ProdottoForm action={createProdotto} fornitori={fornitori} submitLabel="Salva Prodotto" />
+        <ProdottoForm
+          action={createProdotto}
+          fornitori={fornitori}
+          macrofamiglie={macrofamiglie}
+          famiglie={famiglie}
+          linee={linee}
+          submitLabel="Salva Prodotto"
+        />
       </main>
     </div>
   )

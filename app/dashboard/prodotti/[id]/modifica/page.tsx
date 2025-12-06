@@ -1,5 +1,8 @@
 import { getProdotto, updateProdotto } from '@/app/actions/prodotti'
 import { getFornitori } from '@/app/actions/fornitori'
+import { getMacrofamiglie } from '@/app/actions/macrofamiglie'
+import { getFamiglie } from '@/app/actions/famiglie'
+import { getLinee } from '@/app/actions/linee'
 import ProdottoForm from '@/components/ProdottoForm'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -13,8 +16,15 @@ export default async function ModificaProdottoPage({
 }) {
   const { id } = await params
   const query = await searchParams
-  const prodotto = await getProdotto(id)
-  const fornitori = await getFornitori()
+
+  // Carica tutti i dati necessari in parallelo
+  const [prodotto, fornitori, macrofamiglie, famiglie, linee] = await Promise.all([
+    getProdotto(id),
+    getFornitori(),
+    getMacrofamiglie(),
+    getFamiglie(),
+    getLinee(),
+  ])
 
   if (!prodotto) {
     redirect('/dashboard/prodotti?error=Prodotto non trovato')
@@ -46,6 +56,9 @@ export default async function ModificaProdottoPage({
         <ProdottoForm
           action={updateProdottoWithId}
           fornitori={fornitori}
+          macrofamiglie={macrofamiglie}
+          famiglie={famiglie}
+          linee={linee}
           initialData={prodotto}
           submitLabel="Salva Modifiche"
         />
