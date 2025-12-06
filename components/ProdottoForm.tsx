@@ -31,10 +31,15 @@ export default function ProdottoForm({
   const [eanError, setEanError] = useState('')
   const [selectedMacrofamiglia, setSelectedMacrofamiglia] = useState<number | undefined>(initialData?.macrofamiglia_id)
 
+  // Stati locali per le liste (aggiornati dopo quick create)
+  const [localMacrofamiglie, setLocalMacrofamiglie] = useState(macrofamiglie)
+  const [localFamiglie, setLocalFamiglie] = useState(famiglie)
+  const [localLinee, setLocalLinee] = useState(linee)
+
   // Filtra famiglie in base alla macrofamiglia selezionata
   const famiglieFiltrate = selectedMacrofamiglia
-    ? famiglie.filter(f => f.macrofamiglia_id === selectedMacrofamiglia)
-    : famiglie
+    ? localFamiglie.filter(f => f.macrofamiglia_id === selectedMacrofamiglia)
+    : localFamiglie
 
   // Validazione Codice EAN
   const validateEAN = (value: string) => {
@@ -147,13 +152,18 @@ export default function ProdottoForm({
               name="macrofamiglia_id"
               label="Macrofamiglia"
               entityName="Macrofamiglia"
-              options={macrofamiglie}
+              entityType="macrofamiglia"
+              options={localMacrofamiglie}
               valueField="id"
               displayField="nome"
               defaultValue={initialData?.macrofamiglia_id}
               onChange={(val) => setSelectedMacrofamiglia(val as number | undefined)}
               placeholder="Seleziona macrofamiglia"
-              createUrl="/dashboard/configurazioni/macrofamiglie/nuovo"
+              quickCreateFields={[
+                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'MF001' },
+                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome macrofamiglia' },
+              ]}
+              onCreated={(item) => setLocalMacrofamiglie(prev => [...prev, item as unknown as Macrofamiglia])}
             />
 
             {/* Famiglia */}
@@ -161,13 +171,19 @@ export default function ProdottoForm({
               name="famiglia_id"
               label="Famiglia"
               entityName="Famiglia"
+              entityType="famiglia"
               options={famiglieFiltrate}
               valueField="id"
               displayField="nome"
               defaultValue={initialData?.famiglia_id}
               placeholder="Seleziona famiglia"
               helpText={selectedMacrofamiglia && famiglieFiltrate.length === 0 ? 'Nessuna famiglia per questa macrofamiglia' : undefined}
-              createUrl="/dashboard/configurazioni/famiglie/nuovo"
+              quickCreateFields={[
+                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'FAM001' },
+                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome famiglia' },
+                { name: 'macrofamiglia_id', label: '', type: 'hidden', defaultValue: selectedMacrofamiglia },
+              ]}
+              onCreated={(item) => setLocalFamiglie(prev => [...prev, item as unknown as Famiglia])}
             />
 
             {/* Linea */}
@@ -175,12 +191,17 @@ export default function ProdottoForm({
               name="linea_id"
               label="Linea"
               entityName="Linea"
-              options={linee}
+              entityType="linea"
+              options={localLinee}
               valueField="id"
               displayField="nome"
               defaultValue={initialData?.linea_id}
               placeholder="Seleziona linea"
-              createUrl="/dashboard/configurazioni/linee/nuovo"
+              quickCreateFields={[
+                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'LIN001' },
+                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome linea' },
+              ]}
+              onCreated={(item) => setLocalLinee(prev => [...prev, item as unknown as LineaProdotto])}
             />
 
             {/* Misura (campo semplice, nessun quick create) */}
