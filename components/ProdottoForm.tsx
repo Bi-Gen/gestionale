@@ -218,37 +218,6 @@ export default function ProdottoForm({
             </div>
           </div>
 
-          {/* Categoria e Sottocategoria */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="categoria" className="block text-sm font-medium text-gray-700">
-                Categoria
-              </label>
-              <input
-                type="text"
-                name="categoria"
-                id="categoria"
-                placeholder="Elettronica"
-                defaultValue={initialData?.categoria}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="sottocategoria" className="block text-sm font-medium text-gray-700">
-                Sottocategoria
-              </label>
-              <input
-                type="text"
-                name="sottocategoria"
-                id="sottocategoria"
-                placeholder="Mouse"
-                defaultValue={initialData?.sottocategoria}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
           {/* Codici Alternativi */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>

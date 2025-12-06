@@ -85,22 +85,22 @@ export default async function DettaglioProdottoPage({
                 <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">{prodotto.descrizione}</dd>
               </div>
             )}
-            {prodotto.categoria && (
+            {prodotto.macrofamiglia_id && (
               <div>
-                <dt className="text-sm font-medium text-gray-500">Categoria</dt>
-                <dd className="mt-1 text-sm text-gray-900">{prodotto.categoria}</dd>
+                <dt className="text-sm font-medium text-gray-500">Macrofamiglia</dt>
+                <dd className="mt-1 text-sm text-gray-900">ID: {prodotto.macrofamiglia_id}</dd>
               </div>
             )}
-            {prodotto.sottocategoria && (
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Sottocategoria</dt>
-                <dd className="mt-1 text-sm text-gray-900">{prodotto.sottocategoria}</dd>
-              </div>
-            )}
-            {prodotto.famiglia && (
+            {prodotto.famiglia_id && (
               <div>
                 <dt className="text-sm font-medium text-gray-500">Famiglia</dt>
-                <dd className="mt-1 text-sm text-gray-900">{prodotto.famiglia}</dd>
+                <dd className="mt-1 text-sm text-gray-900">ID: {prodotto.famiglia_id}</dd>
+              </div>
+            )}
+            {prodotto.linea_id && (
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Linea</dt>
+                <dd className="mt-1 text-sm text-gray-900">ID: {prodotto.linea_id}</dd>
               </div>
             )}
             {prodotto.codice_ean && (

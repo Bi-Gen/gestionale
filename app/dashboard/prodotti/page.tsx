@@ -80,7 +80,7 @@ export default async function ProdottiPage({
                       Nome
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Categoria
+                      Classificazione
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Prezzo Vendita
@@ -105,7 +105,11 @@ export default async function ProdottiPage({
                         <div className="text-sm text-gray-900">{prodotto.nome}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{prodotto.categoria || '-'}</div>
+                        <div className="text-sm text-gray-500">
+                          {prodotto.macrofamiglia_id || prodotto.famiglia_id || prodotto.linea_id
+                            ? `M:${prodotto.macrofamiglia_id || '-'} F:${prodotto.famiglia_id || '-'} L:${prodotto.linea_id || '-'}`
+                            : '-'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">

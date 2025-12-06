@@ -18,12 +18,11 @@ export type Prodotto = {
   codice_doganale?: string
   riferimento?: string
   ean_proprietario?: string
-  famiglia?: string
-  macrofamiglia?: string
-  linea?: string
+  // Classificazione (solo FK)
+  macrofamiglia_id?: number
+  famiglia_id?: number
+  linea_id?: number
   misura?: string
-  categoria?: string
-  sottocategoria?: string
   costo_ultimo?: number
   costo_medio?: number
   prezzo_acquisto?: number
@@ -176,14 +175,9 @@ export async function createProdotto(formData: FormData) {
     ean_proprietario: validation.data.ean_proprietario || null,
     sku: validation.data.sku || null,
 
-    // Classificazione
-    categoria: validation.data.categoria || null,
-    sottocategoria: validation.data.sottocategoria || null,
-    famiglia: validation.data.famiglia || null,
-    famiglia_id: validation.data.famiglia_id ? parseInt(validation.data.famiglia_id) : null,
-    macrofamiglia: validation.data.macrofamiglia || null,
+    // Classificazione (solo FK)
     macrofamiglia_id: validation.data.macrofamiglia_id ? parseInt(validation.data.macrofamiglia_id) : null,
-    linea: validation.data.linea || null,
+    famiglia_id: validation.data.famiglia_id ? parseInt(validation.data.famiglia_id) : null,
     linea_id: validation.data.linea_id ? parseInt(validation.data.linea_id) : null,
     misura: validation.data.misura || null,
 
@@ -319,14 +313,9 @@ export async function updateProdotto(id: string, formData: FormData) {
     ean_proprietario: validation.data.ean_proprietario || null,
     sku: validation.data.sku || null,
 
-    // Classificazione
-    categoria: validation.data.categoria || null,
-    sottocategoria: validation.data.sottocategoria || null,
-    famiglia: validation.data.famiglia || null,
-    famiglia_id: validation.data.famiglia_id ? parseInt(validation.data.famiglia_id) : null,
-    macrofamiglia: validation.data.macrofamiglia || null,
+    // Classificazione (solo FK)
     macrofamiglia_id: validation.data.macrofamiglia_id ? parseInt(validation.data.macrofamiglia_id) : null,
-    linea: validation.data.linea || null,
+    famiglia_id: validation.data.famiglia_id ? parseInt(validation.data.famiglia_id) : null,
     linea_id: validation.data.linea_id ? parseInt(validation.data.linea_id) : null,
     misura: validation.data.misura || null,
 

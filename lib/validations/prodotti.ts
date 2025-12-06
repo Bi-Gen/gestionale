@@ -58,38 +58,13 @@ export const prodottoSchema = z.object({
     .max(100, 'SKU troppo lungo')
     .optional(),
 
-  // === CLASSIFICAZIONE ===
-  categoria: z
-    .string()
-    .max(100, 'Categoria troppo lunga')
-    .optional(),
-
-  sottocategoria: z
-    .string()
-    .max(100, 'Sottocategoria troppo lunga')
-    .optional(),
-
-  famiglia: z
-    .string()
-    .max(100, 'Famiglia troppo lunga')
-    .optional(),
-
-  macrofamiglia: z
-    .string()
-    .max(100, 'Macrofamiglia troppo lunga')
-    .optional(),
-
+  // === CLASSIFICAZIONE (solo FK, no campi stringa) ===
   macrofamiglia_id: z
     .string()
     .optional(),
 
   famiglia_id: z
     .string()
-    .optional(),
-
-  linea: z
-    .string()
-    .max(100, 'Linea troppo lunga')
     .optional(),
 
   linea_id: z
@@ -415,14 +390,9 @@ export function validateProdottoFormData(formData: FormData) {
     ean_proprietario: (formData.get('ean_proprietario') as string) || undefined,
     sku: (formData.get('sku') as string) || undefined,
 
-    // Classificazione
-    categoria: (formData.get('categoria') as string) || undefined,
-    sottocategoria: (formData.get('sottocategoria') as string) || undefined,
-    famiglia: (formData.get('famiglia') as string) || undefined,
-    famiglia_id: (formData.get('famiglia_id') as string) || undefined,
-    macrofamiglia: (formData.get('macrofamiglia') as string) || undefined,
+    // Classificazione (solo FK)
     macrofamiglia_id: (formData.get('macrofamiglia_id') as string) || undefined,
-    linea: (formData.get('linea') as string) || undefined,
+    famiglia_id: (formData.get('famiglia_id') as string) || undefined,
     linea_id: (formData.get('linea_id') as string) || undefined,
     misura: (formData.get('misura') as string) || undefined,
 
