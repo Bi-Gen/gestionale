@@ -15,8 +15,13 @@ export type Prodotto = {
   barcode?: string
   codice_ean?: string
   codice_fornitore?: string
+  codice_doganale?: string
+  riferimento?: string
+  ean_proprietario?: string
   famiglia?: string
   macrofamiglia?: string
+  linea?: string
+  misura?: string
   categoria?: string
   sottocategoria?: string
   costo_ultimo?: number
@@ -36,6 +41,7 @@ export type Prodotto = {
   punto_riordino?: number
   quantita_minima_ordine?: number
   tempo_riordino_giorni?: number
+  transit_time_giorni?: number
   sconto_massimo?: number
   margine_percentuale?: number
   unita_misura?: string
@@ -62,8 +68,28 @@ export type Prodotto = {
   note?: string
   note_interne?: string
   immagine_url?: string
+  // Packaging (da tabella satellite)
+  packaging?: PackagingProdotto
   created_at: string
   updated_at: string
+}
+
+export type PackagingProdotto = {
+  id?: number
+  prodotto_id?: number
+  nome_confezione?: string
+  pezzi_per_confezione?: number
+  confezione_peso_kg?: number
+  confezioni_per_cartone?: number
+  cartone_lunghezza_cm?: number
+  cartone_larghezza_cm?: number
+  cartone_altezza_cm?: number
+  cartone_peso_kg?: number
+  cartoni_per_pallet?: number
+  cartoni_per_strato?: number
+  strati_per_pallet?: number
+  pallet_per_container_20ft?: number
+  pallet_per_container_40ft?: number
 }
 
 export async function getProdotti(): Promise<Prodotto[]> {
@@ -145,12 +171,18 @@ export async function createProdotto(formData: FormData) {
     descrizione_breve: validation.data.descrizione_breve || null,
     codice_ean: validation.data.codice_ean || null,
     codice_fornitore: validation.data.codice_fornitore || null,
+    codice_doganale: validation.data.codice_doganale || null,
+    riferimento: validation.data.riferimento || null,
+    ean_proprietario: validation.data.ean_proprietario || null,
     sku: validation.data.sku || null,
 
     // Classificazione
     categoria: validation.data.categoria || null,
     sottocategoria: validation.data.sottocategoria || null,
     famiglia: validation.data.famiglia || null,
+    macrofamiglia: validation.data.macrofamiglia || null,
+    linea: validation.data.linea || null,
+    misura: validation.data.misura || null,
 
     // Prezzi e costi
     costo_ultimo: validation.data.costo_ultimo ? parseFloat(validation.data.costo_ultimo) : null,
@@ -170,6 +202,7 @@ export async function createProdotto(formData: FormData) {
     // Fornitore
     fornitore_principale_id: validation.data.fornitore_principale_id ? parseInt(validation.data.fornitore_principale_id) : null,
     tempo_riordino_giorni: validation.data.tempo_riordino_giorni ? parseInt(validation.data.tempo_riordino_giorni) : 7,
+    transit_time_giorni: validation.data.transit_time_giorni ? parseInt(validation.data.transit_time_giorni) : null,
     quantita_minima_ordine: validation.data.quantita_minima_ordine ? parseInt(validation.data.quantita_minima_ordine) : 1,
 
     // Magazzino
@@ -206,13 +239,49 @@ export async function createProdotto(formData: FormData) {
     immagine_url: validation.data.immagine_url || null,
   }
 
-  const { error } = await supabase
+  // Inserisci prodotto
+  const { data: newProdotto, error } = await supabase
     .from('prodotto')
     .insert([prodotto])
+    .select('id')
+    .single()
 
   if (error) {
     console.error('Error creating prodotto:', error)
     redirect(`/dashboard/prodotti/nuovo?error=${encodeURIComponent(error.message)}`)
+  }
+
+  // Inserisci packaging se presente
+  const hasPackaging = validation.data.pkg_pezzi_per_confezione ||
+                       validation.data.pkg_confezioni_per_cartone ||
+                       validation.data.pkg_cartoni_per_pallet
+
+  if (hasPackaging && newProdotto) {
+    const packaging = {
+      prodotto_id: newProdotto.id,
+      nome_confezione: validation.data.pkg_nome_confezione || 'Confezione',
+      pezzi_per_confezione: validation.data.pkg_pezzi_per_confezione ? parseInt(validation.data.pkg_pezzi_per_confezione) : 1,
+      confezione_peso_kg: validation.data.pkg_confezione_peso_kg ? parseFloat(validation.data.pkg_confezione_peso_kg) : null,
+      confezioni_per_cartone: validation.data.pkg_confezioni_per_cartone ? parseInt(validation.data.pkg_confezioni_per_cartone) : 1,
+      cartone_lunghezza_cm: validation.data.pkg_cartone_lunghezza_cm ? parseFloat(validation.data.pkg_cartone_lunghezza_cm) : null,
+      cartone_larghezza_cm: validation.data.pkg_cartone_larghezza_cm ? parseFloat(validation.data.pkg_cartone_larghezza_cm) : null,
+      cartone_altezza_cm: validation.data.pkg_cartone_altezza_cm ? parseFloat(validation.data.pkg_cartone_altezza_cm) : null,
+      cartone_peso_kg: validation.data.pkg_cartone_peso_kg ? parseFloat(validation.data.pkg_cartone_peso_kg) : null,
+      cartoni_per_pallet: validation.data.pkg_cartoni_per_pallet ? parseInt(validation.data.pkg_cartoni_per_pallet) : null,
+      cartoni_per_strato: validation.data.pkg_cartoni_per_strato ? parseInt(validation.data.pkg_cartoni_per_strato) : null,
+      strati_per_pallet: validation.data.pkg_strati_per_pallet ? parseInt(validation.data.pkg_strati_per_pallet) : null,
+      pallet_per_container_20ft: validation.data.pkg_pallet_per_container_20ft ? parseInt(validation.data.pkg_pallet_per_container_20ft) : null,
+      pallet_per_container_40ft: validation.data.pkg_pallet_per_container_40ft ? parseInt(validation.data.pkg_pallet_per_container_40ft) : null,
+    }
+
+    const { error: pkgError } = await supabase
+      .from('packaging_prodotto')
+      .insert([packaging])
+
+    if (pkgError) {
+      console.error('Error creating packaging:', pkgError)
+      // Non blocchiamo, il prodotto è già creato
+    }
   }
 
   revalidatePath('/dashboard/prodotti')
@@ -242,12 +311,18 @@ export async function updateProdotto(id: string, formData: FormData) {
     descrizione_breve: validation.data.descrizione_breve || null,
     codice_ean: validation.data.codice_ean || null,
     codice_fornitore: validation.data.codice_fornitore || null,
+    codice_doganale: validation.data.codice_doganale || null,
+    riferimento: validation.data.riferimento || null,
+    ean_proprietario: validation.data.ean_proprietario || null,
     sku: validation.data.sku || null,
 
     // Classificazione
     categoria: validation.data.categoria || null,
     sottocategoria: validation.data.sottocategoria || null,
     famiglia: validation.data.famiglia || null,
+    macrofamiglia: validation.data.macrofamiglia || null,
+    linea: validation.data.linea || null,
+    misura: validation.data.misura || null,
 
     // Prezzi e costi
     costo_ultimo: validation.data.costo_ultimo ? parseFloat(validation.data.costo_ultimo) : null,
@@ -267,6 +342,7 @@ export async function updateProdotto(id: string, formData: FormData) {
     // Fornitore
     fornitore_principale_id: validation.data.fornitore_principale_id ? parseInt(validation.data.fornitore_principale_id) : null,
     tempo_riordino_giorni: validation.data.tempo_riordino_giorni ? parseInt(validation.data.tempo_riordino_giorni) : 7,
+    transit_time_giorni: validation.data.transit_time_giorni ? parseInt(validation.data.transit_time_giorni) : null,
     quantita_minima_ordine: validation.data.quantita_minima_ordine ? parseInt(validation.data.quantita_minima_ordine) : 1,
 
     // Magazzino
@@ -311,6 +387,39 @@ export async function updateProdotto(id: string, formData: FormData) {
   if (error) {
     console.error('Error updating prodotto:', error)
     redirect(`/dashboard/prodotti/${id}/modifica?error=${encodeURIComponent(error.message)}`)
+  }
+
+  // Aggiorna o crea packaging
+  const hasPackaging = validation.data.pkg_pezzi_per_confezione ||
+                       validation.data.pkg_confezioni_per_cartone ||
+                       validation.data.pkg_cartoni_per_pallet
+
+  if (hasPackaging) {
+    const packaging = {
+      prodotto_id: parseInt(id),
+      nome_confezione: validation.data.pkg_nome_confezione || 'Confezione',
+      pezzi_per_confezione: validation.data.pkg_pezzi_per_confezione ? parseInt(validation.data.pkg_pezzi_per_confezione) : 1,
+      confezione_peso_kg: validation.data.pkg_confezione_peso_kg ? parseFloat(validation.data.pkg_confezione_peso_kg) : null,
+      confezioni_per_cartone: validation.data.pkg_confezioni_per_cartone ? parseInt(validation.data.pkg_confezioni_per_cartone) : 1,
+      cartone_lunghezza_cm: validation.data.pkg_cartone_lunghezza_cm ? parseFloat(validation.data.pkg_cartone_lunghezza_cm) : null,
+      cartone_larghezza_cm: validation.data.pkg_cartone_larghezza_cm ? parseFloat(validation.data.pkg_cartone_larghezza_cm) : null,
+      cartone_altezza_cm: validation.data.pkg_cartone_altezza_cm ? parseFloat(validation.data.pkg_cartone_altezza_cm) : null,
+      cartone_peso_kg: validation.data.pkg_cartone_peso_kg ? parseFloat(validation.data.pkg_cartone_peso_kg) : null,
+      cartoni_per_pallet: validation.data.pkg_cartoni_per_pallet ? parseInt(validation.data.pkg_cartoni_per_pallet) : null,
+      cartoni_per_strato: validation.data.pkg_cartoni_per_strato ? parseInt(validation.data.pkg_cartoni_per_strato) : null,
+      strati_per_pallet: validation.data.pkg_strati_per_pallet ? parseInt(validation.data.pkg_strati_per_pallet) : null,
+      pallet_per_container_20ft: validation.data.pkg_pallet_per_container_20ft ? parseInt(validation.data.pkg_pallet_per_container_20ft) : null,
+      pallet_per_container_40ft: validation.data.pkg_pallet_per_container_40ft ? parseInt(validation.data.pkg_pallet_per_container_40ft) : null,
+    }
+
+    // Upsert: insert o update
+    const { error: pkgError } = await supabase
+      .from('packaging_prodotto')
+      .upsert([packaging], { onConflict: 'prodotto_id' })
+
+    if (pkgError) {
+      console.error('Error updating packaging:', pkgError)
+    }
   }
 
   revalidatePath('/dashboard/prodotti')

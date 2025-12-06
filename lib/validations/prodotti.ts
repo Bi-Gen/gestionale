@@ -38,6 +38,21 @@ export const prodottoSchema = z.object({
     .max(100, 'Codice fornitore troppo lungo')
     .optional(),
 
+  codice_doganale: z
+    .string()
+    .max(20, 'Codice doganale troppo lungo')
+    .optional(),
+
+  riferimento: z
+    .string()
+    .max(50, 'Riferimento troppo lungo')
+    .optional(),
+
+  ean_proprietario: z
+    .string()
+    .max(100, 'Proprietario EAN troppo lungo')
+    .optional(),
+
   sku: z
     .string()
     .max(100, 'SKU troppo lungo')
@@ -57,6 +72,21 @@ export const prodottoSchema = z.object({
   famiglia: z
     .string()
     .max(100, 'Famiglia troppo lunga')
+    .optional(),
+
+  macrofamiglia: z
+    .string()
+    .max(100, 'Macrofamiglia troppo lunga')
+    .optional(),
+
+  linea: z
+    .string()
+    .max(100, 'Linea troppo lunga')
+    .optional(),
+
+  misura: z
+    .string()
+    .max(50, 'Misura troppo lunga')
     .optional(),
 
   // === PREZZI E COSTI ===
@@ -136,6 +166,14 @@ export const prodottoSchema = z.object({
     .refine(
       (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 0),
       'Tempo riordino deve essere un numero positivo'
+    ),
+
+  transit_time_giorni: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 0),
+      'Transit time deve essere un numero positivo'
     ),
 
   quantita_minima_ordine: z
@@ -296,6 +334,57 @@ export const prodottoSchema = z.object({
     .url('URL immagine non valido')
     .optional()
     .or(z.literal('')),
+
+  // === PACKAGING ===
+  pkg_nome_confezione: z.string().max(50).optional(),
+  pkg_pezzi_per_confezione: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 1),
+    'Pezzi per confezione deve essere almeno 1'
+  ),
+  pkg_confezione_peso_kg: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
+    'Peso confezione non valido'
+  ),
+  pkg_confezioni_per_cartone: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 1),
+    'Confezioni per cartone deve essere almeno 1'
+  ),
+  pkg_cartone_lunghezza_cm: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
+    'Lunghezza cartone non valida'
+  ),
+  pkg_cartone_larghezza_cm: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
+    'Larghezza cartone non valida'
+  ),
+  pkg_cartone_altezza_cm: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
+    'Altezza cartone non valida'
+  ),
+  pkg_cartone_peso_kg: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
+    'Peso cartone non valido'
+  ),
+  pkg_cartoni_per_pallet: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 1),
+    'Cartoni per pallet deve essere almeno 1'
+  ),
+  pkg_cartoni_per_strato: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 1),
+    'Cartoni per strato deve essere almeno 1'
+  ),
+  pkg_strati_per_pallet: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 1),
+    'Strati per pallet deve essere almeno 1'
+  ),
+  pkg_pallet_per_container_20ft: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 1),
+    'Pallet per container 20ft deve essere almeno 1'
+  ),
+  pkg_pallet_per_container_40ft: z.string().optional().refine(
+    (val) => !val || val.length === 0 || (!isNaN(parseInt(val)) && parseInt(val) >= 1),
+    'Pallet per container 40ft deve essere almeno 1'
+  ),
 })
 
 export type ProdottoInput = z.infer<typeof prodottoSchema>
@@ -309,12 +398,18 @@ export function validateProdottoFormData(formData: FormData) {
     descrizione_breve: (formData.get('descrizione_breve') as string) || undefined,
     codice_ean: (formData.get('codice_ean') as string) || undefined,
     codice_fornitore: (formData.get('codice_fornitore') as string) || undefined,
+    codice_doganale: (formData.get('codice_doganale') as string) || undefined,
+    riferimento: (formData.get('riferimento') as string) || undefined,
+    ean_proprietario: (formData.get('ean_proprietario') as string) || undefined,
     sku: (formData.get('sku') as string) || undefined,
 
     // Classificazione
     categoria: (formData.get('categoria') as string) || undefined,
     sottocategoria: (formData.get('sottocategoria') as string) || undefined,
     famiglia: (formData.get('famiglia') as string) || undefined,
+    macrofamiglia: (formData.get('macrofamiglia') as string) || undefined,
+    linea: (formData.get('linea') as string) || undefined,
+    misura: (formData.get('misura') as string) || undefined,
 
     // Prezzi e costi
     costo_ultimo: (formData.get('costo_ultimo') as string) || undefined,
@@ -334,6 +429,7 @@ export function validateProdottoFormData(formData: FormData) {
     // Fornitore
     fornitore_principale_id: (formData.get('fornitore_principale_id') as string) || undefined,
     tempo_riordino_giorni: (formData.get('tempo_riordino_giorni') as string) || undefined,
+    transit_time_giorni: (formData.get('transit_time_giorni') as string) || undefined,
     quantita_minima_ordine: (formData.get('quantita_minima_ordine') as string) || undefined,
 
     // Magazzino
@@ -368,6 +464,21 @@ export function validateProdottoFormData(formData: FormData) {
     note: (formData.get('note') as string) || undefined,
     note_interne: (formData.get('note_interne') as string) || undefined,
     immagine_url: (formData.get('immagine_url') as string) || undefined,
+
+    // Packaging
+    pkg_nome_confezione: (formData.get('pkg_nome_confezione') as string) || undefined,
+    pkg_pezzi_per_confezione: (formData.get('pkg_pezzi_per_confezione') as string) || undefined,
+    pkg_confezione_peso_kg: (formData.get('pkg_confezione_peso_kg') as string) || undefined,
+    pkg_confezioni_per_cartone: (formData.get('pkg_confezioni_per_cartone') as string) || undefined,
+    pkg_cartone_lunghezza_cm: (formData.get('pkg_cartone_lunghezza_cm') as string) || undefined,
+    pkg_cartone_larghezza_cm: (formData.get('pkg_cartone_larghezza_cm') as string) || undefined,
+    pkg_cartone_altezza_cm: (formData.get('pkg_cartone_altezza_cm') as string) || undefined,
+    pkg_cartone_peso_kg: (formData.get('pkg_cartone_peso_kg') as string) || undefined,
+    pkg_cartoni_per_pallet: (formData.get('pkg_cartoni_per_pallet') as string) || undefined,
+    pkg_cartoni_per_strato: (formData.get('pkg_cartoni_per_strato') as string) || undefined,
+    pkg_strati_per_pallet: (formData.get('pkg_strati_per_pallet') as string) || undefined,
+    pkg_pallet_per_container_20ft: (formData.get('pkg_pallet_per_container_20ft') as string) || undefined,
+    pkg_pallet_per_container_40ft: (formData.get('pkg_pallet_per_container_40ft') as string) || undefined,
   }
 
   return prodottoSchema.safeParse(data)

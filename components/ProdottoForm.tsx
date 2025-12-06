@@ -120,8 +120,67 @@ export default function ProdottoForm({ action, fornitori, initialData, submitLab
             />
           </div>
 
-          {/* Classificazione */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Classificazione Estesa */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label htmlFor="macrofamiglia" className="block text-sm font-medium text-gray-700">
+                Macrofamiglia
+              </label>
+              <input
+                type="text"
+                name="macrofamiglia"
+                id="macrofamiglia"
+                placeholder="Tovaglie"
+                defaultValue={initialData?.macrofamiglia}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="famiglia" className="block text-sm font-medium text-gray-700">
+                Famiglia
+              </label>
+              <input
+                type="text"
+                name="famiglia"
+                id="famiglia"
+                placeholder="100x100"
+                defaultValue={initialData?.famiglia}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="linea" className="block text-sm font-medium text-gray-700">
+                Linea
+              </label>
+              <input
+                type="text"
+                name="linea"
+                id="linea"
+                placeholder="Premium"
+                defaultValue={initialData?.linea}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="misura" className="block text-sm font-medium text-gray-700">
+                Misura
+              </label>
+              <input
+                type="text"
+                name="misura"
+                id="misura"
+                placeholder="100x100, XL, 500ml"
+                defaultValue={initialData?.misura}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Categoria e Sottocategoria */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="categoria" className="block text-sm font-medium text-gray-700">
                 Categoria
@@ -149,20 +208,6 @@ export default function ProdottoForm({ action, fornitori, initialData, submitLab
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
               />
             </div>
-
-            <div>
-              <label htmlFor="famiglia" className="block text-sm font-medium text-gray-700">
-                Famiglia
-              </label>
-              <input
-                type="text"
-                name="famiglia"
-                id="famiglia"
-                placeholder="Periferiche PC"
-                defaultValue={initialData?.famiglia}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
           </div>
 
           {/* Codici Alternativi */}
@@ -184,6 +229,22 @@ export default function ProdottoForm({ action, fornitori, initialData, submitLab
             </div>
 
             <div>
+              <label htmlFor="ean_proprietario" className="block text-sm font-medium text-gray-700">
+                Proprietario EAN
+              </label>
+              <input
+                type="text"
+                name="ean_proprietario"
+                id="ean_proprietario"
+                placeholder="Azienda proprietaria del codice EAN"
+                defaultValue={initialData?.ean_proprietario}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
               <label htmlFor="codice_fornitore" className="block text-sm font-medium text-gray-700">
                 Codice Fornitore
               </label>
@@ -193,6 +254,34 @@ export default function ProdottoForm({ action, fornitori, initialData, submitLab
                 id="codice_fornitore"
                 placeholder="Codice usato dal fornitore"
                 defaultValue={initialData?.codice_fornitore}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="codice_doganale" className="block text-sm font-medium text-gray-700">
+                Codice Doganale (HS Code)
+              </label>
+              <input
+                type="text"
+                name="codice_doganale"
+                id="codice_doganale"
+                placeholder="Es: 6302.10.00"
+                defaultValue={initialData?.codice_doganale}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="riferimento" className="block text-sm font-medium text-gray-700">
+                Riferimento Interno
+              </label>
+              <input
+                type="text"
+                name="riferimento"
+                id="riferimento"
+                placeholder="REF-001"
+                defaultValue={initialData?.riferimento}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
               />
             </div>
@@ -465,7 +554,7 @@ export default function ProdottoForm({ action, fornitori, initialData, submitLab
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label htmlFor="quantita_minima_ordine" className="block text-sm font-medium text-gray-700">
                 Quantità Minima Ordine (MOQ)
@@ -479,6 +568,31 @@ export default function ProdottoForm({ action, fornitori, initialData, submitLab
                 defaultValue={initialData?.quantita_minima_ordine || '1'}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
               />
+            </div>
+
+            <div>
+              <label htmlFor="transit_time_giorni" className="block text-sm font-medium text-gray-700">
+                Transit Time (giorni)
+              </label>
+              <input
+                type="number"
+                name="transit_time_giorni"
+                id="transit_time_giorni"
+                min="0"
+                placeholder="60"
+                defaultValue={initialData?.transit_time_giorni}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Tempo di trasporto (es. nave)</p>
+            </div>
+
+            <div className="flex items-end">
+              <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2 w-full">
+                <p className="text-xs text-blue-700 font-medium">Tempo Totale</p>
+                <p className="text-sm text-blue-900">
+                  {(parseInt(String(initialData?.tempo_riordino_giorni || 7)) + parseInt(String(initialData?.transit_time_giorni || 0)))} giorni
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -710,7 +824,258 @@ export default function ProdottoForm({ action, fornitori, initialData, submitLab
       </div>
 
       {/* ========================================= */}
-      {/* SEZIONE 6: GESTIONE AVANZATA */}
+      {/* SEZIONE 6: PACKAGING / CONFEZIONAMENTO */}
+      {/* ========================================= */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          📦 Packaging / Confezionamento
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Definisci la struttura di confezionamento: PEZZO → CONFEZIONE → CARTONE → PALLET
+        </p>
+
+        <div className="space-y-6">
+          {/* Livello 1: Confezione */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Livello 1: Confezione (Busta/Scatola)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label htmlFor="pkg_nome_confezione" className="block text-xs font-medium text-gray-600">
+                  Nome Confezione
+                </label>
+                <input
+                  type="text"
+                  name="pkg_nome_confezione"
+                  id="pkg_nome_confezione"
+                  placeholder="Busta, Scatola, Blister..."
+                  defaultValue={initialData?.packaging?.nome_confezione || 'Confezione'}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_pezzi_per_confezione" className="block text-xs font-medium text-gray-600">
+                  Pezzi per Confezione
+                </label>
+                <input
+                  type="number"
+                  name="pkg_pezzi_per_confezione"
+                  id="pkg_pezzi_per_confezione"
+                  min="1"
+                  placeholder="25"
+                  defaultValue={initialData?.packaging?.pezzi_per_confezione || '1'}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_confezione_peso_kg" className="block text-xs font-medium text-gray-600">
+                  Peso Confezione (kg)
+                </label>
+                <input
+                  type="number"
+                  name="pkg_confezione_peso_kg"
+                  id="pkg_confezione_peso_kg"
+                  step="0.001"
+                  min="0"
+                  placeholder="0.5"
+                  defaultValue={initialData?.packaging?.confezione_peso_kg}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Livello 2: Cartone */}
+          <div className="bg-amber-50 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-amber-800 mb-3">Livello 2: Cartone</h3>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label htmlFor="pkg_confezioni_per_cartone" className="block text-xs font-medium text-gray-600">
+                  Confezioni per Cartone
+                </label>
+                <input
+                  type="number"
+                  name="pkg_confezioni_per_cartone"
+                  id="pkg_confezioni_per_cartone"
+                  min="1"
+                  placeholder="4"
+                  defaultValue={initialData?.packaging?.confezioni_per_cartone || '1'}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_cartone_lunghezza_cm" className="block text-xs font-medium text-gray-600">
+                  Lungh. (cm)
+                </label>
+                <input
+                  type="number"
+                  name="pkg_cartone_lunghezza_cm"
+                  id="pkg_cartone_lunghezza_cm"
+                  step="0.1"
+                  min="0"
+                  placeholder="51"
+                  defaultValue={initialData?.packaging?.cartone_lunghezza_cm}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_cartone_larghezza_cm" className="block text-xs font-medium text-gray-600">
+                  Largh. (cm)
+                </label>
+                <input
+                  type="number"
+                  name="pkg_cartone_larghezza_cm"
+                  id="pkg_cartone_larghezza_cm"
+                  step="0.1"
+                  min="0"
+                  placeholder="27"
+                  defaultValue={initialData?.packaging?.cartone_larghezza_cm}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_cartone_altezza_cm" className="block text-xs font-medium text-gray-600">
+                  Alt. (cm)
+                </label>
+                <input
+                  type="number"
+                  name="pkg_cartone_altezza_cm"
+                  id="pkg_cartone_altezza_cm"
+                  step="0.1"
+                  min="0"
+                  placeholder="25"
+                  defaultValue={initialData?.packaging?.cartone_altezza_cm}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_cartone_peso_kg" className="block text-xs font-medium text-gray-600">
+                  Peso (kg)
+                </label>
+                <input
+                  type="number"
+                  name="pkg_cartone_peso_kg"
+                  id="pkg_cartone_peso_kg"
+                  step="0.1"
+                  min="0"
+                  placeholder="5.5"
+                  defaultValue={initialData?.packaging?.cartone_peso_kg}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Livello 3: Pallet */}
+          <div className="bg-blue-50 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-blue-800 mb-3">Livello 3: Pallet</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label htmlFor="pkg_cartoni_per_pallet" className="block text-xs font-medium text-gray-600">
+                  Cartoni per Pallet
+                </label>
+                <input
+                  type="number"
+                  name="pkg_cartoni_per_pallet"
+                  id="pkg_cartoni_per_pallet"
+                  min="1"
+                  placeholder="54"
+                  defaultValue={initialData?.packaging?.cartoni_per_pallet}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_cartoni_per_strato" className="block text-xs font-medium text-gray-600">
+                  Cartoni per Strato
+                </label>
+                <input
+                  type="number"
+                  name="pkg_cartoni_per_strato"
+                  id="pkg_cartoni_per_strato"
+                  min="1"
+                  placeholder="6"
+                  defaultValue={initialData?.packaging?.cartoni_per_strato}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_strati_per_pallet" className="block text-xs font-medium text-gray-600">
+                  Strati per Pallet
+                </label>
+                <input
+                  type="number"
+                  name="pkg_strati_per_pallet"
+                  id="pkg_strati_per_pallet"
+                  min="1"
+                  placeholder="9"
+                  defaultValue={initialData?.packaging?.strati_per_pallet}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Livello 4: Container */}
+          <div className="bg-green-50 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-green-800 mb-3">Livello 4: Container</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="pkg_pallet_per_container_20ft" className="block text-xs font-medium text-gray-600">
+                  Pallet per Container 20ft
+                </label>
+                <input
+                  type="number"
+                  name="pkg_pallet_per_container_20ft"
+                  id="pkg_pallet_per_container_20ft"
+                  min="1"
+                  placeholder="10"
+                  defaultValue={initialData?.packaging?.pallet_per_container_20ft}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="pkg_pallet_per_container_40ft" className="block text-xs font-medium text-gray-600">
+                  Pallet per Container 40ft
+                </label>
+                <input
+                  type="number"
+                  name="pkg_pallet_per_container_40ft"
+                  id="pkg_pallet_per_container_40ft"
+                  min="1"
+                  placeholder="20"
+                  defaultValue={initialData?.packaging?.pallet_per_container_40ft}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Riepilogo Calcolato */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-purple-800 mb-2">Riepilogo Calcolato</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-purple-600">Pezzi/Cartone:</span>
+                <span className="ml-2 font-medium text-purple-900">
+                  {(parseInt(String(initialData?.packaging?.pezzi_per_confezione || 1)) *
+                    parseInt(String(initialData?.packaging?.confezioni_per_cartone || 1)))}
+                </span>
+              </div>
+              <div>
+                <span className="text-purple-600">Pezzi/Pallet:</span>
+                <span className="ml-2 font-medium text-purple-900">
+                  {initialData?.packaging?.cartoni_per_pallet ?
+                    (parseInt(String(initialData?.packaging?.pezzi_per_confezione || 1)) *
+                     parseInt(String(initialData?.packaging?.confezioni_per_cartone || 1)) *
+                     parseInt(String(initialData?.packaging?.cartoni_per_pallet))) : '-'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE 7: GESTIONE AVANZATA */}
       {/* ========================================= */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
