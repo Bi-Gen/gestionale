@@ -93,13 +93,17 @@ export default function SelectConCreazione<T extends Record<string, unknown>>({
     })
 
     try {
+      console.log('Invio richiesta quick-create:', fields)
+
       const response = await fetch('/api/quick-create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fields)
       })
 
+      console.log('Response status:', response.status)
       const result = await response.json()
+      console.log('Response body:', result)
 
       if (result.success && result.data) {
         // Seleziona il nuovo elemento

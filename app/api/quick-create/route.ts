@@ -3,28 +3,37 @@ import { createClient } from '@/lib/supabase/server'
 
 // POST /api/quick-create
 export async function POST(request: NextRequest) {
+  console.log('=== API quick-create chiamata ===')
+
   try {
     const supabase = await createClient()
 
     // Verifica autenticazione
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('Auth check:', { userId: user?.id, authError })
+
     if (!user) {
+      console.log('Errore: utente non autenticato')
       return NextResponse.json({ success: false, error: 'Non autenticato' }, { status: 401 })
     }
 
     // Ottieni azienda_id
-    const { data: utenteAzienda } = await supabase
+    const { data: utenteAzienda, error: aziendaError } = await supabase
       .from('utente_azienda')
       .select('azienda_id')
       .eq('user_id', user.id)
       .single()
 
+    console.log('Azienda check:', { utenteAzienda, aziendaError })
+
     if (!utenteAzienda?.azienda_id) {
+      console.log('Errore: nessuna azienda associata')
       return NextResponse.json({ success: false, error: 'Nessuna azienda associata' }, { status: 400 })
     }
 
     const aziendaId = utenteAzienda.azienda_id
     const body = await request.json()
+    console.log('Request body:', body)
     const { entityType, ...fields } = body
 
     let tableName: string
@@ -139,17 +148,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Inserisci nel database
+    console.log('Inserting into:', tableName)
+    console.log('Insert data:', insertData)
+    console.log('Select fields:', selectFields)
+
     const { data, error } = await supabase
       .from(tableName)
       .insert([insertData])
       .select(selectFields)
       .single()
 
+    console.log('Insert result:', { data, error })
+
     if (error) {
       console.error(`Errore creazione ${entityType}:`, error)
       return NextResponse.json({ success: false, error: error.message }, { status: 400 })
     }
 
+    console.log('Creazione riuscita:', data)
     return NextResponse.json({ success: true, data })
 
   } catch (err) {
