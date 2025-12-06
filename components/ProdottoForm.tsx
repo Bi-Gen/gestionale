@@ -7,11 +7,6 @@ import type { Macrofamiglia } from '@/app/actions/macrofamiglie'
 import type { Famiglia } from '@/app/actions/famiglie'
 import type { LineaProdotto } from '@/app/actions/linee'
 import SelectConCreazione from './SelectConCreazione'
-import {
-  quickCreateMacrofamiglia,
-  quickCreateFamiglia,
-  quickCreateLinea
-} from '@/app/actions/quick-create'
 
 interface ProdottoFormProps {
   action: any
@@ -35,14 +30,11 @@ export default function ProdottoForm({
   // Stati per validazione client-side
   const [eanError, setEanError] = useState('')
   const [selectedMacrofamiglia, setSelectedMacrofamiglia] = useState<number | undefined>(initialData?.macrofamiglia_id)
-  const [localMacrofamiglie, setLocalMacrofamiglie] = useState(macrofamiglie)
-  const [localFamiglie, setLocalFamiglie] = useState(famiglie)
-  const [localLinee, setLocalLinee] = useState(linee)
 
   // Filtra famiglie in base alla macrofamiglia selezionata
   const famiglieFiltrate = selectedMacrofamiglia
-    ? localFamiglie.filter(f => f.macrofamiglia_id === selectedMacrofamiglia)
-    : localFamiglie
+    ? famiglie.filter(f => f.macrofamiglia_id === selectedMacrofamiglia)
+    : famiglie
 
   // Validazione Codice EAN
   const validateEAN = (value: string) => {
@@ -151,26 +143,21 @@ export default function ProdottoForm({
           {/* Classificazione Estesa con Quick Create */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Macrofamiglia */}
-            <SelectConCreazione<Macrofamiglia, { id: number; codice: string; nome: string }>
+            <SelectConCreazione<Macrofamiglia>
               name="macrofamiglia_id"
               label="Macrofamiglia"
               entityName="Macrofamiglia"
-              options={localMacrofamiglie}
+              options={macrofamiglie}
               valueField="id"
               displayField="nome"
               defaultValue={initialData?.macrofamiglia_id}
               onChange={(val) => setSelectedMacrofamiglia(val as number | undefined)}
               placeholder="Seleziona macrofamiglia"
-              quickCreateFields={[
-                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'MF001' },
-                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome macrofamiglia' },
-              ]}
-              onQuickCreate={quickCreateMacrofamiglia}
-              onCreated={(newItem) => setLocalMacrofamiglie(prev => [...prev, { ...newItem, ordinamento: 0, attivo: true, created_at: '', updated_at: '' } as Macrofamiglia])}
+              createUrl="/dashboard/configurazioni/macrofamiglie/nuovo"
             />
 
             {/* Famiglia */}
-            <SelectConCreazione<Famiglia, { id: number; codice: string; nome: string; macrofamiglia_id: number }>
+            <SelectConCreazione<Famiglia>
               name="famiglia_id"
               label="Famiglia"
               entityName="Famiglia"
@@ -180,37 +167,20 @@ export default function ProdottoForm({
               defaultValue={initialData?.famiglia_id}
               placeholder="Seleziona famiglia"
               helpText={selectedMacrofamiglia && famiglieFiltrate.length === 0 ? 'Nessuna famiglia per questa macrofamiglia' : undefined}
-              quickCreateFields={[
-                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'FAM001' },
-                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome famiglia' },
-                {
-                  name: 'macrofamiglia_id',
-                  label: 'Macrofamiglia',
-                  type: 'select',
-                  options: localMacrofamiglie.map(mf => ({ value: mf.id, label: mf.nome })),
-                  defaultValue: selectedMacrofamiglia
-                },
-              ]}
-              onQuickCreate={quickCreateFamiglia}
-              onCreated={(newItem) => setLocalFamiglie(prev => [...prev, { ...newItem, ordinamento: 0, attivo: true, created_at: '', updated_at: '' } as Famiglia])}
+              createUrl="/dashboard/configurazioni/famiglie/nuovo"
             />
 
             {/* Linea */}
-            <SelectConCreazione<LineaProdotto, { id: number; codice: string; nome: string }>
+            <SelectConCreazione<LineaProdotto>
               name="linea_id"
               label="Linea"
               entityName="Linea"
-              options={localLinee}
+              options={linee}
               valueField="id"
               displayField="nome"
               defaultValue={initialData?.linea_id}
               placeholder="Seleziona linea"
-              quickCreateFields={[
-                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'LIN001' },
-                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome linea' },
-              ]}
-              onQuickCreate={quickCreateLinea}
-              onCreated={(newItem) => setLocalLinee(prev => [...prev, { ...newItem, descrizione: '', ordinamento: 0, attivo: true, created_at: '', updated_at: '' } as LineaProdotto])}
+              createUrl="/dashboard/configurazioni/linee/nuovo"
             />
 
             {/* Misura (campo semplice, nessun quick create) */}
