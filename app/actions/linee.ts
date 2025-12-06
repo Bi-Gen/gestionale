@@ -70,13 +70,14 @@ export async function createLinea(formData: FormData) {
     redirect('/login?error=Nessuna azienda associata')
   }
 
+  const attivoValue = formData.get('attivo')
   const linea = {
     azienda_id: utenteAzienda.azienda_id,
     codice: formData.get('codice') as string,
     nome: formData.get('nome') as string,
     descrizione: (formData.get('descrizione') as string) || null,
     ordinamento: parseInt(formData.get('ordinamento') as string) || 0,
-    attivo: formData.get('attivo') === 'on',
+    attivo: attivoValue === 'true' || attivoValue === 'on',
   }
 
   const { error } = await supabase
@@ -96,12 +97,13 @@ export async function createLinea(formData: FormData) {
 export async function updateLinea(id: number, formData: FormData) {
   const supabase = await createClient()
 
+  const attivoValue = formData.get('attivo')
   const updates = {
     codice: formData.get('codice') as string,
     nome: formData.get('nome') as string,
     descrizione: (formData.get('descrizione') as string) || null,
     ordinamento: parseInt(formData.get('ordinamento') as string) || 0,
-    attivo: formData.get('attivo') === 'on',
+    attivo: attivoValue === 'true' || attivoValue === 'on',
   }
 
   const { error } = await supabase
