@@ -36,6 +36,8 @@ export async function quickCreateMacrofamiglia(formData: FormData): Promise<Quic
   const supabase = await createClient()
   const aziendaId = await getAziendaId()
 
+  console.log('quickCreateMacrofamiglia - aziendaId:', aziendaId)
+
   if (!aziendaId) {
     return { success: false, error: 'Utente non autenticato' }
   }
@@ -43,15 +45,22 @@ export async function quickCreateMacrofamiglia(formData: FormData): Promise<Quic
   const codice = formData.get('codice') as string
   const nome = formData.get('nome') as string
 
+  console.log('quickCreateMacrofamiglia - codice:', codice, 'nome:', nome)
+
   if (!codice || !nome) {
     return { success: false, error: 'Codice e nome sono obbligatori' }
   }
 
+  const insertData = { azienda_id: aziendaId, codice, nome, attivo: true }
+  console.log('quickCreateMacrofamiglia - inserting:', insertData)
+
   const { data, error } = await supabase
     .from('macrofamiglie')
-    .insert([{ azienda_id: aziendaId, codice, nome, attivo: true }])
+    .insert([insertData])
     .select('id, codice, nome')
     .single()
+
+  console.log('quickCreateMacrofamiglia - result:', { data, error })
 
   if (error) {
     console.error('Errore creazione macrofamiglia:', error)

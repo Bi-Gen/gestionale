@@ -73,13 +73,12 @@ export default function SelectConCreazione<T extends Record<string, unknown>, R 
   const [showModal, setShowModal] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [localOptions, setLocalOptions] = useState<T[]>(options)
   const [selectedValue, setSelectedValue] = useState<string | number | undefined>(value ?? defaultValue)
 
-  // Filtra opzioni se c'è un parent
+  // Filtra opzioni se c'è un parent - usa direttamente options dal parent
   const filteredOptions = filterFn && parentValue
-    ? localOptions.filter(opt => filterFn(opt, parentValue))
-    : localOptions
+    ? options.filter(opt => filterFn(opt, parentValue))
+    : options
 
   // Gestione cambio selezione
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
