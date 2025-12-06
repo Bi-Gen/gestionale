@@ -6,6 +6,12 @@ import type { Fornitore } from '@/app/actions/fornitori'
 import type { Macrofamiglia } from '@/app/actions/macrofamiglie'
 import type { Famiglia } from '@/app/actions/famiglie'
 import type { LineaProdotto } from '@/app/actions/linee'
+import SelectConCreazione from './SelectConCreazione'
+import {
+  quickCreateMacrofamiglia,
+  quickCreateFamiglia,
+  quickCreateLinea
+} from '@/app/actions/quick-create'
 
 interface ProdottoFormProps {
   action: any
@@ -29,11 +35,14 @@ export default function ProdottoForm({
   // Stati per validazione client-side
   const [eanError, setEanError] = useState('')
   const [selectedMacrofamiglia, setSelectedMacrofamiglia] = useState<number | undefined>(initialData?.macrofamiglia_id)
+  const [localMacrofamiglie, setLocalMacrofamiglie] = useState(macrofamiglie)
+  const [localFamiglie, setLocalFamiglie] = useState(famiglie)
+  const [localLinee, setLocalLinee] = useState(linee)
 
   // Filtra famiglie in base alla macrofamiglia selezionata
   const famiglieFiltrate = selectedMacrofamiglia
-    ? famiglie.filter(f => f.macrofamiglia_id === selectedMacrofamiglia)
-    : famiglie
+    ? localFamiglie.filter(f => f.macrofamiglia_id === selectedMacrofamiglia)
+    : localFamiglie
 
   // Validazione Codice EAN
   const validateEAN = (value: string) => {
@@ -139,69 +148,72 @@ export default function ProdottoForm({
             />
           </div>
 
-          {/* Classificazione Estesa */}
+          {/* Classificazione Estesa con Quick Create */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div>
-              <label htmlFor="macrofamiglia_id" className="block text-sm font-medium text-gray-700">
-                Macrofamiglia
-              </label>
-              <select
-                name="macrofamiglia_id"
-                id="macrofamiglia_id"
-                defaultValue={initialData?.macrofamiglia_id || ''}
-                onChange={(e) => setSelectedMacrofamiglia(e.target.value ? parseInt(e.target.value) : undefined)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              >
-                <option value="">Seleziona macrofamiglia</option>
-                {macrofamiglie.map((mf) => (
-                  <option key={mf.id} value={mf.id}>
-                    {mf.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Macrofamiglia */}
+            <SelectConCreazione<Macrofamiglia, { id: number; codice: string; nome: string }>
+              name="macrofamiglia_id"
+              label="Macrofamiglia"
+              entityName="Macrofamiglia"
+              options={localMacrofamiglie}
+              valueField="id"
+              displayField="nome"
+              defaultValue={initialData?.macrofamiglia_id}
+              onChange={(val) => setSelectedMacrofamiglia(val as number | undefined)}
+              placeholder="Seleziona macrofamiglia"
+              quickCreateFields={[
+                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'MF001' },
+                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome macrofamiglia' },
+              ]}
+              onQuickCreate={quickCreateMacrofamiglia}
+              onCreated={(newItem) => setLocalMacrofamiglie(prev => [...prev, { ...newItem, ordinamento: 0, attivo: true, created_at: '', updated_at: '' } as Macrofamiglia])}
+            />
 
-            <div>
-              <label htmlFor="famiglia_id" className="block text-sm font-medium text-gray-700">
-                Famiglia
-              </label>
-              <select
-                name="famiglia_id"
-                id="famiglia_id"
-                defaultValue={initialData?.famiglia_id || ''}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              >
-                <option value="">Seleziona famiglia</option>
-                {famiglieFiltrate.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.nome}
-                  </option>
-                ))}
-              </select>
-              {selectedMacrofamiglia && famiglieFiltrate.length === 0 && (
-                <p className="mt-1 text-xs text-amber-600">Nessuna famiglia per questa macrofamiglia</p>
-              )}
-            </div>
+            {/* Famiglia */}
+            <SelectConCreazione<Famiglia, { id: number; codice: string; nome: string; macrofamiglia_id: number }>
+              name="famiglia_id"
+              label="Famiglia"
+              entityName="Famiglia"
+              options={famiglieFiltrate}
+              valueField="id"
+              displayField="nome"
+              defaultValue={initialData?.famiglia_id}
+              placeholder="Seleziona famiglia"
+              helpText={selectedMacrofamiglia && famiglieFiltrate.length === 0 ? 'Nessuna famiglia per questa macrofamiglia' : undefined}
+              quickCreateFields={[
+                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'FAM001' },
+                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome famiglia' },
+                {
+                  name: 'macrofamiglia_id',
+                  label: 'Macrofamiglia',
+                  type: 'select',
+                  options: localMacrofamiglie.map(mf => ({ value: mf.id, label: mf.nome })),
+                  defaultValue: selectedMacrofamiglia
+                },
+              ]}
+              onQuickCreate={quickCreateFamiglia}
+              onCreated={(newItem) => setLocalFamiglie(prev => [...prev, { ...newItem, ordinamento: 0, attivo: true, created_at: '', updated_at: '' } as Famiglia])}
+            />
 
-            <div>
-              <label htmlFor="linea_id" className="block text-sm font-medium text-gray-700">
-                Linea
-              </label>
-              <select
-                name="linea_id"
-                id="linea_id"
-                defaultValue={initialData?.linea_id || ''}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              >
-                <option value="">Seleziona linea</option>
-                {linee.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Linea */}
+            <SelectConCreazione<LineaProdotto, { id: number; codice: string; nome: string }>
+              name="linea_id"
+              label="Linea"
+              entityName="Linea"
+              options={localLinee}
+              valueField="id"
+              displayField="nome"
+              defaultValue={initialData?.linea_id}
+              placeholder="Seleziona linea"
+              quickCreateFields={[
+                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'LIN001' },
+                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome linea' },
+              ]}
+              onQuickCreate={quickCreateLinea}
+              onCreated={(newItem) => setLocalLinee(prev => [...prev, { ...newItem, descrizione: '', ordinamento: 0, attivo: true, created_at: '', updated_at: '' } as LineaProdotto])}
+            />
 
+            {/* Misura (campo semplice, nessun quick create) */}
             <div>
               <label htmlFor="misura" className="block text-sm font-medium text-gray-700">
                 Misura
