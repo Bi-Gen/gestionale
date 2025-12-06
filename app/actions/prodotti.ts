@@ -27,11 +27,6 @@ export type Prodotto = {
   costo_medio?: number
   prezzo_acquisto?: number
   prezzo_vendita: number
-  prezzo_listino1?: number
-  prezzo_listino2?: number
-  prezzo_listino3?: number
-  prezzo_listino4?: number
-  prezzo_listino5?: number
   aliquota_iva?: number
   valuta?: string
   quantita_magazzino?: number
@@ -186,11 +181,6 @@ export async function createProdotto(formData: FormData) {
     costo_medio: validation.data.costo_medio ? parseFloat(validation.data.costo_medio) : null,
     prezzo_acquisto: validation.data.prezzo_acquisto ? parseFloat(validation.data.prezzo_acquisto) : null,
     prezzo_vendita: parseFloat(validation.data.prezzo_vendita),
-    prezzo_listino1: validation.data.prezzo_listino1 ? parseFloat(validation.data.prezzo_listino1) : null,
-    prezzo_listino2: validation.data.prezzo_listino2 ? parseFloat(validation.data.prezzo_listino2) : null,
-    prezzo_listino3: validation.data.prezzo_listino3 ? parseFloat(validation.data.prezzo_listino3) : null,
-    prezzo_listino4: validation.data.prezzo_listino4 ? parseFloat(validation.data.prezzo_listino4) : null,
-    prezzo_listino5: validation.data.prezzo_listino5 ? parseFloat(validation.data.prezzo_listino5) : null,
     margine_percentuale: validation.data.margine_percentuale ? parseFloat(validation.data.margine_percentuale) : null,
     sconto_massimo: validation.data.sconto_massimo ? parseFloat(validation.data.sconto_massimo) : null,
     aliquota_iva: validation.data.aliquota_iva ? parseFloat(validation.data.aliquota_iva) : 22.00,
@@ -324,11 +314,6 @@ export async function updateProdotto(id: string, formData: FormData) {
     costo_medio: validation.data.costo_medio ? parseFloat(validation.data.costo_medio) : null,
     prezzo_acquisto: validation.data.prezzo_acquisto ? parseFloat(validation.data.prezzo_acquisto) : null,
     prezzo_vendita: parseFloat(validation.data.prezzo_vendita),
-    prezzo_listino1: validation.data.prezzo_listino1 ? parseFloat(validation.data.prezzo_listino1) : null,
-    prezzo_listino2: validation.data.prezzo_listino2 ? parseFloat(validation.data.prezzo_listino2) : null,
-    prezzo_listino3: validation.data.prezzo_listino3 ? parseFloat(validation.data.prezzo_listino3) : null,
-    prezzo_listino4: validation.data.prezzo_listino4 ? parseFloat(validation.data.prezzo_listino4) : null,
-    prezzo_listino5: validation.data.prezzo_listino5 ? parseFloat(validation.data.prezzo_listino5) : null,
     margine_percentuale: validation.data.margine_percentuale ? parseFloat(validation.data.margine_percentuale) : null,
     sconto_massimo: validation.data.sconto_massimo ? parseFloat(validation.data.sconto_massimo) : null,
     aliquota_iva: validation.data.aliquota_iva ? parseFloat(validation.data.aliquota_iva) : 22.00,

@@ -168,32 +168,10 @@ export default async function DettaglioProdottoPage({
             </div>
           </dl>
 
-          {/* Listini */}
-          {(prodotto.prezzo_listino1 || prodotto.prezzo_listino2 || prodotto.prezzo_listino3) && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Listini Vendita</h3>
-              <dl className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {prodotto.prezzo_listino1 && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Listino 1</dt>
-                    <dd className="mt-1 text-sm text-gray-900">€ {prodotto.prezzo_listino1.toFixed(2)}</dd>
-                  </div>
-                )}
-                {prodotto.prezzo_listino2 && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Listino 2</dt>
-                    <dd className="mt-1 text-sm text-gray-900">€ {prodotto.prezzo_listino2.toFixed(2)}</dd>
-                  </div>
-                )}
-                {prodotto.prezzo_listino3 && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Listino 3</dt>
-                    <dd className="mt-1 text-sm text-gray-900">€ {prodotto.prezzo_listino3.toFixed(2)}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-          )}
+          {/* Nota listini */}
+          <p className="mt-6 pt-6 border-t border-gray-200 text-xs text-gray-500">
+            💡 I listini prezzi si gestiscono da Configurazioni → Listini
+          </p>
         </div>
 
         {/* SEZIONE 3: FORNITORE */}

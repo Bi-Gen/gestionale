@@ -105,12 +105,6 @@ export const prodottoSchema = z.object({
     .string()
     .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, 'Prezzo vendita è obbligatorio e deve essere un numero positivo'),
 
-  // Listini
-  prezzo_listino1: z.string().optional().refine((val) => !val || !isNaN(parseFloat(val)), 'Listino 1 non valido'),
-  prezzo_listino2: z.string().optional().refine((val) => !val || !isNaN(parseFloat(val)), 'Listino 2 non valido'),
-  prezzo_listino3: z.string().optional().refine((val) => !val || !isNaN(parseFloat(val)), 'Listino 3 non valido'),
-  prezzo_listino4: z.string().optional().refine((val) => !val || !isNaN(parseFloat(val)), 'Listino 4 non valido'),
-  prezzo_listino5: z.string().optional().refine((val) => !val || !isNaN(parseFloat(val)), 'Listino 5 non valido'),
 
   margine_percentuale: z
     .string()
@@ -401,11 +395,6 @@ export function validateProdottoFormData(formData: FormData) {
     costo_medio: (formData.get('costo_medio') as string) || undefined,
     prezzo_acquisto: (formData.get('prezzo_acquisto') as string) || undefined,
     prezzo_vendita: formData.get('prezzo_vendita') as string,
-    prezzo_listino1: (formData.get('prezzo_listino1') as string) || undefined,
-    prezzo_listino2: (formData.get('prezzo_listino2') as string) || undefined,
-    prezzo_listino3: (formData.get('prezzo_listino3') as string) || undefined,
-    prezzo_listino4: (formData.get('prezzo_listino4') as string) || undefined,
-    prezzo_listino5: (formData.get('prezzo_listino5') as string) || undefined,
     margine_percentuale: (formData.get('margine_percentuale') as string) || undefined,
     sconto_massimo: (formData.get('sconto_massimo') as string) || undefined,
     aliquota_iva: (formData.get('aliquota_iva') as string) || undefined,

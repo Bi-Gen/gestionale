@@ -28,7 +28,6 @@ export default function ProdottoForm({
 }: ProdottoFormProps) {
   // Stati per validazione client-side
   const [eanError, setEanError] = useState('')
-  const [showListini, setShowListini] = useState(false)
   const [selectedMacrofamiglia, setSelectedMacrofamiglia] = useState<number | undefined>(initialData?.macrofamiglia_id)
 
   // Filtra famiglie in base alla macrofamiglia selezionata
@@ -451,68 +450,10 @@ export default function ProdottoForm({
             </div>
           </div>
 
-          {/* Listini Multipli (opzionale collassabile) */}
-          <div className="border-t border-gray-200 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowListini(!showListini)}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              {showListini ? '▼' : '▶'} Listini Vendita (opzionale)
-            </button>
-
-            {showListini && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                <div>
-                  <label htmlFor="prezzo_listino1" className="block text-sm font-medium text-gray-700">
-                    Listino 1 (€)
-                  </label>
-                  <input
-                    type="number"
-                    name="prezzo_listino1"
-                    id="prezzo_listino1"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    defaultValue={initialData?.prezzo_listino1}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="prezzo_listino2" className="block text-sm font-medium text-gray-700">
-                    Listino 2 (€)
-                  </label>
-                  <input
-                    type="number"
-                    name="prezzo_listino2"
-                    id="prezzo_listino2"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    defaultValue={initialData?.prezzo_listino2}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="prezzo_listino3" className="block text-sm font-medium text-gray-700">
-                    Listino 3 (€)
-                  </label>
-                  <input
-                    type="number"
-                    name="prezzo_listino3"
-                    id="prezzo_listino3"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    defaultValue={initialData?.prezzo_listino3}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Nota: I listini si gestiscono da Configurazioni > Listini */}
+          <p className="text-xs text-gray-500 border-t border-gray-200 pt-4">
+            💡 I listini prezzi si gestiscono da <span className="font-medium">Configurazioni → Listini</span>
+          </p>
         </div>
       </div>
 
