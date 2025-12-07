@@ -6,6 +6,7 @@ import { getRegioni, getProvinceByRegione, getComuniByProvincia, type Regione, t
 import { getAgentiAttivi, type AgenteLista } from '@/app/actions/agenti'
 import { getCategorieClienteAttive } from '@/app/actions/categorie-cliente'
 import { getListiniAttivi } from '@/app/actions/listini'
+import SelectConCreazione from './SelectConCreazione'
 
 type CategoriaCliente = {
   id: number
@@ -509,51 +510,39 @@ export default function ClienteForm({ action, initialData, submitLabel = 'Salva 
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Categoria Cliente */}
-            <div>
-              <label htmlFor="categoria_cliente_id" className="block text-sm font-medium text-gray-700">
-                Categoria Cliente
-              </label>
-              <select
-                name="categoria_cliente_id"
-                id="categoria_cliente_id"
-                value={selectedCategoriaId}
-                onChange={(e) => handleCategoriaChange(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              >
-                <option value="">Nessuna categoria</option>
-                {categorieCliente.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    [{cat.codice}] {cat.nome}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-gray-500">
-                Selezionando una categoria verranno precompilati listino e sconto
-              </p>
-            </div>
+            {/* Categoria Cliente con Quick Create */}
+            <SelectConCreazione<CategoriaCliente>
+              name="categoria_cliente_id"
+              label="Categoria Cliente"
+              entityName="Categoria Cliente"
+              options={categorieCliente}
+              valueField="id"
+              displayField="nome"
+              value={selectedCategoriaId ? parseInt(selectedCategoriaId) : undefined}
+              onChange={(val) => handleCategoriaChange(val?.toString() || '')}
+              placeholder="Nessuna categoria"
+              helpText="Selezionando una categoria verranno precompilati listino e sconto"
+              createUrl="/dashboard/configurazioni/categorie-cliente/nuovo"
+              channelName="categoria-cliente-created"
+              onCreated={(item) => setCategorieCliente(prev => [...prev, item])}
+            />
 
-            {/* Listino Prezzi */}
-            <div>
-              <label htmlFor="listino_id" className="block text-sm font-medium text-gray-700">
-                Listino Prezzi
-              </label>
-              <select
-                name="listino_id"
-                id="listino_id"
-                value={selectedListinoId}
-                onChange={(e) => setSelectedListinoId(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              >
-                <option value="">Listino base</option>
-                {listini.map((listino) => (
-                  <option key={listino.id} value={listino.id}>
-                    [{listino.codice}] {listino.nome}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-gray-500">Listino prezzi applicato a questo cliente</p>
-            </div>
+            {/* Listino Prezzi con Quick Create */}
+            <SelectConCreazione<Listino>
+              name="listino_id"
+              label="Listino Prezzi"
+              entityName="Listino"
+              options={listini}
+              valueField="id"
+              displayField="nome"
+              value={selectedListinoId ? parseInt(selectedListinoId) : undefined}
+              onChange={(val) => setSelectedListinoId(val?.toString() || '')}
+              placeholder="Listino base"
+              helpText="Listino prezzi applicato a questo cliente"
+              createUrl="/dashboard/configurazioni/listini/nuovo"
+              channelName="listino-created"
+              onCreated={(item) => setListini(prev => [...prev, item])}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

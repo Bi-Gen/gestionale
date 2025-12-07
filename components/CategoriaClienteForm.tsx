@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useFormStatus } from 'react-dom'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 type Listino = {
@@ -21,16 +23,17 @@ type CategoriaData = {
   attivo: boolean
 }
 
-function SubmitButton({ isEdit }: { isEdit: boolean }) {
+function SubmitButton({ isEdit, isPopup, isSubmitting }: { isEdit: boolean; isPopup: boolean; isSubmitting: boolean }) {
   const { pending } = useFormStatus()
+  const loading = pending || isSubmitting
 
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={loading}
       className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
     >
-      {pending ? 'Salvataggio...' : isEdit ? 'Aggiorna Categoria' : 'Crea Categoria'}
+      {loading ? 'Salvataggio...' : isEdit ? 'Aggiorna Categoria' : 'Crea Categoria'}
     </button>
   )
 }
@@ -67,13 +70,70 @@ export default function CategoriaClienteForm({
   error?: string
 }) {
   const isEdit = !!categoria?.id
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [popupError, setPopupError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+
+  // Modalità popup (aperta da SelectConCreazione)
+  const isPopup = searchParams.get('popup') === 'true'
+  const channelName = searchParams.get('channel')
+
+  // Gestione submit in modalità popup
+  const handlePopupSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setPopupError(null)
+    setIsSubmitting(true)
+
+    const formData = new FormData(e.currentTarget)
+
+    try {
+      const response = await fetch('/api/quick-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entityType: 'categoria_cliente',
+          codice: formData.get('codice'),
+          nome: formData.get('nome'),
+          descrizione: formData.get('descrizione'),
+          listino_id: formData.get('listino_id') || null,
+          sconto_default: parseFloat(formData.get('sconto_default') as string) || 0,
+          priorita: parseInt(formData.get('priorita') as string) || 0,
+          colore: formData.get('colore') || '#6B7280',
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success && result.data) {
+        // Invia messaggio al BroadcastChannel
+        if (channelName) {
+          const channel = new BroadcastChannel(channelName)
+          channel.postMessage({ type: 'created', item: result.data })
+          channel.close()
+        }
+        // Chiudi la finestra popup
+        window.close()
+      } else {
+        setPopupError(result.error || 'Errore durante la creazione')
+      }
+    } catch (err) {
+      setPopupError('Errore di connessione')
+      console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <form action={action} className="space-y-6">
+    <form
+      action={isPopup ? undefined : action}
+      onSubmit={isPopup ? handlePopupSubmit : undefined}
+      className="space-y-6"
+    >
       {/* Error message */}
-      {error && (
+      {(error || popupError) && (
         <div className="rounded-md bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-700">{error || popupError}</p>
         </div>
       )}
 
@@ -241,13 +301,24 @@ export default function CategoriaClienteForm({
 
       {/* Actions */}
       <div className="flex justify-end gap-3">
-        <Link
-          href="/dashboard/configurazioni/categorie-cliente"
-          className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors"
-        >
-          Annulla
-        </Link>
-        <SubmitButton isEdit={isEdit} />
+        {isPopup ? (
+          <button
+            type="button"
+            onClick={() => window.close()}
+            disabled={isSubmitting}
+            className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Annulla
+          </button>
+        ) : (
+          <Link
+            href="/dashboard/configurazioni/categorie-cliente"
+            className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Annulla
+          </Link>
+        )}
+        <SubmitButton isEdit={isEdit} isPopup={isPopup} isSubmitting={isSubmitting} />
       </div>
     </form>
   )

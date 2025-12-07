@@ -86,9 +86,15 @@ export async function POST(request: NextRequest) {
         insertData = {
           azienda_id: aziendaId,
           codice: fields.codice,
-          nome: fields.nome
+          nome: fields.nome,
+          descrizione: fields.descrizione || null,
+          listino_id: fields.listino_id || null,
+          sconto_default: fields.sconto_default || 0,
+          priorita: fields.priorita || 0,
+          colore: fields.colore || '#6B7280',
+          attivo: true
         }
-        selectFields = 'id, codice, nome'
+        selectFields = 'id, codice, nome, descrizione, listino_id, sconto_default, priorita, colore, attivo'
         break
 
       case 'categoria_fornitore':
@@ -96,9 +102,13 @@ export async function POST(request: NextRequest) {
         insertData = {
           azienda_id: aziendaId,
           codice: fields.codice,
-          nome: fields.nome
+          nome: fields.nome,
+          descrizione: fields.descrizione || null,
+          priorita: fields.priorita || 0,
+          colore: fields.colore || '#6B7280',
+          attivo: true
         }
-        selectFields = 'id, codice, nome'
+        selectFields = 'id, codice, nome, descrizione, priorita, colore, attivo'
         break
 
       case 'listino':
@@ -107,10 +117,14 @@ export async function POST(request: NextRequest) {
           azienda_id: aziendaId,
           codice: fields.codice,
           nome: fields.nome,
+          descrizione: fields.descrizione || null,
           tipo: fields.tipo || 'vendita',
+          valuta_id: fields.valuta_id || null,
+          provvigione_default: fields.provvigione_default || 0,
+          priorita: fields.priorita || 0,
           attivo: true
         }
-        selectFields = 'id, codice, nome'
+        selectFields = 'id, codice, nome, descrizione, tipo, valuta_id, provvigione_default, priorita, attivo'
         break
 
       case 'codice_pagamento':

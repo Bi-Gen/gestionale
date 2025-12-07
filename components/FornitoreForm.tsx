@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getRegioni, getProvinceByRegione, getComuniByProvincia, type Regione, type Provincia, type Comune } from '@/app/actions/geografia'
+import SelectConCreazione from './SelectConCreazione'
 
 type CategoriaFornitore = {
   id: number
@@ -19,6 +20,8 @@ interface FornitoreFormProps {
 }
 
 export default function FornitoreForm({ action, initialData, submitLabel = 'Salva Fornitore', categorieFornitore = [] }: FornitoreFormProps) {
+  // Stato locale per categorie (per permettere quick create)
+  const [localCategorieFornitore, setLocalCategorieFornitore] = useState<CategoriaFornitore[]>(categorieFornitore)
   const [regioni, setRegioni] = useState<Regione[]>([])
   const [province, setProvince] = useState<Provincia[]>([])
   const [comuni, setComuni] = useState<Comune[]>([])
@@ -480,30 +483,21 @@ export default function FornitoreForm({ action, initialData, submitLabel = 'Salv
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Categoria Fornitore */}
-            <div>
-              <label htmlFor="categoria_fornitore_id" className="block text-sm font-medium text-gray-700">
-                Categoria
-              </label>
-              <select
-                name="categoria_fornitore_id"
-                id="categoria_fornitore_id"
-                defaultValue={initialData?.categoria_fornitore_id || ''}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              >
-                <option value="">Seleziona categoria</option>
-                {categorieFornitore.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.codice} - {cat.nome}
-                  </option>
-                ))}
-              </select>
-              {categorieFornitore.length === 0 && (
-                <p className="mt-1 text-xs text-amber-600">
-                  Nessuna categoria disponibile. Creale in Configurazioni → Categorie Fornitore
-                </p>
-              )}
-            </div>
+            {/* Categoria Fornitore con Quick Create */}
+            <SelectConCreazione<CategoriaFornitore>
+              name="categoria_fornitore_id"
+              label="Categoria"
+              entityName="Categoria Fornitore"
+              options={localCategorieFornitore}
+              valueField="id"
+              displayField="nome"
+              defaultValue={initialData?.categoria_fornitore_id}
+              placeholder="Seleziona categoria"
+              helpText={localCategorieFornitore.length === 0 ? 'Clicca + per creare una categoria' : undefined}
+              createUrl="/dashboard/configurazioni/categorie-fornitore/nuovo"
+              channelName="categoria-fornitore-created"
+              onCreated={(item) => setLocalCategorieFornitore(prev => [...prev, item])}
+            />
 
             {/* Giorni Consegna */}
             <div>
