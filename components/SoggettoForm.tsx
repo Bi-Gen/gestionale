@@ -62,6 +62,7 @@ export default function SoggettoForm({
   submitLabel
 }: SoggettoFormProps) {
   // Stati locali per permettere quick create
+  const [localTipiSoggetto, setLocalTipiSoggetto] = useState<TipoSoggetto[]>(tipiSoggetto)
   const [localCategorieCliente, setLocalCategorieCliente] = useState<CategoriaClienteOption[]>(categorieCliente)
   const [localCategorieFornitore, setLocalCategorieFornitore] = useState<CategoriaFornitoreOption[]>(categorieFornitore)
   const [localListini, setLocalListini] = useState<ListinoOption[]>(listini)
@@ -123,7 +124,7 @@ export default function SoggettoForm({
   }, [])
 
   // Get selected tipo_soggetto codice for backward compatibility
-  const selectedTipoSoggetto = tipiSoggetto.find(t => t.id === parseInt(tipoSoggettoId))
+  const selectedTipoSoggetto = localTipiSoggetto.find(t => t.id === parseInt(tipoSoggettoId))
 
   // Check if selected type is Cliente or Fornitore
   const isCliente = selectedTipoSoggetto?.codice === 'CLI'
@@ -165,26 +166,22 @@ export default function SoggettoForm({
       <div className="bg-white shadow-sm rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Tipo Soggetto</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="tipo_soggetto_id" className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="tipo_soggetto_id"
-              name="tipo_soggetto_id"
-              value={tipoSoggettoId}
-              onChange={(e) => setTipoSoggettoId(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleziona tipo...</option>
-              {tipiSoggetto.filter(t => t.attivo).map((tipo) => (
-                <option key={tipo.id} value={tipo.id}>
-                  {tipo.nome}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Tipo con Quick Create */}
+          <SelectConCreazione<TipoSoggetto>
+            name="tipo_soggetto_id"
+            label="Tipo"
+            entityName="Tipo Soggetto"
+            options={localTipiSoggetto.filter(t => t.attivo)}
+            valueField="id"
+            displayField="nome"
+            value={tipoSoggettoId ? parseInt(tipoSoggettoId) : undefined}
+            onChange={(val) => setTipoSoggettoId(val?.toString() || '')}
+            placeholder="Seleziona tipo..."
+            required
+            createUrl="/dashboard/configurazioni/tipi-soggetto/nuovo"
+            channelName="tipo-soggetto-created"
+            onCreated={(item) => setLocalTipiSoggetto(prev => [...prev, item])}
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

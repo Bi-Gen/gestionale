@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'categoria_cliente':
-        tableName = 'categorie_cliente'
+        tableName = 'categoria_cliente'
         insertData = {
           azienda_id: aziendaId,
           codice: fields.codice,
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'categoria_fornitore':
-        tableName = 'categorie_fornitore'
+        tableName = 'categoria_fornitore'
         insertData = {
           azienda_id: aziendaId,
           codice: fields.codice,
@@ -158,6 +158,20 @@ export async function POST(request: NextRequest) {
           attivo: true
         }
         selectFields = 'id, codice, nome'
+        break
+
+      case 'tipo_soggetto':
+        tableName = 'tipi_soggetto'
+        insertData = {
+          azienda_id: aziendaId,
+          codice: fields.codice,
+          nome: fields.nome,
+          descrizione: fields.descrizione || null,
+          colore: fields.colore || '#3B82F6',
+          icona: fields.icona || null,
+          attivo: true
+        }
+        selectFields = 'id, codice, nome, descrizione, colore, icona, attivo'
         break
 
       default:
