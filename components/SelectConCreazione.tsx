@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 // Tipo per la configurazione dei campi del form minimale
 export type QuickCreateField = {
@@ -67,6 +68,12 @@ export default function SelectConCreazione<T extends Record<string, unknown>>({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedValue, setSelectedValue] = useState<string | number | undefined>(value ?? defaultValue)
+  const [mounted, setMounted] = useState(false)
+
+  // Per renderizzare il portal solo lato client
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Gestione cambio selezione
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -170,8 +177,8 @@ export default function SelectConCreazione<T extends Record<string, unknown>>({
         <p className="mt-1 text-xs text-gray-500">{helpText}</p>
       )}
 
-      {/* Modale Quick Create */}
-      {showModal && (
+      {/* Modale Quick Create - Renderizzata fuori dal form padre con Portal */}
+      {mounted && showModal && createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             {/* Header */}
@@ -249,7 +256,8 @@ export default function SelectConCreazione<T extends Record<string, unknown>>({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
