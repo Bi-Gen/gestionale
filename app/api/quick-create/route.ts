@@ -47,10 +47,11 @@ export async function POST(request: NextRequest) {
           azienda_id: aziendaId,
           codice: fields.codice,
           nome: fields.nome,
+          descrizione: fields.descrizione || null,
           attivo: true,
-          ordinamento: 0
+          ordinamento: fields.ordinamento || 0
         }
-        selectFields = 'id, codice, nome'
+        selectFields = 'id, codice, nome, descrizione, ordinamento, attivo'
         break
 
       case 'famiglia':
@@ -60,10 +61,11 @@ export async function POST(request: NextRequest) {
           codice: fields.codice,
           nome: fields.nome,
           macrofamiglia_id: fields.macrofamiglia_id || null,
+          descrizione: fields.descrizione || null,
           attivo: true,
-          ordinamento: 0
+          ordinamento: fields.ordinamento || 0
         }
-        selectFields = 'id, codice, nome, macrofamiglia_id'
+        selectFields = 'id, codice, nome, macrofamiglia_id, descrizione, ordinamento, attivo'
         break
 
       case 'linea':
@@ -72,10 +74,11 @@ export async function POST(request: NextRequest) {
           azienda_id: aziendaId,
           codice: fields.codice,
           nome: fields.nome,
+          descrizione: fields.descrizione || null,
           attivo: true,
-          ordinamento: 0
+          ordinamento: fields.ordinamento || 0
         }
-        selectFields = 'id, codice, nome'
+        selectFields = 'id, codice, nome, descrizione, ordinamento, attivo'
         break
 
       case 'categoria_cliente':

@@ -152,18 +152,15 @@ export default function ProdottoForm({
               name="macrofamiglia_id"
               label="Macrofamiglia"
               entityName="Macrofamiglia"
-              entityType="macrofamiglia"
               options={localMacrofamiglie}
               valueField="id"
               displayField="nome"
               defaultValue={initialData?.macrofamiglia_id}
               onChange={(val) => setSelectedMacrofamiglia(val as number | undefined)}
               placeholder="Seleziona macrofamiglia"
-              quickCreateFields={[
-                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'MF001' },
-                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome macrofamiglia' },
-              ]}
-              onCreated={(item) => setLocalMacrofamiglie(prev => [...prev, item as unknown as Macrofamiglia])}
+              createUrl="/dashboard/configurazioni/macrofamiglie/nuovo"
+              channelName="macrofamiglia-created"
+              onCreated={(item) => setLocalMacrofamiglie(prev => [...prev, item])}
             />
 
             {/* Famiglia */}
@@ -171,19 +168,15 @@ export default function ProdottoForm({
               name="famiglia_id"
               label="Famiglia"
               entityName="Famiglia"
-              entityType="famiglia"
               options={famiglieFiltrate}
               valueField="id"
               displayField="nome"
               defaultValue={initialData?.famiglia_id}
               placeholder="Seleziona famiglia"
               helpText={selectedMacrofamiglia && famiglieFiltrate.length === 0 ? 'Nessuna famiglia per questa macrofamiglia' : undefined}
-              quickCreateFields={[
-                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'FAM001' },
-                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome famiglia' },
-                { name: 'macrofamiglia_id', label: '', type: 'hidden', defaultValue: selectedMacrofamiglia },
-              ]}
-              onCreated={(item) => setLocalFamiglie(prev => [...prev, item as unknown as Famiglia])}
+              createUrl="/dashboard/configurazioni/famiglie/nuovo"
+              channelName="famiglia-created"
+              onCreated={(item) => setLocalFamiglie(prev => [...prev, item])}
             />
 
             {/* Linea */}
@@ -191,17 +184,14 @@ export default function ProdottoForm({
               name="linea_id"
               label="Linea"
               entityName="Linea"
-              entityType="linea"
               options={localLinee}
               valueField="id"
               displayField="nome"
               defaultValue={initialData?.linea_id}
               placeholder="Seleziona linea"
-              quickCreateFields={[
-                { name: 'codice', label: 'Codice', type: 'text', required: true, placeholder: 'LIN001' },
-                { name: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Nome linea' },
-              ]}
-              onCreated={(item) => setLocalLinee(prev => [...prev, item as unknown as LineaProdotto])}
+              createUrl="/dashboard/configurazioni/linee/nuovo"
+              channelName="linea-created"
+              onCreated={(item) => setLocalLinee(prev => [...prev, item])}
             />
 
             {/* Misura (campo semplice, nessun quick create) */}

@@ -2,6 +2,7 @@
 
 import { LineaProdotto } from '@/app/actions/linee'
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 type LineaFormProps = {
   linea?: LineaProdotto
@@ -15,9 +16,70 @@ export default function LineaForm({
   submitLabel,
 }: LineaFormProps) {
   const [attivo, setAttivo] = useState(linea?.attivo ?? true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+
+  // Modalità popup (aperta da SelectConCreazione)
+  const isPopup = searchParams.get('popup') === 'true'
+  const channelName = searchParams.get('channel')
+
+  // Gestione submit in modalità popup
+  const handlePopupSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+    setIsSubmitting(true)
+
+    const formData = new FormData(e.currentTarget)
+
+    try {
+      const response = await fetch('/api/quick-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entityType: 'linea',
+          codice: formData.get('codice'),
+          nome: formData.get('nome'),
+          descrizione: formData.get('descrizione'),
+          ordinamento: parseInt(formData.get('ordinamento') as string) || 0,
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success && result.data) {
+        // Invia messaggio al BroadcastChannel
+        if (channelName) {
+          const channel = new BroadcastChannel(channelName)
+          channel.postMessage({ type: 'created', item: result.data })
+          channel.close()
+        }
+        // Chiudi la finestra popup
+        window.close()
+      } else {
+        setError(result.error || 'Errore durante la creazione')
+      }
+    } catch (err) {
+      setError('Errore di connessione')
+      console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <form action={action} className="space-y-6">
+    <form
+      action={isPopup ? undefined : action}
+      onSubmit={isPopup ? handlePopupSubmit : undefined}
+      className="space-y-6"
+    >
+      {/* Errore in modalità popup */}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
       {/* Codice */}
       <div>
         <label htmlFor="codice" className="block text-sm font-medium text-gray-700">
@@ -109,16 +171,28 @@ export default function LineaForm({
       <div className="flex gap-3 pt-4">
         <button
           type="submit"
-          className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium transition-colors"
+          disabled={isSubmitting}
+          className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium transition-colors disabled:bg-blue-400"
         >
-          {submitLabel}
+          {isSubmitting ? 'Creazione...' : submitLabel}
         </button>
-        <a
-          href="/dashboard/configurazioni/linee"
-          className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 font-medium text-center transition-colors"
-        >
-          Annulla
-        </a>
+        {isPopup ? (
+          <button
+            type="button"
+            onClick={() => window.close()}
+            disabled={isSubmitting}
+            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 font-medium text-center transition-colors"
+          >
+            Annulla
+          </button>
+        ) : (
+          <a
+            href="/dashboard/configurazioni/linee"
+            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 font-medium text-center transition-colors"
+          >
+            Annulla
+          </a>
+        )}
       </div>
     </form>
   )
