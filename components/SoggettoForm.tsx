@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Soggetto } from '@/app/actions/soggetti'
 import { TipoSoggetto } from '@/app/actions/tipi-soggetto'
+import SelectConCreazione from './SelectConCreazione'
 
 type AgenteOption = {
   id: string | number
@@ -60,6 +61,11 @@ export default function SoggettoForm({
   action,
   submitLabel
 }: SoggettoFormProps) {
+  // Stati locali per permettere quick create
+  const [localCategorieCliente, setLocalCategorieCliente] = useState<CategoriaClienteOption[]>(categorieCliente)
+  const [localCategorieFornitore, setLocalCategorieFornitore] = useState<CategoriaFornitoreOption[]>(categorieFornitore)
+  const [localListini, setLocalListini] = useState<ListinoOption[]>(listini)
+
   const [tipoPersona, setTipoPersona] = useState<'fisica' | 'giuridica'>(
     soggetto?.tipo_persona || 'giuridica'
   )
@@ -133,7 +139,7 @@ export default function SoggettoForm({
     setCategoriaClienteId(catId)
 
     if (catId) {
-      const categoria = categorieCliente.find(c => c.id === parseInt(catId))
+      const categoria = localCategorieCliente.find(c => c.id === parseInt(catId))
       if (categoria) {
         // Auto-fill listino se la categoria ne ha uno associato
         if (categoria.listino_id) {
@@ -470,57 +476,39 @@ export default function SoggettoForm({
         <div className="bg-white shadow-sm rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Dati Commerciali</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Categoria Cliente */}
-            {categorieCliente.length > 0 && (
-              <div>
-                <label htmlFor="categoria_cliente_id" className="block text-sm font-medium text-gray-700 mb-1">
-                  Categoria Cliente
-                </label>
-                <select
-                  id="categoria_cliente_id"
-                  name="categoria_cliente_id"
-                  value={categoriaClienteId}
-                  onChange={(e) => handleCategoriaChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Nessuna categoria</option>
-                  {categorieCliente.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      [{cat.codice}] {cat.nome}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Selezionando una categoria verranno precompilati listino e sconto
-                </p>
-              </div>
-            )}
+            {/* Categoria Cliente con Quick Create */}
+            <SelectConCreazione<CategoriaClienteOption>
+              name="categoria_cliente_id"
+              label="Categoria Cliente"
+              entityName="Categoria Cliente"
+              options={localCategorieCliente}
+              valueField="id"
+              displayField="nome"
+              value={categoriaClienteId ? parseInt(categoriaClienteId) : undefined}
+              onChange={(val) => handleCategoriaChange(val?.toString() || '')}
+              placeholder="Nessuna categoria"
+              helpText="Selezionando una categoria verranno precompilati listino e sconto"
+              createUrl="/dashboard/configurazioni/categorie-cliente/nuovo"
+              channelName="categoria-cliente-created"
+              onCreated={(item) => setLocalCategorieCliente(prev => [...prev, item])}
+            />
 
-            {/* Listino */}
-            {listini.length > 0 && (
-              <div>
-                <label htmlFor="listino_id" className="block text-sm font-medium text-gray-700 mb-1">
-                  Listino Prezzi
-                </label>
-                <select
-                  id="listino_id"
-                  name="listino_id"
-                  value={listinoId}
-                  onChange={(e) => setListinoId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Listino base</option>
-                  {listini.map((listino) => (
-                    <option key={listino.id} value={listino.id}>
-                      [{listino.codice}] {listino.nome}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Listino prezzi applicato a questo cliente
-                </p>
-              </div>
-            )}
+            {/* Listino con Quick Create */}
+            <SelectConCreazione<ListinoOption>
+              name="listino_id"
+              label="Listino Prezzi"
+              entityName="Listino"
+              options={localListini}
+              valueField="id"
+              displayField="nome"
+              value={listinoId ? parseInt(listinoId) : undefined}
+              onChange={(val) => setListinoId(val?.toString() || '')}
+              placeholder="Listino base"
+              helpText="Listino prezzi applicato a questo cliente"
+              createUrl="/dashboard/configurazioni/listini/nuovo"
+              channelName="listino-created"
+              onCreated={(item) => setLocalListini(prev => [...prev, item])}
+            />
 
             {/* Agente */}
             {agenti.length > 0 && (
@@ -579,31 +567,22 @@ export default function SoggettoForm({
         <div className="bg-white shadow-sm rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Dati Commerciali Fornitore</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Categoria Fornitore */}
-            <div>
-              <label htmlFor="categoria_fornitore_id" className="block text-sm font-medium text-gray-700 mb-1">
-                Categoria Fornitore
-              </label>
-              <select
-                id="categoria_fornitore_id"
-                name="categoria_fornitore_id"
-                value={categoriaFornitoreId}
-                onChange={(e) => setCategoriaFornitoreId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Nessuna categoria</option>
-                {categorieFornitore.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    [{cat.codice}] {cat.nome}
-                  </option>
-                ))}
-              </select>
-              {categorieFornitore.length === 0 && (
-                <p className="mt-1 text-xs text-amber-600">
-                  Nessuna categoria disponibile. Creale in Configurazioni → Categorie Fornitore
-                </p>
-              )}
-            </div>
+            {/* Categoria Fornitore con Quick Create */}
+            <SelectConCreazione<CategoriaFornitoreOption>
+              name="categoria_fornitore_id"
+              label="Categoria Fornitore"
+              entityName="Categoria Fornitore"
+              options={localCategorieFornitore}
+              valueField="id"
+              displayField="nome"
+              value={categoriaFornitoreId ? parseInt(categoriaFornitoreId) : undefined}
+              onChange={(val) => setCategoriaFornitoreId(val?.toString() || '')}
+              placeholder="Nessuna categoria"
+              helpText={localCategorieFornitore.length === 0 ? 'Clicca + per creare una categoria' : undefined}
+              createUrl="/dashboard/configurazioni/categorie-fornitore/nuovo"
+              channelName="categoria-fornitore-created"
+              onCreated={(item) => setLocalCategorieFornitore(prev => [...prev, item])}
+            />
 
             {/* Giorni Consegna */}
             <div>
