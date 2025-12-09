@@ -4,6 +4,7 @@ import { getMacrofamiglie } from '@/app/actions/macrofamiglie'
 import { getFamiglie } from '@/app/actions/famiglie'
 import { getLinee } from '@/app/actions/linee'
 import { getPrezziListinoProdotto, getListiniAttivi } from '@/app/actions/listini'
+import { getUltimoCostoAcquisto } from '@/app/actions/magazzino'
 import ProdottoForm from '@/components/ProdottoForm'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -20,7 +21,7 @@ export default async function ModificaProdottoPage({
   const isNuovoProdotto = query.nuovo === 'true'
 
   // Carica tutti i dati necessari in parallelo
-  const [prodotto, fornitori, macrofamiglie, famiglie, linee, prezziListino, listini] = await Promise.all([
+  const [prodotto, fornitori, macrofamiglie, famiglie, linee, prezziListino, listini, ultimoCostoAcquisto] = await Promise.all([
     getProdotto(id),
     getFornitori(),
     getMacrofamiglie(),
@@ -28,6 +29,7 @@ export default async function ModificaProdottoPage({
     getLinee(),
     getPrezziListinoProdotto(parseInt(id)),
     getListiniAttivi(),
+    getUltimoCostoAcquisto(parseInt(id)),
   ])
 
   if (!prodotto) {
@@ -76,6 +78,7 @@ export default async function ModificaProdottoPage({
           prezziListino={prezziListino}
           listiniDisponibili={listiniDisponibili}
           isNuovoProdotto={isNuovoProdotto}
+          ultimoCostoAcquisto={ultimoCostoAcquisto}
         />
       </main>
     </div>

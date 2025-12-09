@@ -17,6 +17,13 @@ type ListinoOption = {
   tipo: 'vendita' | 'acquisto'
 }
 
+type UltimoCostoAcquistoType = {
+  costo_unitario: number
+  data_movimento: string
+  documento_numero?: string
+  soggetto_ragione_sociale?: string
+} | null
+
 interface ProdottoFormProps {
   action: any
   fornitori: Fornitore[]
@@ -28,6 +35,7 @@ interface ProdottoFormProps {
   prezziListino?: PrezzoListinoProdotto[]
   listiniDisponibili?: ListinoOption[]
   isNuovoProdotto?: boolean
+  ultimoCostoAcquisto?: UltimoCostoAcquistoType
 }
 
 export default function ProdottoForm({
@@ -41,6 +49,7 @@ export default function ProdottoForm({
   prezziListino = [],
   listiniDisponibili = [],
   isNuovoProdotto = false,
+  ultimoCostoAcquisto = null,
 }: ProdottoFormProps) {
   // Stati per validazione client-side
   const [eanError, setEanError] = useState('')
@@ -427,17 +436,32 @@ export default function ProdottoForm({
                 <label className="block text-sm font-medium text-gray-500">
                   Costo Ultimo Carico (€)
                 </label>
-                <div className="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700">
-                  {initialData?.costo_ultimo != null ? `€ ${Number(initialData.costo_ultimo).toFixed(2)}` : '— Nessun carico'}
+                <div className={`mt-1 block w-full rounded-md border px-3 py-2 ${
+                  ultimoCostoAcquisto ? 'border-orange-300 bg-orange-50 text-orange-800' : 'border-gray-200 bg-gray-100 text-gray-500'
+                }`}>
+                  {ultimoCostoAcquisto
+                    ? `€ ${Number(ultimoCostoAcquisto.costo_unitario).toFixed(2)}`
+                    : '— Nessun movimento di carico'}
                 </div>
-                <p className="mt-1 text-xs text-gray-400">Dall&apos;ultimo DDT/fattura acquisto</p>
+                {ultimoCostoAcquisto && (
+                  <p className="mt-1 text-xs text-orange-600">
+                    {ultimoCostoAcquisto.data_movimento}
+                    {ultimoCostoAcquisto.documento_numero && ` - ${ultimoCostoAcquisto.documento_numero}`}
+                    {ultimoCostoAcquisto.soggetto_ragione_sociale && ` (${ultimoCostoAcquisto.soggetto_ragione_sociale})`}
+                  </p>
+                )}
+                {!ultimoCostoAcquisto && (
+                  <p className="mt-1 text-xs text-gray-400">Verrà aggiornato al primo carico magazzino</p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-500">
                   Costo Medio Ponderato (€)
                 </label>
-                <div className="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700">
+                <div className={`mt-1 block w-full rounded-md border px-3 py-2 ${
+                  initialData?.costo_medio != null ? 'border-orange-300 bg-orange-50 text-orange-800' : 'border-gray-200 bg-gray-100 text-gray-500'
+                }`}>
                   {initialData?.costo_medio != null ? `€ ${Number(initialData.costo_medio).toFixed(2)}` : '— Nessun movimento'}
                 </div>
                 <p className="mt-1 text-xs text-gray-400">Media ponderata di tutti i carichi</p>

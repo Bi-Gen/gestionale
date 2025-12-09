@@ -708,6 +708,68 @@ export async function getOrdiniPerReso(
 }
 
 // =====================================================
+// GET: Ultimo costo acquisto da movimenti
+// =====================================================
+
+export type UltimoCostoAcquisto = {
+  costo_unitario: number
+  data_movimento: string
+  documento_numero?: string
+  soggetto_ragione_sociale?: string
+}
+
+export async function getUltimoCostoAcquisto(prodottoId: number): Promise<UltimoCostoAcquisto | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return null
+  }
+
+  // Trova l'ultimo movimento di carico (segno = 1) per questo prodotto
+  const { data: movimento, error } = await supabase
+    .from('movimento_magazzino')
+    .select(`
+      costo_unitario,
+      data_movimento,
+      documento_numero,
+      soggetto_id
+    `)
+    .eq('prodotto_id', prodottoId)
+    .eq('segno', 1) // Solo carichi (acquisti)
+    .not('costo_unitario', 'is', null) // Solo movimenti con costo
+    .order('data_movimento', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error || !movimento || !movimento.costo_unitario) {
+    return null
+  }
+
+  // Se c'è un soggetto, recupera la ragione sociale
+  let soggettoRagioneSociale: string | undefined
+  if (movimento.soggetto_id) {
+    const { data: soggetto } = await supabase
+      .from('soggetto')
+      .select('ragione_sociale')
+      .eq('id', movimento.soggetto_id)
+      .single()
+
+    if (soggetto) {
+      soggettoRagioneSociale = soggetto.ragione_sociale
+    }
+  }
+
+  return {
+    costo_unitario: movimento.costo_unitario,
+    data_movimento: movimento.data_movimento,
+    documento_numero: movimento.documento_numero || undefined,
+    soggetto_ragione_sociale: soggettoRagioneSociale,
+  }
+}
+
+// =====================================================
 // GET: Giacenze per tutti i prodotti
 // =====================================================
 
