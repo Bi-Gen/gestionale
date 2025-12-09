@@ -728,8 +728,7 @@ export async function getUltimoCostoAcquisto(prodottoId: number): Promise<Ultimo
 
   // Trova l'ultimo movimento di carico da ORDINE DI ACQUISTO (non resi o movimenti manuali)
   // - segno = 1 (carico)
-  // - documento_tipo = 'ordine' (proviene da un ordine, non movimento manuale)
-  // - documento_numero inizia con 'ORD-A' (ordine acquisto, non vendita)
+  // - documento_numero inizia con 'ORD-A' (ordine acquisto, esclude MOV- e altri)
   const { data: movimento, error } = await supabase
     .from('movimento_magazzino')
     .select(`
@@ -740,8 +739,7 @@ export async function getUltimoCostoAcquisto(prodottoId: number): Promise<Ultimo
     `)
     .eq('prodotto_id', prodottoId)
     .eq('segno', 1) // Solo carichi
-    .eq('documento_tipo', 'ordine') // Solo da ordini (non movimenti manuali/resi)
-    .like('documento_numero', 'ORD-A%') // Solo ordini di ACQUISTO
+    .like('documento_numero', 'ORD-A%') // Solo ordini di ACQUISTO (esclude MOV-, ORD-V, ecc.)
     .not('costo_unitario', 'is', null) // Solo movimenti con costo
     .order('data_movimento', { ascending: false })
     .order('created_at', { ascending: false })
