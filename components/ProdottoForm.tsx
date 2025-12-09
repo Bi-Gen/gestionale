@@ -46,6 +46,18 @@ export default function ProdottoForm({
   const [eanError, setEanError] = useState('')
   const [selectedMacrofamiglia, setSelectedMacrofamiglia] = useState<number | undefined>(initialData?.macrofamiglia_id)
 
+  // Estrai prezzi dai listini associati (priorità più alta = primo)
+  const prezziAcquisto = prezziListino
+    .filter(p => p.listino?.tipo === 'acquisto')
+    .sort((a, b) => (b.listino?.priorita || 0) - (a.listino?.priorita || 0))
+  const prezziVendita = prezziListino
+    .filter(p => p.listino?.tipo === 'vendita')
+    .sort((a, b) => (b.listino?.priorita || 0) - (a.listino?.priorita || 0))
+
+  // Prezzo principale da listino (quello con priorità più alta)
+  const prezzoListinoAcquisto = prezziAcquisto[0]
+  const prezzoListinoVendita = prezziVendita[0]
+
   // Stati locali per le liste (aggiornati dopo quick create)
   const [localMacrofamiglie, setLocalMacrofamiglie] = useState(macrofamiglie)
   const [localFamiglie, setLocalFamiglie] = useState(famiglie)
@@ -328,24 +340,97 @@ export default function ProdottoForm({
         </div>
 
         <div className="space-y-6">
-          {/* Sottosezione: Costi Interni (Read-Only) */}
+          {/* Sottosezione: Prezzi da Listini (Read-Only) */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+              Prezzi da Listini Associati
+            </h3>
+            <p className="text-xs text-gray-500 mb-3 pl-4">
+              Questi valori provengono dai listini a cui è associato il prodotto. Modificali nella sezione &quot;Prezzi Listino&quot; più in basso.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4 border-l-2 border-blue-200">
+              <div>
+                <label className="block text-sm font-medium text-gray-500">
+                  Costo da Listino Acquisto (€)
+                </label>
+                <div className={`mt-1 block w-full rounded-md border px-3 py-2 ${
+                  prezzoListinoAcquisto ? 'border-green-300 bg-green-50 text-green-800' : 'border-gray-200 bg-gray-100 text-gray-500'
+                }`}>
+                  {prezzoListinoAcquisto
+                    ? `€ ${Number(prezzoListinoAcquisto.prezzo).toFixed(2)}`
+                    : '— Nessun listino acquisto'}
+                </div>
+                {prezzoListinoAcquisto && (
+                  <p className="mt-1 text-xs text-green-600">
+                    Da: {prezzoListinoAcquisto.listino?.nome} ({prezzoListinoAcquisto.listino?.codice})
+                  </p>
+                )}
+                {!prezzoListinoAcquisto && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    Aggiungi il prodotto a un listino di tipo &quot;acquisto&quot;
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500">
+                  Prezzo da Listino Vendita (€)
+                </label>
+                <div className={`mt-1 block w-full rounded-md border px-3 py-2 ${
+                  prezzoListinoVendita ? 'border-green-300 bg-green-50 text-green-800' : 'border-gray-200 bg-gray-100 text-gray-500'
+                }`}>
+                  {prezzoListinoVendita
+                    ? `€ ${Number(prezzoListinoVendita.prezzo).toFixed(2)}`
+                    : '— Nessun listino vendita'}
+                </div>
+                {prezzoListinoVendita && (
+                  <p className="mt-1 text-xs text-green-600">
+                    Da: {prezzoListinoVendita.listino?.nome} ({prezzoListinoVendita.listino?.codice})
+                  </p>
+                )}
+                {!prezzoListinoVendita && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    Aggiungi il prodotto a un listino di tipo &quot;vendita&quot;
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Margine calcolato se entrambi i listini sono presenti */}
+            {prezzoListinoAcquisto && prezzoListinoVendita && (
+              <div className="mt-4 pl-4 border-l-2 border-purple-200">
+                <div className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-md border border-purple-200">
+                  <span className="text-sm text-purple-700">Margine Listini:</span>
+                  <span className="font-semibold text-purple-900">
+                    {((prezzoListinoVendita.prezzo - prezzoListinoAcquisto.prezzo) / prezzoListinoVendita.prezzo * 100).toFixed(2)}%
+                  </span>
+                  <span className="text-xs text-purple-600">
+                    (€ {(prezzoListinoVendita.prezzo - prezzoListinoAcquisto.prezzo).toFixed(2)})
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sottosezione: Costi da Movimenti (Read-Only) */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-              Costi Interni (automatici - sola lettura)
+              Costi da Movimenti Magazzino (sola lettura)
             </h3>
             <p className="text-xs text-gray-500 mb-3 pl-4">
-              Questi valori vengono aggiornati automaticamente dai movimenti di magazzino
+              Valori calcolati automaticamente dai movimenti di carico effettivi
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-4 border-l-2 border-orange-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4 border-l-2 border-orange-200">
               <div>
                 <label className="block text-sm font-medium text-gray-500">
-                  Costo Ultimo Acquisto (€)
+                  Costo Ultimo Carico (€)
                 </label>
                 <div className="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700">
-                  {initialData?.costo_ultimo != null ? `€ ${Number(initialData.costo_ultimo).toFixed(2)}` : '—'}
+                  {initialData?.costo_ultimo != null ? `€ ${Number(initialData.costo_ultimo).toFixed(2)}` : '— Nessun carico'}
                 </div>
-                <p className="mt-1 text-xs text-gray-400">Dall&apos;ultimo carico magazzino</p>
+                <p className="mt-1 text-xs text-gray-400">Dall&apos;ultimo DDT/fattura acquisto</p>
               </div>
 
               <div>
@@ -353,19 +438,9 @@ export default function ProdottoForm({
                   Costo Medio Ponderato (€)
                 </label>
                 <div className="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700">
-                  {initialData?.costo_medio != null ? `€ ${Number(initialData.costo_medio).toFixed(2)}` : '—'}
+                  {initialData?.costo_medio != null ? `€ ${Number(initialData.costo_medio).toFixed(2)}` : '— Nessun movimento'}
                 </div>
-                <p className="mt-1 text-xs text-gray-400">Media ponderata dei carichi</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500">
-                  Margine Calcolato (%)
-                </label>
-                <div className="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700">
-                  {initialData?.margine_percentuale != null ? `${Number(initialData.margine_percentuale).toFixed(2)}%` : '—'}
-                </div>
-                <p className="mt-1 text-xs text-gray-400">Su prezzo vendita base</p>
+                <p className="mt-1 text-xs text-gray-400">Media ponderata di tutti i carichi</p>
               </div>
             </div>
           </div>
