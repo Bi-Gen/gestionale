@@ -154,28 +154,31 @@ Nel form vendita (`VenditaForm.tsx`):
 
 ## 7. PANEL SUPPORTO DECISIONALE
 
-### Funzione DB: `get_statistiche_vendita_prodotto(p_prodotto_id, p_cliente_id, p_mesi_storico)`
+### Server Action: `getStatisticheVenditaProdotto(prodottoId, clienteId)` in `app/actions/ordini.ts`
 
-**Server Action:** `getStatisticheVenditaProdotto(prodottoId, clienteId)` in `app/actions/ordini.ts`
+**Implementazione:** Usa le stesse funzioni già testate per i Prodotti:
+- `getUltimoCostoAcquisto(prodottoId)` da `magazzino.ts`
+- `getStatistichePrezziProdotto(prodottoId)` da `magazzino.ts`
+
+**Fonte dati costi:** `movimento_magazzino` con filtro:
+- `segno = 1` (carico)
+- `documento_numero LIKE 'ORD-A%'` (solo ordini acquisto, esclude resi/movimenti manuali)
 
 **Campi restituiti:**
 
 ```
-Statistiche Vendite (ultimi 12 mesi):
-├── prezzo_medio_vendita      → Media ponderata prezzi vendita
-├── prezzo_min_vendita        → Prezzo minimo applicato
-├── prezzo_max_vendita        → Prezzo massimo applicato
-├── quantita_totale_venduta   → Quantità totale venduta
-└── numero_vendite            → Numero ordini evasi
+Statistiche Vendite:
+├── prezzo_medio_vendita      → Media prezzi vendita (da movimento_magazzino ORD-V%)
+└── numero_vendite            → Numero vendite effettuate
 
 Ultima Vendita:
 ├── ultima_vendita_prezzo     → Prezzo ultima vendita (generale)
 ├── ultima_vendita_data       → Data ultima vendita
 ├── ultima_vendita_cliente_*  → Stessi dati per lo specifico cliente
 
-Costi:
-├── costo_ultimo              → Ultimo costo di acquisto
-└── costo_medio               → Costo medio nel periodo
+Costi (da ORD-A%):
+├── costo_ultimo              → Ultimo costo da ordine acquisto evaso
+└── costo_medio               → Costo medio ponderato acquisti
 
 Margini Calcolati:
 ├── margine_medio_euro        → (prezzo_medio - costo_medio) in €

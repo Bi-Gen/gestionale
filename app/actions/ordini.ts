@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { validateOrdineFormData } from '@/lib/validations/ordini'
+import {
+  getUltimoCostoAcquisto,
+  getStatistichePrezziProdotto
+} from '@/app/actions/magazzino'
 
 // =====================================================
 // TIPI PER PREZZI CLIENTE
@@ -135,12 +139,12 @@ export async function getPrezziClienteBulk(
 
 /**
  * Recupera statistiche storiche di vendita per un prodotto
+ * Usa le stesse funzioni usate in dettaglio prodotto (magazzino.ts)
  * Include: prezzi medi, margini, ultima vendita, costi
  */
 export async function getStatisticheVenditaProdotto(
   prodottoId: number,
-  clienteId?: number,
-  mesiStorico: number = 12
+  clienteId?: number
 ): Promise<StatisticheVenditaProdotto | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -149,24 +153,95 @@ export async function getStatisticheVenditaProdotto(
     return null
   }
 
-  const { data, error } = await supabase
-    .rpc('get_statistiche_vendita_prodotto', {
-      p_prodotto_id: prodottoId,
-      p_cliente_id: clienteId || null,
-      p_mesi_storico: mesiStorico
-    })
+  // Usa le stesse funzioni già testate per i prodotti
+  const [ultimoCosto, statistichePrezzi] = await Promise.all([
+    getUltimoCostoAcquisto(prodottoId),
+    getStatistichePrezziProdotto(prodottoId)
+  ])
 
-  if (error) {
-    console.error('Error fetching statistiche vendita:', error)
-    return null
+  // Query per ultima vendita a questo cliente specifico (se fornito)
+  let ultimaVenditaCliente = null
+  if (clienteId) {
+    const { data: venditaCliente } = await supabase
+      .from('movimento_magazzino')
+      .select('costo_unitario, data_movimento, quantita')
+      .eq('prodotto_id', prodottoId)
+      .eq('soggetto_id', clienteId)
+      .eq('segno', -1) // Scarico = vendita
+      .like('documento_numero', 'ORD-V%')
+      .not('costo_unitario', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (venditaCliente) {
+      ultimaVenditaCliente = venditaCliente
+    }
   }
 
-  // La funzione RPC ritorna un array (RETURNS TABLE)
-  if (data && data.length > 0) {
-    return data[0] as StatisticheVenditaProdotto
+  // Query per ultima vendita generale
+  const { data: ultimaVenditaGenerale } = await supabase
+    .from('movimento_magazzino')
+    .select('costo_unitario, data_movimento, quantita')
+    .eq('prodotto_id', prodottoId)
+    .eq('segno', -1) // Scarico = vendita
+    .like('documento_numero', 'ORD-V%')
+    .not('costo_unitario', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  // Calcola costi
+  const costoUltimo = ultimoCosto?.costo_unitario ?? null
+  const costoMedio = statistichePrezzi.costo_medio_acquisti
+
+  // Calcola prezzi vendita
+  const prezzoMedioVendita = statistichePrezzi.prezzo_medio_vendite
+  const totaleVendite = statistichePrezzi.totale_vendite
+
+  // Calcola margini
+  let margineMedioEuro: number | null = null
+  let margineMedioPerc: number | null = null
+  if (prezzoMedioVendita && costoMedio && costoMedio > 0) {
+    margineMedioEuro = prezzoMedioVendita - costoMedio
+    margineMedioPerc = ((prezzoMedioVendita - costoMedio) / costoMedio) * 100
   }
 
-  return null
+  let margineUltimoEuro: number | null = null
+  let margineUltimoPerc: number | null = null
+  if (ultimaVenditaGenerale?.costo_unitario && costoUltimo && costoUltimo > 0) {
+    margineUltimoEuro = ultimaVenditaGenerale.costo_unitario - costoUltimo
+    margineUltimoPerc = ((ultimaVenditaGenerale.costo_unitario - costoUltimo) / costoUltimo) * 100
+  }
+
+  return {
+    // Vendite
+    prezzo_medio_vendita: prezzoMedioVendita,
+    prezzo_min_vendita: null, // Non disponibile dalle funzioni esistenti
+    prezzo_max_vendita: null, // Non disponibile dalle funzioni esistenti
+    quantita_totale_venduta: null, // Non disponibile dalle funzioni esistenti
+    numero_vendite: totaleVendite,
+
+    // Ultima vendita generale
+    ultima_vendita_prezzo: ultimaVenditaGenerale?.costo_unitario ?? null,
+    ultima_vendita_data: ultimaVenditaGenerale?.data_movimento ?? null,
+    ultima_vendita_quantita: ultimaVenditaGenerale?.quantita ?? null,
+
+    // Ultima vendita cliente
+    ultima_vendita_cliente_prezzo: ultimaVenditaCliente?.costo_unitario ?? null,
+    ultima_vendita_cliente_data: ultimaVenditaCliente?.data_movimento ?? null,
+    ultima_vendita_cliente_quantita: ultimaVenditaCliente?.quantita ?? null,
+
+    // Costi (da movimenti ORD-A%)
+    costo_ultimo: costoUltimo,
+    costo_medio: costoMedio,
+
+    // Margini
+    margine_medio_euro: margineMedioEuro,
+    margine_medio_percentuale: margineMedioPerc ? Math.round(margineMedioPerc * 100) / 100 : null,
+    margine_ultimo_vendita_euro: margineUltimoEuro,
+    margine_ultimo_vendita_perc: margineUltimoPerc ? Math.round(margineUltimoPerc * 100) / 100 : null
+  }
 }
 
 /**
