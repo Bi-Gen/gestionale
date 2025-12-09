@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
         dettagli={dati.dettagli}
         totali={dati.totali}
         trasporto={{
-          trasportatore: dati.trasportatore?.ragione_sociale,
           costo_stimato: dati.ordine.costo_trasporto,
           peso_totale: dati.ordine.peso_totale_kg,
           incoterm: dati.incoterm?.codice,

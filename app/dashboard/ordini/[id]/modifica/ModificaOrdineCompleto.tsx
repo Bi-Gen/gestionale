@@ -848,8 +848,37 @@ export default function ModificaOrdineCompleto({
                     <span className="text-gray-500 ml-2">({cliente.metodo_pagamento.giorni_scadenza} giorni)</span>
                   )}
                 </div>
+                <input type="hidden" name="metodo_pagamento_id" value={cliente.metodo_pagamento_id || ''} />
               </div>
             )}
+
+            {/* Agente */}
+            {cliente.agente && (
+              <div className="border border-pink-200 rounded-lg p-4 bg-pink-50">
+                <h3 className="text-sm font-medium text-pink-900 mb-3">Agente Commerciale</h3>
+                <div className="text-sm">
+                  <span className="font-medium text-gray-900">{cliente.agente.ragione_sociale}</span>
+                  {cliente.agente.codice_agente && (
+                    <span className="text-gray-500 ml-2">({cliente.agente.codice_agente})</span>
+                  )}
+                </div>
+                <input type="hidden" name="agente_id" value={cliente.agente_id || ''} />
+              </div>
+            )}
+
+            {/* Data Consegna Prevista */}
+            <div className="border border-cyan-200 rounded-lg p-4 bg-cyan-50">
+              <label htmlFor="data_consegna_prevista" className="block text-sm font-medium text-cyan-900 mb-3">
+                Data Consegna Prevista
+              </label>
+              <input
+                type="date"
+                name="data_consegna_prevista"
+                id="data_consegna_prevista"
+                defaultValue={ordine.data_consegna_prevista || ''}
+                className="block w-full rounded-md border border-cyan-300 px-3 py-2 text-gray-900 bg-white focus:border-cyan-500 focus:outline-none focus:ring-cyan-500"
+              />
+            </div>
           </div>
         )
       })()}

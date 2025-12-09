@@ -56,7 +56,6 @@ type Props = {
     totale: number
   }
   trasporto?: {
-    trasportatore?: string
     costo_stimato?: number
     peso_totale?: number
     incoterm?: string
@@ -147,24 +146,25 @@ export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpe
 
         {/* Info Trasporto e Pagamento */}
         <View style={{ flexDirection: 'row', marginBottom: 15, backgroundColor: '#F9FAFB', padding: 10, borderRadius: 4 }}>
-          {/* Trasporto */}
+          {/* Modalità Trasporto */}
           <View style={{ width: '32%' }}>
-            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151', marginBottom: 5 }}>TRASPORTO</Text>
-            {trasporto?.trasportatore && (
-              <Text style={{ fontSize: 9, color: '#4B5563' }}>{trasporto.trasportatore}</Text>
-            )}
-            {trasporto?.incoterm && (
-              <Text style={{ fontSize: 9, color: '#4B5563' }}>
-                {trasporto.incoterm} {trasporto.incoterm_nome && `- ${trasporto.incoterm_nome}`}
-              </Text>
-            )}
-            {trasporto?.trasporto_a_carico && (
-              <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>
-                ({trasporto.trasporto_a_carico === 'compratore' ? 'Franco fabbrica' : 'Franco destino'})
-              </Text>
+            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151', marginBottom: 5 }}>MODALITÀ TRASPORTO</Text>
+            {trasporto?.incoterm ? (
+              <>
+                <Text style={{ fontSize: 9, color: '#4B5563' }}>
+                  {trasporto.incoterm} {trasporto.incoterm_nome && `- ${trasporto.incoterm_nome}`}
+                </Text>
+                {trasporto?.trasporto_a_carico && (
+                  <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>
+                    ({trasporto.trasporto_a_carico === 'compratore' ? 'Franco fabbrica' : 'Franco destino'})
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Text style={{ fontSize: 9, color: '#9CA3AF' }}>Da definire</Text>
             )}
             {trasporto?.peso_totale !== undefined && trasporto.peso_totale > 0 && (
-              <Text style={{ fontSize: 9, color: '#4B5563', marginTop: 2 }}>Peso: {trasporto.peso_totale.toFixed(2)} kg</Text>
+              <Text style={{ fontSize: 9, color: '#4B5563', marginTop: 4 }}>Peso: {trasporto.peso_totale.toFixed(2)} kg</Text>
             )}
           </View>
 

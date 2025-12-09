@@ -287,8 +287,11 @@ export type Ordine = {
   trasportatore_id?: number
   incoterm_id?: number
   sede_cliente_id?: number
+  metodo_pagamento_id?: number
+  agente_id?: number
   costo_trasporto?: number
   peso_totale_kg?: number
+  data_consegna_prevista?: string
   stato: string
   totale: number
   note?: string
@@ -532,6 +535,15 @@ export async function createOrdine(formData: FormData) {
     ? parseFloat(formData.get('peso_totale_kg') as string)
     : 0
 
+  // Nuovi campi: metodo pagamento, agente, data consegna
+  const metodoPagamentoId = formData.get('metodo_pagamento_id')
+    ? parseInt(formData.get('metodo_pagamento_id') as string)
+    : null
+  const agenteId = formData.get('agente_id')
+    ? parseInt(formData.get('agente_id') as string)
+    : null
+  const dataConsegnaPrevista = formData.get('data_consegna_prevista') as string || null
+
   const ordine = {
     azienda_id: utenteAzienda.azienda_id,
     numero_ordine: validation.data.numero_ordine,
@@ -545,6 +557,9 @@ export async function createOrdine(formData: FormData) {
     sede_cliente_id: sedeClienteId,
     costo_trasporto: costoTrasporto,
     peso_totale_kg: pesoTotaleKg,
+    metodo_pagamento_id: metodoPagamentoId,
+    agente_id: agenteId,
+    data_consegna_prevista: dataConsegnaPrevista || null,
     stato: validation.data.stato || 'bozza',
     totale,
     note: validation.data.note || null,
@@ -672,6 +687,15 @@ export async function updateOrdine(id: string, formData: FormData) {
     ? parseFloat(formData.get('peso_totale_kg') as string)
     : 0
 
+  // Nuovi campi: metodo pagamento, agente, data consegna
+  const metodoPagamentoId = formData.get('metodo_pagamento_id')
+    ? parseInt(formData.get('metodo_pagamento_id') as string)
+    : null
+  const agenteId = formData.get('agente_id')
+    ? parseInt(formData.get('agente_id') as string)
+    : null
+  const dataConsegnaPrevista = formData.get('data_consegna_prevista') as string || null
+
   const updates = {
     numero_ordine: validation.data.numero_ordine,
     data_ordine: validation.data.data_ordine,
@@ -683,6 +707,9 @@ export async function updateOrdine(id: string, formData: FormData) {
     sede_cliente_id: sedeClienteId,
     costo_trasporto: costoTrasporto,
     peso_totale_kg: pesoTotaleKg,
+    metodo_pagamento_id: metodoPagamentoId,
+    agente_id: agenteId,
+    data_consegna_prevista: dataConsegnaPrevista || null,
     stato: validation.data.stato || 'bozza',
     totale,
     note: validation.data.note || null,

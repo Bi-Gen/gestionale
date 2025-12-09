@@ -924,28 +924,59 @@ export default function VenditaForm({
                     <span className="text-gray-500 ml-2">({cliente.metodo_pagamento.giorni_scadenza} giorni)</span>
                   )}
                 </div>
+                <input type="hidden" name="metodo_pagamento_id" value={cliente.metodo_pagamento_id || ''} />
+              </div>
+            )}
+
+            {/* Agente */}
+            {cliente.agente && (
+              <div className="border border-pink-200 rounded-lg p-4 bg-pink-50">
+                <h3 className="text-sm font-medium text-pink-900 mb-3">Agente Commerciale</h3>
+                <div className="text-sm">
+                  <span className="font-medium text-gray-900">{cliente.agente.ragione_sociale}</span>
+                  {cliente.agente.codice_agente && (
+                    <span className="text-gray-500 ml-2">({cliente.agente.codice_agente})</span>
+                  )}
+                </div>
+                <input type="hidden" name="agente_id" value={cliente.agente_id || ''} />
               </div>
             )}
           </div>
         )
       })()}
 
-      <div>
-        <label htmlFor="stato" className="block text-sm font-medium text-gray-700">
-          Stato *
-        </label>
-        <select
-          name="stato"
-          id="stato"
-          defaultValue="bozza"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-        >
-          <option value="bozza">Bozza</option>
-          <option value="confermato">Confermato</option>
-        </select>
-        <p className="mt-1 text-xs text-gray-500">
-          Per evadere l&apos;ordine e scaricare il magazzino, usa il bottone &quot;Evadi Ordine&quot; dalla pagina di dettaglio dopo aver salvato l&apos;ordine
-        </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="stato" className="block text-sm font-medium text-gray-700">
+            Stato *
+          </label>
+          <select
+            name="stato"
+            id="stato"
+            defaultValue="bozza"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+          >
+            <option value="bozza">Bozza</option>
+            <option value="confermato">Confermato</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Per evadere l&apos;ordine e scaricare il magazzino, usa il bottone &quot;Evadi Ordine&quot; dalla pagina di dettaglio
+          </p>
+        </div>
+        <div>
+          <label htmlFor="data_consegna_prevista" className="block text-sm font-medium text-gray-700">
+            Data Consegna Prevista
+          </label>
+          <input
+            type="date"
+            name="data_consegna_prevista"
+            id="data_consegna_prevista"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Data stimata di consegna al cliente
+          </p>
+        </div>
       </div>
 
       <div>
