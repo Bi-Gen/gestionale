@@ -65,9 +65,6 @@ export default function VenditaForm({
   ])
   const [selectedClienteId, setSelectedClienteId] = useState<string>('')
   const [loadingPrezzi, setLoadingPrezzi] = useState<boolean>(false)
-  // Trasporto
-  const [trasportatoreId, setTrasportatoreId] = useState<string>('')
-  const [incotermId, setIncotermId] = useState<string>('')
 
   // Funzione per recuperare prezzo, statistiche e giacenza
   const fetchInfoProdotto = useCallback(async (
@@ -147,20 +144,6 @@ export default function VenditaForm({
     aggiornaInfoBulk()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClienteId])
-
-  // Quando cambia il cliente, imposta trasportatore e incoterm default
-  useEffect(() => {
-    if (!selectedClienteId) {
-      setTrasportatoreId('')
-      setIncotermId('')
-      return
-    }
-    const cliente = clienti.find(c => c.id.toString() === selectedClienteId)
-    if (cliente) {
-      setTrasportatoreId(cliente.trasportatore_id?.toString() || '')
-      setIncotermId(cliente.incoterm_default_id?.toString() || '')
-    }
-  }, [selectedClienteId, clienti])
 
   const aggiungiRiga = () => {
     setDettagli([...dettagli, { prodotto_id: '', quantita: 1, prezzo_unitario: 0, sconto_percentuale: 0 }])
@@ -354,72 +337,73 @@ export default function VenditaForm({
         </div>
       </div>
 
-      {/* Sezione Trasporto */}
-      {selectedClienteId && (trasportatori.length > 0 || incoterms.length > 0) && (
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Trasporto</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Incoterm - Chi paga */}
-            {incoterms.length > 0 && (
-              <div>
-                <label htmlFor="incoterm_id" className="block text-sm font-medium text-gray-700">
-                  Chi paga il trasporto
-                </label>
-                <select
-                  name="incoterm_id"
-                  id="incoterm_id"
-                  value={incotermId}
-                  onChange={(e) => setIncotermId(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                >
-                  <option value="">Seleziona...</option>
-                  {incoterms.map((inc) => (
-                    <option key={inc.id} value={inc.id}>
-                      {inc.nome}
-                    </option>
-                  ))}
-                </select>
-                {incotermId && (() => {
-                  const selectedIncoterm = incoterms.find(i => i.id.toString() === incotermId)
-                  if (!selectedIncoterm) return null
-                  const isClientePaga = selectedIncoterm.trasporto_a_carico === 'compratore'
-                  return (
-                    <p className={`mt-1 text-xs px-2 py-1 rounded ${
-                      isClientePaga ? 'text-green-700 bg-green-100' : 'text-orange-700 bg-orange-100'
-                    }`}>
-                      {isClientePaga ? 'Il cliente paga il trasporto' : 'Noi paghiamo il trasporto'}
-                    </p>
-                  )
-                })()}
-              </div>
-            )}
+      {/* Sezione Info Cliente (Read-Only) */}
+      {selectedClienteId && (() => {
+        const cliente = clienti.find(c => c.id.toString() === selectedClienteId)
+        if (!cliente) return null
 
-            {/* Trasportatore */}
-            {trasportatori.length > 0 && (
+        const hasTrasporto = cliente.trasportatore || cliente.incoterm
+        const hasPagamento = cliente.metodo_pagamento
+
+        if (!hasTrasporto && !hasPagamento) return null
+
+        return (
+          <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+            <h3 className="text-sm font-medium text-blue-900 mb-3">
+              Condizioni Cliente
+              <span className="text-xs font-normal text-blue-600 ml-2">(da anagrafica cliente)</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Trasportatore */}
               <div>
-                <label htmlFor="trasportatore_id" className="block text-sm font-medium text-gray-700">
-                  Trasportatore
-                </label>
-                <select
-                  name="trasportatore_id"
-                  id="trasportatore_id"
-                  value={trasportatoreId}
-                  onChange={(e) => setTrasportatoreId(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                >
-                  <option value="">Nessun trasportatore</option>
-                  {trasportatori.map((trasp) => (
-                    <option key={trasp.id} value={trasp.id}>
-                      {trasp.ragione_sociale}
-                      {trasp.costo_trasporto_kg ? ` (${trasp.costo_trasporto_kg.toFixed(2)} €/kg)` : ''}
-                    </option>
-                  ))}
-                </select>
+                <dt className="text-xs font-medium text-gray-500 uppercase">Trasportatore</dt>
+                <dd className="mt-1 text-sm font-medium text-gray-900">
+                  {cliente.trasportatore?.ragione_sociale || <span className="text-gray-400 italic">Non assegnato</span>}
+                </dd>
+                {cliente.trasportatore?.costo_trasporto_kg && (
+                  <dd className="text-xs text-gray-500">{cliente.trasportatore.costo_trasporto_kg.toFixed(2)} €/kg</dd>
+                )}
+                <input type="hidden" name="trasportatore_id" value={cliente.trasportatore_id || ''} />
               </div>
-            )}
+
+              {/* Termini di Resa */}
+              <div>
+                <dt className="text-xs font-medium text-gray-500 uppercase">Termini di Resa</dt>
+                {cliente.incoterm ? (
+                  <>
+                    <dd className="mt-1 text-sm font-medium text-gray-900">{cliente.incoterm.nome}</dd>
+                    <dd className={`text-xs px-2 py-0.5 rounded inline-block mt-1 ${
+                      cliente.incoterm.trasporto_a_carico === 'compratore'
+                        ? 'text-green-700 bg-green-100'
+                        : 'text-orange-700 bg-orange-100'
+                    }`}>
+                      {cliente.incoterm.trasporto_a_carico === 'compratore' ? 'Cliente paga' : 'Noi paghiamo'}
+                    </dd>
+                  </>
+                ) : (
+                  <dd className="mt-1 text-sm text-gray-400 italic">Non definito</dd>
+                )}
+                <input type="hidden" name="incoterm_id" value={cliente.incoterm_default_id || ''} />
+              </div>
+
+              {/* Metodo di Pagamento */}
+              <div>
+                <dt className="text-xs font-medium text-gray-500 uppercase">Metodo Pagamento</dt>
+                {cliente.metodo_pagamento ? (
+                  <>
+                    <dd className="mt-1 text-sm font-medium text-gray-900">{cliente.metodo_pagamento.nome}</dd>
+                    {cliente.metodo_pagamento.giorni_scadenza !== undefined && cliente.metodo_pagamento.giorni_scadenza > 0 && (
+                      <dd className="text-xs text-gray-500">{cliente.metodo_pagamento.giorni_scadenza} giorni</dd>
+                    )}
+                  </>
+                ) : (
+                  <dd className="mt-1 text-sm text-gray-400 italic">Non definito</dd>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Sezione Prodotti */}
       <div className="border-t pt-6">

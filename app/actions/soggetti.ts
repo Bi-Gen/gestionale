@@ -55,6 +55,8 @@ export type Soggetto = {
   // NOTA: Chi paga il trasporto si deduce da incoterm_default_id
   // (incoterm.trasporto_a_carico = 'compratore' → cliente paga, 'venditore' → noi paghiamo)
   incoterm_default_id?: number
+  // Metodo di pagamento predefinito
+  metodo_pagamento_id?: number
   // Campi costi trasporto (per soggetti trasportatori)
   costo_trasporto_kg?: number
   peso_minimo_fatturabile?: number
@@ -303,6 +305,8 @@ export async function createSoggetto(formData: FormData) {
     trasportatore_id: formData.get('trasportatore_id') ? parseInt(formData.get('trasportatore_id') as string) : null,
     // Incoterm predefinito (determina chi paga il trasporto)
     incoterm_default_id: formData.get('incoterm_default_id') ? parseInt(formData.get('incoterm_default_id') as string) : null,
+    // Metodo di pagamento predefinito
+    metodo_pagamento_id: formData.get('metodo_pagamento_id') ? parseInt(formData.get('metodo_pagamento_id') as string) : null,
     // Campi trasporto (solo per trasportatori)
     costo_trasporto_kg: formData.get('costo_trasporto_kg') ? parseFloat(formData.get('costo_trasporto_kg') as string) : null,
     peso_minimo_fatturabile: formData.get('peso_minimo_fatturabile') ? parseFloat(formData.get('peso_minimo_fatturabile') as string) : null,
@@ -385,6 +389,8 @@ export async function updateSoggetto(id: number, formData: FormData) {
     trasportatore_id: formData.get('trasportatore_id') ? parseInt(formData.get('trasportatore_id') as string) : null,
     // Incoterm predefinito (determina chi paga il trasporto)
     incoterm_default_id: formData.get('incoterm_default_id') ? parseInt(formData.get('incoterm_default_id') as string) : null,
+    // Metodo di pagamento predefinito
+    metodo_pagamento_id: formData.get('metodo_pagamento_id') ? parseInt(formData.get('metodo_pagamento_id') as string) : null,
     // Campi trasporto (solo per trasportatori)
     costo_trasporto_kg: formData.get('costo_trasporto_kg') ? parseFloat(formData.get('costo_trasporto_kg') as string) : null,
     peso_minimo_fatturabile: formData.get('peso_minimo_fatturabile') ? parseFloat(formData.get('peso_minimo_fatturabile') as string) : null,

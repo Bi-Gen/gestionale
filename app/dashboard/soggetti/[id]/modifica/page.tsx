@@ -5,6 +5,7 @@ import { getCategorieClienteAttive } from '@/app/actions/categorie-cliente'
 import { getCategorieFornitoreAttive } from '@/app/actions/categorie-fornitore'
 import { getListiniAttivi } from '@/app/actions/listini'
 import { getIncotermsAttivi } from '@/app/actions/incoterm'
+import { getMetodiPagamentoAttivi } from '@/app/actions/metodi-pagamento'
 import SoggettoForm from '@/components/SoggettoForm'
 import { notFound } from 'next/navigation'
 
@@ -18,12 +19,13 @@ export default async function ModificaSoggettoPage({
   const { id } = await params
   const searchParamsResolved = await searchParams
 
-  const [soggetto, tipiSoggetto, agenti, trasportatori, incoterms, categorieCliente, categorieFornitore, listini] = await Promise.all([
+  const [soggetto, tipiSoggetto, agenti, trasportatori, incoterms, metodiPagamento, categorieCliente, categorieFornitore, listini] = await Promise.all([
     getSoggetto(parseInt(id)),
     getTipiSoggetto(),
     getAgentiAttivi(),
     getTrasportatori(),
     getIncotermsAttivi(),
+    getMetodiPagamentoAttivi(),
     getCategorieClienteAttive(),
     getCategorieFornitoreAttive(),
     getListiniAttivi('vendita')
@@ -57,6 +59,7 @@ export default async function ModificaSoggettoPage({
         agenti={agenti}
         trasportatori={trasportatori}
         incoterms={incoterms}
+        metodiPagamento={metodiPagamento}
         categorieCliente={categorieCliente}
         categorieFornitore={categorieFornitore}
         listini={listini}

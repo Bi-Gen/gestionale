@@ -50,6 +50,13 @@ type IncotermOption = {
   trasporto_a_carico: 'venditore' | 'compratore' | 'condiviso'
 }
 
+type MetodoPagamentoOption = {
+  id: number
+  codice: string
+  nome: string
+  giorni_scadenza?: number
+}
+
 type SoggettoFormProps = {
   soggetto?: Soggetto
   tipiSoggetto: TipoSoggetto[]
@@ -57,6 +64,7 @@ type SoggettoFormProps = {
   agenti?: AgenteOption[]
   trasportatori?: TrasportatoreOption[]
   incoterms?: IncotermOption[]
+  metodiPagamento?: MetodoPagamentoOption[]
   categorieCliente?: CategoriaClienteOption[]
   categorieFornitore?: CategoriaFornitoreOption[]
   listini?: ListinoOption[]
@@ -72,6 +80,7 @@ export default function SoggettoForm({
   agenti = [],
   trasportatori = [],
   incoterms = [],
+  metodiPagamento = [],
   categorieCliente = [],
   categorieFornitore = [],
   listini = [],
@@ -123,6 +132,7 @@ export default function SoggettoForm({
   const [agenteId, setAgenteId] = useState<string>(soggetto?.agente_id?.toString() || '')
   const [trasportatoreId, setTrasportatoreId] = useState<string>(soggetto?.trasportatore_id?.toString() || '')
   const [incotermId, setIncotermId] = useState<string>(soggetto?.incoterm_default_id?.toString() || '')
+  const [metodoPagamentoId, setMetodoPagamentoId] = useState<string>(soggetto?.metodo_pagamento_id?.toString() || '')
   const [categoriaClienteId, setCategoriaClienteId] = useState<string>(
     soggetto?.categoria_cliente_id?.toString() || ''
   )
@@ -758,6 +768,32 @@ export default function SoggettoForm({
                 })()}
                 <p className="mt-1 text-xs text-gray-500">
                   Determina chi paga il trasporto
+                </p>
+              </div>
+            )}
+
+            {/* Metodo di Pagamento */}
+            {metodiPagamento.length > 0 && (
+              <div>
+                <label htmlFor="metodo_pagamento_id" className="block text-sm font-medium text-gray-700 mb-1">
+                  Metodo di Pagamento
+                </label>
+                <select
+                  id="metodo_pagamento_id"
+                  name="metodo_pagamento_id"
+                  value={metodoPagamentoId}
+                  onChange={(e) => setMetodoPagamentoId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleziona...</option>
+                  {metodiPagamento.map((mp) => (
+                    <option key={mp.id} value={mp.id}>
+                      {mp.nome} {mp.giorni_scadenza ? `(${mp.giorni_scadenza}gg)` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Termini di pagamento predefiniti
                 </p>
               </div>
             )}

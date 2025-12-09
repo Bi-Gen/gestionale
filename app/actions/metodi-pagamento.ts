@@ -17,6 +17,25 @@ export type MetodoPagamento = {
   created_at: string
 }
 
+// GET: Lista metodi pagamento attivi (per select)
+export async function getMetodiPagamentoAttivi() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('metodo_pagamento')
+    .select('*')
+    .eq('attivo', true)
+    .order('predefinito', { ascending: false })
+    .order('nome', { ascending: true })
+
+  if (error) {
+    console.error('Errore caricamento metodi pagamento:', error)
+    return []
+  }
+
+  return data as MetodoPagamento[]
+}
+
 // GET: Lista metodi pagamento
 export async function getMetodiPagamento() {
   const supabase = await createClient()

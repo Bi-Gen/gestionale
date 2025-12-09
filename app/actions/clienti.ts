@@ -49,6 +49,8 @@ export type Cliente = {
   // Trasporto
   trasportatore_id?: number
   incoterm_default_id?: number
+  // Pagamento
+  metodo_pagamento_id?: number
   created_at: string
   updated_at: string
   agente?: {
@@ -69,6 +71,12 @@ export type Cliente = {
     codice: string
     nome: string
     trasporto_a_carico: 'venditore' | 'compratore' | 'condiviso'
+  }
+  metodo_pagamento?: {
+    id: number
+    codice: string
+    nome: string
+    giorni_scadenza?: number
   }
 }
 
@@ -108,6 +116,12 @@ export async function getClienti(): Promise<Cliente[]> {
         codice,
         nome,
         trasporto_a_carico
+      ),
+      metodo_pagamento:metodo_pagamento_id(
+        id,
+        codice,
+        nome,
+        giorni_scadenza
       )
     `)
     .eq('tipo_soggetto_id', tipoCliente.id)
