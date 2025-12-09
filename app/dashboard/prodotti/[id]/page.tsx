@@ -3,6 +3,7 @@ import { getFornitori } from '@/app/actions/fornitori'
 import { getMacrofamiglie } from '@/app/actions/macrofamiglie'
 import { getFamiglie } from '@/app/actions/famiglie'
 import { getLinee } from '@/app/actions/linee'
+import { getUltimoCostoAcquisto } from '@/app/actions/magazzino'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -16,12 +17,13 @@ export default async function DettaglioProdottoPage({
   const { id } = await params
   const query = await searchParams
 
-  const [prodotto, fornitori, macrofamiglie, famiglie, linee] = await Promise.all([
+  const [prodotto, fornitori, macrofamiglie, famiglie, linee, ultimoCostoAcquisto] = await Promise.all([
     getProdotto(id),
     getFornitori(),
     getMacrofamiglie(),
     getFamiglie(),
     getLinee(),
+    getUltimoCostoAcquisto(parseInt(id)),
   ])
 
   if (!prodotto) {
@@ -45,6 +47,12 @@ export default async function DettaglioProdottoPage({
     : null
 
   const hasPackaging = prodotto.pkg_pezzi_per_confezione || prodotto.pkg_confezioni_per_cartone || prodotto.pkg_cartoni_per_pallet
+
+  // Calcola margine reale basato sul costo ultimo da movimenti
+  const costoReale = ultimoCostoAcquisto?.costo_unitario ?? prodotto.costo_ultimo
+  const margineReale = costoReale && prodotto.prezzo_vendita > 0
+    ? ((prodotto.prezzo_vendita - costoReale) / prodotto.prezzo_vendita) * 100
+    : null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -323,12 +331,20 @@ export default async function DettaglioProdottoPage({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  {prodotto.costo_ultimo != null && (
+                  {ultimoCostoAcquisto ? (
+                    <div className="bg-gray-50 rounded-lg p-3 text-center">
+                      <dt className="text-xs text-gray-500">Costo Ultimo</dt>
+                      <dd className="text-lg font-semibold text-gray-900">€ {ultimoCostoAcquisto.costo_unitario.toFixed(2)}</dd>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(ultimoCostoAcquisto.data_movimento).toLocaleDateString('it-IT')}
+                      </p>
+                    </div>
+                  ) : prodotto.costo_ultimo != null ? (
                     <div className="bg-gray-50 rounded-lg p-3 text-center">
                       <dt className="text-xs text-gray-500">Costo Ultimo</dt>
                       <dd className="text-lg font-semibold text-gray-900">€ {prodotto.costo_ultimo.toFixed(2)}</dd>
                     </div>
-                  )}
+                  ) : null}
                   {prodotto.costo_medio != null && (
                     <div className="bg-gray-50 rounded-lg p-3 text-center">
                       <dt className="text-xs text-gray-500">Costo Medio</dt>
@@ -337,11 +353,11 @@ export default async function DettaglioProdottoPage({
                   )}
                 </div>
 
-                {prodotto.margine_percentuale != null && (
+                {margineReale != null && (
                   <div className="flex items-center justify-between py-2 border-t border-gray-100">
                     <span className="text-sm text-gray-500">Margine</span>
-                    <span className={`text-sm font-semibold ${prodotto.margine_percentuale > 20 ? 'text-green-600' : prodotto.margine_percentuale > 10 ? 'text-amber-600' : 'text-red-600'}`}>
-                      {prodotto.margine_percentuale.toFixed(1)}%
+                    <span className={`text-sm font-semibold ${margineReale > 20 ? 'text-green-600' : margineReale > 10 ? 'text-amber-600' : 'text-red-600'}`}>
+                      {margineReale.toFixed(1)}%
                     </span>
                   </div>
                 )}
