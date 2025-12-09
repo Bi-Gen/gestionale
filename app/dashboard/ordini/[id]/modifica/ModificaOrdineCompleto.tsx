@@ -1,19 +1,32 @@
 'use client'
 
-import { updateOrdine } from '@/app/actions/ordini'
+import {
+  updateOrdine,
+  getInfoProdottoVendita,
+  type Ordine,
+  type PrezzoCliente,
+  type StatisticheVenditaProdotto
+} from '@/app/actions/ordini'
 import Link from 'next/link'
-import { type Ordine } from '@/app/actions/ordini'
 import { type Cliente } from '@/app/actions/clienti'
 import { type Fornitore } from '@/app/actions/fornitori'
 import { type Prodotto } from '@/app/actions/prodotti'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 type DettaglioRiga = {
   id?: string
   prodotto_id: string
   quantita: number
   prezzo_unitario: number
+  prezzo_listino_originale?: number
   sconto_percentuale: number
+  listino_info?: {
+    listino_codice: string | null
+    fonte: string
+    sconto_max: number | null
+    provvigione: number | null
+  }
+  statistiche?: StatisticheVenditaProdotto | null
 }
 
 export default function ModificaOrdineCompleto({
@@ -30,17 +43,39 @@ export default function ModificaOrdineCompleto({
   dettagliEsistenti: any[]
 }) {
   const [fornitoreSelezionato, setFornitoreSelezionato] = useState<string>(ordine.fornitore_id || '')
+  const [selectedClienteId, setSelectedClienteId] = useState<string>(ordine.cliente_id || '')
+  const [loadingPrezzi, setLoadingPrezzi] = useState(false)
   const [dettagli, setDettagli] = useState<DettaglioRiga[]>(
     dettagliEsistenti.length > 0
       ? dettagliEsistenti.map(d => ({
           id: d.id,
-          prodotto_id: d.prodotto_id.toString(), // Converti a stringa per matching
+          prodotto_id: d.prodotto_id.toString(),
           quantita: d.quantita,
           prezzo_unitario: d.prezzo_unitario,
+          prezzo_listino_originale: d.prezzo_unitario,
           sconto_percentuale: d.sconto_percentuale || 0
         }))
       : [{ prodotto_id: '', quantita: 1, prezzo_unitario: 0, sconto_percentuale: 0 }]
   )
+
+  // Funzione per recuperare prezzo e statistiche (solo per vendita)
+  const fetchInfoProdotto = useCallback(async (
+    prodottoId: string,
+    clienteId: string
+  ): Promise<{ prezzo: PrezzoCliente | null, statistiche: StatisticheVenditaProdotto | null }> => {
+    if (!prodottoId || !clienteId) return { prezzo: null, statistiche: null }
+
+    try {
+      const info = await getInfoProdottoVendita(
+        parseInt(prodottoId),
+        parseInt(clienteId)
+      )
+      return info
+    } catch (error) {
+      console.error('Errore recupero info prodotto:', error)
+      return { prezzo: null, statistiche: null }
+    }
+  }, [])
 
   const prodottiFiltrati = ordine.tipo === 'acquisto' && fornitoreSelezionato
     ? prodotti.filter(p => p.fornitore_principale_id === parseInt(fornitoreSelezionato))
@@ -54,6 +89,63 @@ export default function ModificaOrdineCompleto({
     }
   }, [prodotti])
 
+  // Quando cambia il cliente (vendita), aggiorna prezzi e statistiche
+  useEffect(() => {
+    const aggiornaInfoBulk = async () => {
+      if (!selectedClienteId || ordine.tipo !== 'vendita') return
+
+      const prodottiSelezionati = dettagli.filter(d => d.prodotto_id)
+      if (prodottiSelezionati.length === 0) return
+
+      setLoadingPrezzi(true)
+
+      const nuoviDettagli = await Promise.all(
+        dettagli.map(async (dettaglio) => {
+          if (!dettaglio.prodotto_id) return dettaglio
+
+          const { prezzo: prezzoInfo, statistiche } = await fetchInfoProdotto(dettaglio.prodotto_id, selectedClienteId)
+          const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
+
+          if (prezzoInfo && prezzoInfo.prezzo !== null) {
+            return {
+              ...dettaglio,
+              prezzo_unitario: prezzoInfo.prezzo,
+              prezzo_listino_originale: prezzoInfo.prezzo,
+              listino_info: {
+                listino_codice: prezzoInfo.listino_codice,
+                fonte: prezzoInfo.fonte,
+                sconto_max: prezzoInfo.sconto_max,
+                provvigione: prezzoInfo.provvigione
+              },
+              statistiche
+            }
+          } else if (prodotto) {
+            const prezzoBase = prodotto.prezzo_vendita || 0
+            return {
+              ...dettaglio,
+              prezzo_unitario: prezzoBase,
+              prezzo_listino_originale: prezzoBase,
+              listino_info: {
+                listino_codice: null,
+                fonte: 'prezzo_base',
+                sconto_max: null,
+                provvigione: null
+              },
+              statistiche
+            }
+          }
+          return dettaglio
+        })
+      )
+
+      setDettagli(nuoviDettagli)
+      setLoadingPrezzi(false)
+    }
+
+    aggiornaInfoBulk()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClienteId])
+
   const aggiungiRiga = () => {
     setDettagli([...dettagli, { prodotto_id: '', quantita: 1, prezzo_unitario: 0, sconto_percentuale: 0 }])
   }
@@ -64,7 +156,7 @@ export default function ModificaOrdineCompleto({
     }
   }
 
-  const aggiornaProdotto = (index: number, prodottoId: string) => {
+  const aggiornaProdotto = async (index: number, prodottoId: string) => {
     const prodotto = prodotti.find(p => p.id.toString() === prodottoId)
 
     if (!prodotto) {
@@ -74,6 +166,31 @@ export default function ModificaOrdineCompleto({
 
     const nuoviDettagli = [...dettagli]
 
+    // Per ordini di VENDITA con cliente selezionato, recupera prezzo e statistiche
+    if (ordine.tipo === 'vendita' && selectedClienteId) {
+      const { prezzo: prezzoInfo, statistiche } = await fetchInfoProdotto(prodottoId, selectedClienteId)
+
+      if (prezzoInfo && prezzoInfo.prezzo !== null) {
+        nuoviDettagli[index] = {
+          ...nuoviDettagli[index],
+          prodotto_id: prodottoId,
+          prezzo_unitario: prezzoInfo.prezzo,
+          prezzo_listino_originale: prezzoInfo.prezzo,
+          sconto_percentuale: 0,
+          listino_info: {
+            listino_codice: prezzoInfo.listino_codice,
+            fonte: prezzoInfo.fonte,
+            sconto_max: prezzoInfo.sconto_max,
+            provvigione: prezzoInfo.provvigione
+          },
+          statistiche
+        }
+        setDettagli(nuoviDettagli)
+        return
+      }
+    }
+
+    // Fallback: usa prezzo base
     const prezzoSuggerito = ordine.tipo === 'vendita'
       ? (prodotto.prezzo_vendita || 0)
       : (prodotto.costo_ultimo || prodotto.costo_medio || prodotto.prezzo_acquisto || 0)
@@ -82,7 +199,15 @@ export default function ModificaOrdineCompleto({
       ...nuoviDettagli[index],
       prodotto_id: prodottoId,
       prezzo_unitario: prezzoSuggerito,
-      sconto_percentuale: 0
+      prezzo_listino_originale: prezzoSuggerito,
+      sconto_percentuale: 0,
+      listino_info: ordine.tipo === 'vendita' ? {
+        listino_codice: null,
+        fonte: 'prezzo_base',
+        sconto_max: null,
+        provvigione: null
+      } : undefined,
+      statistiche: null
     }
     setDettagli(nuoviDettagli)
   }
@@ -172,7 +297,8 @@ export default function ModificaOrdineCompleto({
             name="cliente_id"
             id="cliente_id"
             required
-            defaultValue={ordine.cliente_id || ''}
+            value={selectedClienteId}
+            onChange={(e) => setSelectedClienteId(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
           >
             <option value="">Seleziona un cliente</option>
@@ -182,6 +308,9 @@ export default function ModificaOrdineCompleto({
               </option>
             ))}
           </select>
+          {loadingPrezzi && (
+            <p className="mt-1 text-sm text-blue-600">Aggiornamento prezzi in corso...</p>
+          )}
         </div>
       ) : (
         <div>
@@ -349,23 +478,111 @@ export default function ModificaOrdineCompleto({
                       </span>
                     </div>
 
-                    {/* Info prezzi/costi */}
-                    <div className={`flex gap-4 p-2 rounded ${ordine.tipo === 'vendita' ? 'bg-blue-50 text-blue-900' : 'bg-orange-50 text-orange-900'}`}>
-                      <span className="font-medium">{ordine.tipo === 'vendita' ? 'Prezzi:' : 'Costi:'}</span>
-                      {ordine.tipo === 'vendita' ? (
-                        <>
-                          <span>Vendita: €{prodotto.prezzo_vendita.toFixed(2)}</span>
-                          {prodotto.costo_ultimo && <span>Costo: €{prodotto.costo_ultimo.toFixed(2)}</span>}
-                          {prodotto.margine_percentuale && <span>Margine: {prodotto.margine_percentuale}%</span>}
-                        </>
-                      ) : (
-                        <>
-                          {prodotto.costo_ultimo && <span>Ultimo: €{prodotto.costo_ultimo.toFixed(2)}</span>}
-                          {prodotto.costo_medio && <span>Medio: €{prodotto.costo_medio.toFixed(2)}</span>}
-                          {prodotto.prezzo_acquisto && <span>Listino: €{prodotto.prezzo_acquisto.toFixed(2)}</span>}
-                        </>
-                      )}
-                    </div>
+                    {/* Info listino applicato (solo vendita) */}
+                    {ordine.tipo === 'vendita' && dettaglio.listino_info && (
+                      <div className={`p-2 rounded text-xs ${
+                        dettaglio.listino_info.fonte === 'listino_cliente' ? 'bg-green-50 text-green-800 border border-green-200' :
+                        dettaglio.listino_info.fonte === 'listino_categoria' ? 'bg-blue-50 text-blue-800 border border-blue-200' :
+                        dettaglio.listino_info.fonte === 'listino_default' ? 'bg-yellow-50 text-yellow-800 border border-yellow-200' :
+                        'bg-gray-50 text-gray-700 border border-gray-200'
+                      }`}>
+                        <span className="font-medium">Listino:</span>
+                        <span className="ml-2">
+                          {dettaglio.listino_info.fonte === 'listino_cliente' && `Cliente (${dettaglio.listino_info.listino_codice || 'N/D'})`}
+                          {dettaglio.listino_info.fonte === 'listino_categoria' && `Categoria (${dettaglio.listino_info.listino_codice || 'N/D'})`}
+                          {dettaglio.listino_info.fonte === 'listino_default' && `Predefinito (${dettaglio.listino_info.listino_codice || 'N/D'})`}
+                          {dettaglio.listino_info.fonte === 'prezzo_base' && 'Prezzo Base Prodotto'}
+                        </span>
+                        {dettaglio.listino_info.sconto_max != null && (
+                          <span className="ml-3 text-gray-600">Max sconto: {dettaglio.listino_info.sconto_max}%</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Panel Statistiche (solo vendita con statistiche) */}
+                    {ordine.tipo === 'vendita' && dettaglio.statistiche && dettaglio.statistiche.numero_vendite > 0 ? (
+                      <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                        <div className="text-xs font-semibold text-purple-800 mb-2">Analisi Storica</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                          {/* Costi */}
+                          <div className="bg-white p-2 rounded shadow-sm">
+                            <div className="text-gray-500 mb-1">Costi</div>
+                            {dettaglio.statistiche.costo_ultimo !== null && (
+                              <div>Ultimo: <span className="font-medium">€{dettaglio.statistiche.costo_ultimo.toFixed(2)}</span></div>
+                            )}
+                            {dettaglio.statistiche.costo_medio !== null && (
+                              <div>Medio: <span className="font-medium">€{dettaglio.statistiche.costo_medio.toFixed(2)}</span></div>
+                            )}
+                          </div>
+
+                          {/* Vendite */}
+                          <div className="bg-white p-2 rounded shadow-sm">
+                            <div className="text-gray-500 mb-1">Vendite ({dettaglio.statistiche.numero_vendite})</div>
+                            {dettaglio.statistiche.prezzo_medio_vendita !== null && (
+                              <div>Medio: <span className="font-medium text-blue-700">€{dettaglio.statistiche.prezzo_medio_vendita.toFixed(2)}</span></div>
+                            )}
+                          </div>
+
+                          {/* Margine */}
+                          <div className="bg-white p-2 rounded shadow-sm">
+                            <div className="text-gray-500 mb-1">Margine Medio</div>
+                            {dettaglio.statistiche.margine_medio_percentuale !== null && (
+                              <div className={`font-bold ${
+                                dettaglio.statistiche.margine_medio_percentuale >= 20 ? 'text-green-600' :
+                                dettaglio.statistiche.margine_medio_percentuale >= 10 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                                {dettaglio.statistiche.margine_medio_percentuale.toFixed(1)}%
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Ultima Vendita */}
+                          <div className="bg-white p-2 rounded shadow-sm">
+                            <div className="text-gray-500 mb-1">Ultima Vendita</div>
+                            {dettaglio.statistiche.ultima_vendita_prezzo !== null && (
+                              <div>€{dettaglio.statistiche.ultima_vendita_prezzo.toFixed(2)}</div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Margine attuale */}
+                        {dettaglio.statistiche.costo_ultimo !== null && dettaglio.prezzo_unitario > 0 && (
+                          <div className="mt-2 p-2 bg-white rounded border text-xs">
+                            {(() => {
+                              const margineAttuale = ((dettaglio.prezzo_unitario - dettaglio.statistiche.costo_ultimo!) / dettaglio.statistiche.costo_ultimo!) * 100
+                              return (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-gray-600">Margine attuale:</span>
+                                  <span className={`font-bold ${
+                                    margineAttuale >= 20 ? 'text-green-600' : margineAttuale >= 10 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>
+                                    {margineAttuale.toFixed(1)}%
+                                  </span>
+                                </div>
+                              )
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* Fallback: info prezzi base */
+                      <div className={`flex gap-4 p-2 rounded ${ordine.tipo === 'vendita' ? 'bg-blue-50 text-blue-900' : 'bg-orange-50 text-orange-900'}`}>
+                        <span className="font-medium">{ordine.tipo === 'vendita' ? 'Prezzi:' : 'Costi:'}</span>
+                        {ordine.tipo === 'vendita' ? (
+                          <>
+                            <span>Vendita: €{prodotto.prezzo_vendita.toFixed(2)}</span>
+                            {prodotto.costo_ultimo && <span>Costo: €{prodotto.costo_ultimo.toFixed(2)}</span>}
+                            {prodotto.margine_percentuale && <span>Margine: {prodotto.margine_percentuale}%</span>}
+                          </>
+                        ) : (
+                          <>
+                            {prodotto.costo_ultimo && <span>Ultimo: €{prodotto.costo_ultimo.toFixed(2)}</span>}
+                            {prodotto.costo_medio && <span>Medio: €{prodotto.costo_medio.toFixed(2)}</span>}
+                            {prodotto.prezzo_acquisto && <span>Listino: €{prodotto.prezzo_acquisto.toFixed(2)}</span>}
+                          </>
+                        )}
+                      </div>
+                    )}
 
                     {/* Warning */}
                     {giacenzaInsufficiente && (
