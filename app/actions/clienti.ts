@@ -107,8 +107,20 @@ export async function getClienti(): Promise<Cliente[]> {
     redirect('/login')
   }
 
+  // Prima ottieni l'ID del tipo soggetto "Cliente" (CLI)
+  const { data: tipoCliente } = await supabase
+    .from('tipi_soggetto')
+    .select('id')
+    .eq('codice', 'CLI')
+    .single()
+
+  if (!tipoCliente) {
+    console.error('Tipo soggetto CLI non trovato')
+    return []
+  }
+
   // Query clienti con relazioni base
-  // Filtro solo soggetti con 'cliente' nell'array tipo
+  // Filtro per tipo_soggetto_id = CLI
   const { data: clientiData, error: clientiError } = await supabase
     .from('soggetto')
     .select(`
@@ -126,7 +138,7 @@ export async function getClienti(): Promise<Cliente[]> {
         giorni_scadenza
       )
     `)
-    .contains('tipo', ['cliente'])
+    .eq('tipo_soggetto_id', tipoCliente.id)
     .order('ragione_sociale', { ascending: true })
 
   if (clientiError) {
