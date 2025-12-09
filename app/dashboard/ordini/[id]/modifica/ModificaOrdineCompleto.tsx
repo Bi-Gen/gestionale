@@ -47,8 +47,8 @@ export default function ModificaOrdineCompleto({
   magazzini: Magazzino[]
   dettagliEsistenti: any[]
 }) {
-  const [fornitoreSelezionato, setFornitoreSelezionato] = useState<string>(ordine.fornitore_id || '')
-  const [selectedClienteId, setSelectedClienteId] = useState<string>(ordine.cliente_id || '')
+  const [fornitoreSelezionato, setFornitoreSelezionato] = useState<string>(ordine.fornitore_id?.toString() || '')
+  const [selectedClienteId, setSelectedClienteId] = useState<string>(ordine.cliente_id?.toString() || '')
   const [loadingPrezzi, setLoadingPrezzi] = useState(false)
   // Sede cliente - inizializza dalla sede dell'ordine esistente
   const [selectedSedeId, setSelectedSedeId] = useState<string>(ordine.sede_cliente_id?.toString() || '')

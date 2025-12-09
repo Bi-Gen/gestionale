@@ -113,13 +113,6 @@ export async function getClienti(): Promise<Cliente[]> {
     .from('soggetto')
     .select(`
       *,
-      trasportatore:soggetto!trasportatore_id(
-        id,
-        ragione_sociale,
-        costo_trasporto_kg,
-        peso_minimo_fatturabile,
-        costo_minimo_trasporto
-      ),
       incoterm:incoterm_default_id(
         id,
         codice,
@@ -185,10 +178,31 @@ export async function getClienti(): Promise<Cliente[]> {
     }
   }
 
-  // Combina clienti con le loro sedi
+  // Recupera trasportatori per i clienti che ne hanno uno
+  const trasportatoreIds = clientiData
+    .map(c => c.trasportatore_id)
+    .filter((id): id is number => id !== null && id !== undefined)
+
+  const trasportatoriMap = new Map<number, { id: number; ragione_sociale: string; costo_trasporto_kg?: number; peso_minimo_fatturabile?: number; costo_minimo_trasporto?: number }>()
+
+  if (trasportatoreIds.length > 0) {
+    const { data: trasportatoriData } = await supabase
+      .from('soggetto')
+      .select('id, ragione_sociale, costo_trasporto_kg, peso_minimo_fatturabile, costo_minimo_trasporto')
+      .in('id', trasportatoreIds)
+
+    if (trasportatoriData) {
+      for (const t of trasportatoriData) {
+        trasportatoriMap.set(t.id, t)
+      }
+    }
+  }
+
+  // Combina clienti con le loro sedi e trasportatori
   const clientiConSedi = clientiData.map(cliente => ({
     ...cliente,
-    sedi: sediByCliente.get(cliente.id) || []
+    sedi: sediByCliente.get(cliente.id) || [],
+    trasportatore: cliente.trasportatore_id ? trasportatoriMap.get(cliente.trasportatore_id) : undefined
   }))
 
   return clientiConSedi
