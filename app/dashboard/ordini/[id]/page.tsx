@@ -2,6 +2,7 @@ import { getOrdine } from '@/app/actions/ordini'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import EvadiOrdineButton from '@/components/EvadiOrdineButton'
+import PdfExportButtons from '@/components/PdfExportButtons'
 
 export default async function DettaglioOrdinePage({
   params,
@@ -330,6 +331,14 @@ export default async function DettaglioOrdinePage({
                 </div>
               </div>
             )}
+
+            {/* Card: Export PDF */}
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+                Esporta PDF
+              </h2>
+              <PdfExportButtons ordineId={id} tipo={ordine.tipo} />
+            </div>
 
           </div>
         </div>

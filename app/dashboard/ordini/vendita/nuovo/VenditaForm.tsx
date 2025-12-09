@@ -260,7 +260,8 @@ export default function VenditaForm({
     return dettagli.reduce((sum, dettaglio) => {
       if (!dettaglio.prodotto_id) return sum
       const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
-      const pesoUnitario = prodotto?.peso_kg || 0
+      // peso_kg può arrivare come stringa dopo serializzazione JSON
+      const pesoUnitario = prodotto?.peso_kg ? parseFloat(String(prodotto.peso_kg)) : 0
       return sum + (dettaglio.quantita * pesoUnitario)
     }, 0)
   }
@@ -270,9 +271,10 @@ export default function VenditaForm({
     if (!trasportatore?.costo_trasporto_kg) return null
 
     const pesoTotale = calcolaPesoTotale()
-    const costoKg = trasportatore.costo_trasporto_kg
-    const pesoMinimo = trasportatore.peso_minimo_fatturabile || 0
-    const costoMinimo = trasportatore.costo_minimo_trasporto || 0
+    // I valori possono arrivare come stringhe dopo serializzazione JSON
+    const costoKg = parseFloat(String(trasportatore.costo_trasporto_kg))
+    const pesoMinimo = trasportatore.peso_minimo_fatturabile ? parseFloat(String(trasportatore.peso_minimo_fatturabile)) : 0
+    const costoMinimo = trasportatore.costo_minimo_trasporto ? parseFloat(String(trasportatore.costo_minimo_trasporto)) : 0
 
     // Applica peso minimo fatturabile
     const pesoEffettivo = Math.max(pesoTotale, pesoMinimo)

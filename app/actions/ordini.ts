@@ -846,3 +846,214 @@ async function ricalcolaTotaleOrdine(ordineId: string) {
     .update({ totale })
     .eq('id', ordineId)
 }
+
+// =====================================================
+// DATI COMPLETI PER PDF
+// =====================================================
+
+export type OrdineCompletoPDF = {
+  ordine: {
+    numero_ordine: string
+    data_ordine: string
+    tipo: string
+    stato: string
+    totale: number
+    note?: string
+    costo_trasporto?: number
+    peso_totale_kg?: number
+  }
+  azienda: {
+    nome: string
+    ragione_sociale?: string
+    partita_iva?: string
+    codice_fiscale?: string
+    email: string
+    telefono?: string
+    indirizzo?: string
+    cap?: string
+    citta?: string
+    provincia?: string
+  }
+  cliente?: {
+    ragione_sociale: string
+    partita_iva?: string
+    codice_fiscale?: string
+    email?: string
+    telefono?: string
+    indirizzo?: string
+    cap?: string
+    citta?: string
+    provincia?: string
+  }
+  indirizzoSpedizione?: {
+    denominazione: string
+    indirizzo?: string
+    cap?: string
+    citta?: string
+    provincia?: string
+  }
+  trasportatore?: {
+    ragione_sociale: string
+    partita_iva?: string
+    telefono?: string
+    email?: string
+  }
+  incoterm?: {
+    codice: string
+    nome: string
+  }
+  dettagli: Array<{
+    codice: string
+    descrizione: string
+    quantita: number
+    unita: string
+    prezzo_unitario: number
+    sconto_percentuale: number
+    totale: number
+  }>
+  totali: {
+    imponibile: number
+    iva: number
+    totale: number
+  }
+}
+
+/**
+ * Recupera tutti i dati necessari per generare PDF ordine
+ */
+export async function getOrdinePDF(id: string): Promise<OrdineCompletoPDF | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return null
+  }
+
+  // Ottieni azienda
+  const { data: utenteAzienda } = await supabase
+    .from('utente_azienda')
+    .select('azienda_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!utenteAzienda) return null
+
+  const { data: azienda } = await supabase
+    .from('azienda')
+    .select('nome, ragione_sociale, partita_iva, codice_fiscale, email, telefono, indirizzo, cap, citta, provincia')
+    .eq('id', utenteAzienda.azienda_id)
+    .single()
+
+  if (!azienda) return null
+
+  // Ottieni ordine con relazioni
+  const { data: ordine } = await supabase
+    .from('ordini')
+    .select(`
+      numero_ordine, data_ordine, tipo, stato, totale, note, costo_trasporto, peso_totale_kg,
+      cliente_id, sede_cliente_id, trasportatore_id, incoterm_id
+    `)
+    .eq('id', id)
+    .single()
+
+  if (!ordine) return null
+
+  // Cliente completo
+  let cliente = null
+  if (ordine.cliente_id) {
+    const { data } = await supabase
+      .from('soggetto')
+      .select('ragione_sociale, partita_iva, codice_fiscale, email, telefono, indirizzo, cap, citta, provincia')
+      .eq('id', ordine.cliente_id)
+      .single()
+    cliente = data
+  }
+
+  // Sede spedizione
+  let indirizzoSpedizione = null
+  if (ordine.sede_cliente_id) {
+    const { data } = await supabase
+      .from('sede_cliente')
+      .select('denominazione, indirizzo, cap, citta, provincia')
+      .eq('id', ordine.sede_cliente_id)
+      .single()
+    indirizzoSpedizione = data
+  }
+
+  // Trasportatore
+  let trasportatore = null
+  if (ordine.trasportatore_id) {
+    const { data } = await supabase
+      .from('soggetto')
+      .select('ragione_sociale, partita_iva, telefono, email')
+      .eq('id', ordine.trasportatore_id)
+      .single()
+    trasportatore = data
+  }
+
+  // Incoterm
+  let incoterm = null
+  if (ordine.incoterm_id) {
+    const { data } = await supabase
+      .from('incoterm')
+      .select('codice, nome')
+      .eq('id', ordine.incoterm_id)
+      .single()
+    incoterm = data
+  }
+
+  // Dettagli prodotti
+  const { data: dettagliDb } = await supabase
+    .from('dettagli_ordini')
+    .select(`
+      quantita, prezzo_unitario, sconto_percentuale, subtotale,
+      prodotto:prodotto_id(codice, nome, unita_misura)
+    `)
+    .eq('ordine_id', id)
+
+  const dettagli = (dettagliDb || []).map(d => {
+    // Il prodotto può essere un oggetto o un array (dipende dalla query Supabase)
+    const prodottoRaw = d.prodotto as unknown
+    const prodotto = Array.isArray(prodottoRaw)
+      ? prodottoRaw[0] as { codice: string; nome: string; unita_misura?: string } | undefined
+      : prodottoRaw as { codice: string; nome: string; unita_misura?: string } | null
+    return {
+      codice: prodotto?.codice || '',
+      descrizione: prodotto?.nome || '',
+      quantita: d.quantita,
+      unita: prodotto?.unita_misura || 'PZ',
+      prezzo_unitario: parseFloat(String(d.prezzo_unitario)),
+      sconto_percentuale: parseFloat(String(d.sconto_percentuale || 0)),
+      totale: parseFloat(String(d.subtotale))
+    }
+  })
+
+  // Calcola totali
+  const imponibile = dettagli.reduce((sum, d) => sum + d.totale, 0)
+  const iva = imponibile * 0.22 // IVA 22%
+  const totaleConIva = imponibile + iva + (ordine.costo_trasporto || 0)
+
+  return {
+    ordine: {
+      numero_ordine: ordine.numero_ordine,
+      data_ordine: ordine.data_ordine,
+      tipo: ordine.tipo,
+      stato: ordine.stato,
+      totale: parseFloat(String(ordine.totale)),
+      note: ordine.note,
+      costo_trasporto: ordine.costo_trasporto ? parseFloat(String(ordine.costo_trasporto)) : undefined,
+      peso_totale_kg: ordine.peso_totale_kg ? parseFloat(String(ordine.peso_totale_kg)) : undefined
+    },
+    azienda,
+    cliente: cliente || undefined,
+    indirizzoSpedizione: indirizzoSpedizione || undefined,
+    trasportatore: trasportatore || undefined,
+    incoterm: incoterm || undefined,
+    dettagli,
+    totali: {
+      imponibile: Math.round(imponibile * 100) / 100,
+      iva: Math.round(iva * 100) / 100,
+      totale: Math.round(totaleConIva * 100) / 100
+    }
+  }
+}

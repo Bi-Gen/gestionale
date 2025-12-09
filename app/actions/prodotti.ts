@@ -111,7 +111,15 @@ export async function getProdotti(): Promise<Prodotto[]> {
 
   const { data, error } = await supabase
     .from('prodotto')
-    .select('*')
+    .select(`
+      *,
+      packaging:packaging_prodotto(
+        confezione_peso_kg,
+        cartone_peso_kg,
+        pezzi_per_confezione,
+        pezzi_per_cartone
+      )
+    `)
     .order('nome', { ascending: true })
 
   if (error) {
@@ -119,7 +127,19 @@ export async function getProdotti(): Promise<Prodotto[]> {
     return []
   }
 
-  return data || []
+  // Mappa i dati packaging per compatibilità
+  return (data || []).map(prodotto => {
+    const packaging = Array.isArray(prodotto.packaging) ? prodotto.packaging[0] : prodotto.packaging
+    return {
+      ...prodotto,
+      // Usa peso_kg del prodotto, o calcola da packaging se disponibile
+      peso_kg: prodotto.peso_kg || (packaging?.confezione_peso_kg && packaging?.pezzi_per_confezione
+        ? packaging.confezione_peso_kg / packaging.pezzi_per_confezione
+        : null),
+      pkg_confezione_peso_kg: packaging?.confezione_peso_kg,
+      pkg_cartone_peso_kg: packaging?.cartone_peso_kg,
+    }
+  })
 }
 
 export async function getProdotto(id: string): Promise<Prodotto | null> {
