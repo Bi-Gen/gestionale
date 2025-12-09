@@ -106,4 +106,58 @@ Il PDF Riepilogo Ordine ora mostra le informazioni richieste (agente, metodo pag
 
 ---
 
+## Errori Critici Supabase da Risolvere
+
+### 1. RLS Disabilitato (2 tabelle)
+
+| Tabella | Problema |
+|---------|----------|
+| `public.azienda` | Ha le RLS policies create ma RLS NON è abilitato |
+| `public.piano_abbonamento` | Tabella pubblica senza RLS |
+
+**Soluzione:**
+```sql
+ALTER TABLE public.azienda ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.piano_abbonamento ENABLE ROW LEVEL SECURITY;
+-- Verificare che le policy esistenti siano corrette
+```
+
+### 2. SECURITY DEFINER Views (13 views)
+
+Queste views usano `SECURITY DEFINER` invece di `SECURITY INVOKER`.
+Questo significa che le query vengono eseguite con i permessi del creatore della view, bypassando RLS.
+
+| View |
+|------|
+| `prodotto_tempi_approvvigionamento` |
+| `scadenzario` |
+| `movimento_completo` |
+| `dettagli_ordini_compat` |
+| `vista_agenti` |
+| `prodotto_classificato` |
+| `confronto_prezzi_prodotto` |
+| `ultimo_prezzo_prodotto` |
+| `ordini_compat` |
+| `prima_nota` |
+| `piano_abbonamento_dettaglio` |
+| `prodotti_sotto_scorta` |
+| `prodotto_con_packaging` |
+
+**Soluzione:** Ricreare le views con `SECURITY INVOKER`:
+```sql
+-- Per ogni view, fare:
+-- 1. Salvare la definizione attuale
+-- 2. DROP VIEW nome_view;
+-- 3. CREATE VIEW nome_view WITH (security_invoker = true) AS ...
+```
+
+### Approccio Consigliato
+
+1. **Prima** fare backup/export delle definizioni delle views
+2. **Testare** in ambiente di sviluppo
+3. Creare una **migration** con tutte le fix
+4. **Verificare** che l'app funzioni ancora dopo le modifiche
+
+---
+
 *Ultimo aggiornamento: 2025-12-09*
