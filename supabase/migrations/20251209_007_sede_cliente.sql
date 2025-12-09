@@ -95,6 +95,7 @@ COMMENT ON COLUMN ordini.sede_cliente_id IS 'Sede di spedizione per questo ordin
 ALTER TABLE sede_cliente ENABLE ROW LEVEL SECURITY;
 
 -- Policy: gli utenti vedono solo le sedi dei clienti della loro azienda
+DROP POLICY IF EXISTS sede_cliente_select_policy ON sede_cliente;
 CREATE POLICY sede_cliente_select_policy ON sede_cliente
   FOR SELECT
   USING (
@@ -104,6 +105,7 @@ CREATE POLICY sede_cliente_select_policy ON sede_cliente
     )
   );
 
+DROP POLICY IF EXISTS sede_cliente_insert_policy ON sede_cliente;
 CREATE POLICY sede_cliente_insert_policy ON sede_cliente
   FOR INSERT
   WITH CHECK (
@@ -113,6 +115,7 @@ CREATE POLICY sede_cliente_insert_policy ON sede_cliente
     )
   );
 
+DROP POLICY IF EXISTS sede_cliente_update_policy ON sede_cliente;
 CREATE POLICY sede_cliente_update_policy ON sede_cliente
   FOR UPDATE
   USING (
@@ -122,6 +125,7 @@ CREATE POLICY sede_cliente_update_policy ON sede_cliente
     )
   );
 
+DROP POLICY IF EXISTS sede_cliente_delete_policy ON sede_cliente;
 CREATE POLICY sede_cliente_delete_policy ON sede_cliente
   FOR DELETE
   USING (
