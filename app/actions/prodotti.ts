@@ -65,6 +65,20 @@ export type Prodotto = {
   immagine_url?: string
   // Packaging (da tabella satellite)
   packaging?: PackagingProdotto
+  // Campi packaging con prefisso per compatibilità form
+  pkg_nome_confezione?: string
+  pkg_pezzi_per_confezione?: number
+  pkg_confezione_peso_kg?: number
+  pkg_confezioni_per_cartone?: number
+  pkg_cartone_lunghezza_cm?: number
+  pkg_cartone_larghezza_cm?: number
+  pkg_cartone_altezza_cm?: number
+  pkg_cartone_peso_kg?: number
+  pkg_cartoni_per_pallet?: number
+  pkg_cartoni_per_strato?: number
+  pkg_strati_per_pallet?: number
+  pkg_pallet_per_container_20ft?: number
+  pkg_pallet_per_container_40ft?: number
   created_at: string
   updated_at: string
 }
@@ -116,15 +130,44 @@ export async function getProdotto(id: string): Promise<Prodotto | null> {
     redirect('/login')
   }
 
+  // Recupera prodotto con packaging dalla tabella satellite
   const { data, error } = await supabase
     .from('prodotto')
-    .select('*')
+    .select(`
+      *,
+      packaging:packaging_prodotto(*)
+    `)
     .eq('id', id)
     .single()
 
   if (error) {
     console.error('Error fetching prodotto:', error)
     return null
+  }
+
+  // Mappa i campi packaging con prefisso pkg_ per compatibilità con il form
+  if (data) {
+    const packaging = Array.isArray(data.packaging) ? data.packaging[0] : data.packaging
+    if (packaging) {
+      return {
+        ...data,
+        packaging,
+        // Campi con prefisso pkg_ per il form
+        pkg_nome_confezione: packaging.nome_confezione,
+        pkg_pezzi_per_confezione: packaging.pezzi_per_confezione,
+        pkg_confezione_peso_kg: packaging.confezione_peso_kg,
+        pkg_confezioni_per_cartone: packaging.confezioni_per_cartone,
+        pkg_cartone_lunghezza_cm: packaging.cartone_lunghezza_cm,
+        pkg_cartone_larghezza_cm: packaging.cartone_larghezza_cm,
+        pkg_cartone_altezza_cm: packaging.cartone_altezza_cm,
+        pkg_cartone_peso_kg: packaging.cartone_peso_kg,
+        pkg_cartoni_per_pallet: packaging.cartoni_per_pallet,
+        pkg_cartoni_per_strato: packaging.cartoni_per_strato,
+        pkg_strati_per_pallet: packaging.strati_per_pallet,
+        pkg_pallet_per_container_20ft: packaging.pallet_per_container_20ft,
+        pkg_pallet_per_container_40ft: packaging.pallet_per_container_40ft,
+      }
+    }
   }
 
   return data
