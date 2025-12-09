@@ -1,5 +1,7 @@
 import { getProdotto } from '@/app/actions/prodotti'
 import { getFornitori } from '@/app/actions/fornitori'
+import { getPrezziListinoProdotto, getListiniAttivi } from '@/app/actions/listini'
+import PrezziListinoProdotto from '@/components/PrezziListinoProdotto'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -14,6 +16,8 @@ export default async function DettaglioProdottoPage({
   const query = await searchParams
   const prodotto = await getProdotto(id)
   const fornitori = await getFornitori()
+  const prezziListino = await getPrezziListinoProdotto(parseInt(id))
+  const listini = await getListiniAttivi()
 
   if (!prodotto) {
     redirect('/dashboard/prodotti?error=Prodotto non trovato')
@@ -21,6 +25,14 @@ export default async function DettaglioProdottoPage({
 
   // Trova il fornitore associato
   const fornitore = fornitori.find(f => String(f.id) === String(prodotto.fornitore_principale_id))
+
+  // Prepara listini per il componente
+  const listiniDisponibili = listini.map(l => ({
+    id: l.id,
+    codice: l.codice,
+    nome: l.nome,
+    tipo: l.tipo as 'vendita' | 'acquisto',
+  }))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -168,10 +180,15 @@ export default async function DettaglioProdottoPage({
             </div>
           </dl>
 
-          {/* Nota listini */}
-          <p className="mt-6 pt-6 border-t border-gray-200 text-xs text-gray-500">
-            💡 I listini prezzi si gestiscono da Configurazioni → Listini
-          </p>
+        </div>
+
+        {/* SEZIONE PREZZI LISTINO */}
+        <div className="mb-6">
+          <PrezziListinoProdotto
+            prodottoId={parseInt(id)}
+            prezzi={prezziListino}
+            listiniDisponibili={listiniDisponibili}
+          />
         </div>
 
         {/* SEZIONE 3: FORNITORE */}

@@ -556,6 +556,177 @@ export async function removeProdottoFromListino(id: number, listino_id: number) 
   redirect(`/dashboard/configurazioni/listini/${listino_id}?success=Prodotto rimosso dal listino`)
 }
 
+// =====================================================
+// PREZZI LISTINO PER PRODOTTO - Vista dal prodotto
+// =====================================================
+
+export type PrezzoListinoProdotto = {
+  id: number
+  azienda_id: string
+  listino_id: number
+  prodotto_id: number
+  prezzo: number
+  prezzo_minimo?: number
+  sconto_max?: number
+  provvigione_override?: number
+  data_inizio?: string
+  data_fine?: string
+  note?: string
+  created_at: string
+  updated_at: string
+  // Relazione listino
+  listino?: {
+    id: number
+    codice: string
+    nome: string
+    tipo: 'vendita' | 'acquisto'
+    provvigione_default: number
+    priorita: number
+    attivo: boolean
+  }
+}
+
+// GET: Tutti i prezzi listino per un prodotto
+export async function getPrezziListinoProdotto(prodotto_id: number) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('listino_prodotto')
+    .select(`
+      *,
+      listino:listino_id(id, codice, nome, tipo, provvigione_default, priorita, attivo)
+    `)
+    .eq('prodotto_id', prodotto_id)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Errore caricamento prezzi listino prodotto:', error)
+    return []
+  }
+
+  return data as PrezzoListinoProdotto[]
+}
+
+// CREATE: Aggiungi prezzo prodotto a un listino (dalla vista prodotto)
+export async function addPrezzoListinoProdotto(prodotto_id: number, formData: FormData) {
+  const supabase = await createClient()
+
+  // Ottieni azienda_id
+  const { data: userData } = await supabase.auth.getUser()
+  if (!userData.user) {
+    return { error: 'Utente non autenticato' }
+  }
+
+  const { data: utenteAzienda } = await supabase
+    .from('utente_azienda')
+    .select('azienda_id')
+    .eq('user_id', userData.user.id)
+    .eq('attivo', true)
+    .single()
+
+  if (!utenteAzienda) {
+    return { error: 'Nessuna azienda associata' }
+  }
+
+  const listino_id = parseInt(formData.get('listino_id') as string)
+  const prezzo = parseFloat(formData.get('prezzo') as string)
+
+  if (!listino_id || isNaN(prezzo)) {
+    return { error: 'Listino e prezzo sono obbligatori' }
+  }
+
+  const listinoProdottoData = {
+    azienda_id: utenteAzienda.azienda_id,
+    listino_id,
+    prodotto_id,
+    prezzo,
+    prezzo_minimo: formData.get('prezzo_minimo') ? parseFloat(formData.get('prezzo_minimo') as string) : null,
+    sconto_max: formData.get('sconto_max') ? parseFloat(formData.get('sconto_max') as string) : null,
+    provvigione_override: formData.get('provvigione_override') ? parseFloat(formData.get('provvigione_override') as string) : null,
+    data_inizio: (formData.get('data_inizio') as string) || null,
+    data_fine: (formData.get('data_fine') as string) || null,
+    note: (formData.get('note') as string)?.trim() || null,
+  }
+
+  const { data, error } = await supabase
+    .from('listino_prodotto')
+    .insert([listinoProdottoData])
+    .select(`
+      *,
+      listino:listino_id(id, codice, nome, tipo, provvigione_default, priorita, attivo)
+    `)
+    .single()
+
+  if (error) {
+    console.error('Errore aggiunta prezzo listino:', error)
+    if (error.code === '23505') {
+      return { error: 'Prodotto già presente in questo listino' }
+    }
+    return { error: error.message }
+  }
+
+  revalidatePath(`/dashboard/prodotti/${prodotto_id}`)
+  return { success: true, data }
+}
+
+// UPDATE: Modifica prezzo prodotto in un listino (dalla vista prodotto)
+export async function updatePrezzoListinoProdotto(id: number, prodotto_id: number, formData: FormData) {
+  const supabase = await createClient()
+
+  const prezzo = parseFloat(formData.get('prezzo') as string)
+
+  if (isNaN(prezzo)) {
+    return { error: 'Prezzo non valido' }
+  }
+
+  const updateData = {
+    prezzo,
+    prezzo_minimo: formData.get('prezzo_minimo') ? parseFloat(formData.get('prezzo_minimo') as string) : null,
+    sconto_max: formData.get('sconto_max') ? parseFloat(formData.get('sconto_max') as string) : null,
+    provvigione_override: formData.get('provvigione_override') ? parseFloat(formData.get('provvigione_override') as string) : null,
+    data_inizio: (formData.get('data_inizio') as string) || null,
+    data_fine: (formData.get('data_fine') as string) || null,
+    note: (formData.get('note') as string)?.trim() || null,
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase
+    .from('listino_prodotto')
+    .update(updateData)
+    .eq('id', id)
+    .select(`
+      *,
+      listino:listino_id(id, codice, nome, tipo, provvigione_default, priorita, attivo)
+    `)
+    .single()
+
+  if (error) {
+    console.error('Errore aggiornamento prezzo listino:', error)
+    return { error: error.message }
+  }
+
+  revalidatePath(`/dashboard/prodotti/${prodotto_id}`)
+  return { success: true, data }
+}
+
+// DELETE: Rimuovi prezzo prodotto da un listino (dalla vista prodotto)
+export async function deletePrezzoListinoProdotto(id: number, prodotto_id: number) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('listino_prodotto')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Errore eliminazione prezzo listino:', error)
+    return { error: error.message }
+  }
+
+  revalidatePath(`/dashboard/prodotti/${prodotto_id}`)
+  return { success: true }
+}
+
 // BULK IMPORT: Importa prezzi da CSV/array
 export async function importPrezziListino(
   listino_id: number,
