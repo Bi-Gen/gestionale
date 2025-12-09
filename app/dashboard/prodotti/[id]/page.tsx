@@ -3,7 +3,7 @@ import { getFornitori } from '@/app/actions/fornitori'
 import { getMacrofamiglie } from '@/app/actions/macrofamiglie'
 import { getFamiglie } from '@/app/actions/famiglie'
 import { getLinee } from '@/app/actions/linee'
-import { getUltimoCostoAcquisto } from '@/app/actions/magazzino'
+import { getUltimoCostoAcquisto, getUltimaVendita, getStatistichePrezziProdotto } from '@/app/actions/magazzino'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -17,13 +17,15 @@ export default async function DettaglioProdottoPage({
   const { id } = await params
   const query = await searchParams
 
-  const [prodotto, fornitori, macrofamiglie, famiglie, linee, ultimoCostoAcquisto] = await Promise.all([
+  const [prodotto, fornitori, macrofamiglie, famiglie, linee, ultimoCostoAcquisto, ultimaVendita, statistichePrezzi] = await Promise.all([
     getProdotto(id),
     getFornitori(),
     getMacrofamiglie(),
     getFamiglie(),
     getLinee(),
     getUltimoCostoAcquisto(parseInt(id)),
+    getUltimaVendita(parseInt(id)),
+    getStatistichePrezziProdotto(parseInt(id)),
   ])
 
   if (!prodotto) {
@@ -48,10 +50,9 @@ export default async function DettaglioProdottoPage({
 
   const hasPackaging = prodotto.pkg_pezzi_per_confezione || prodotto.pkg_confezioni_per_cartone || prodotto.pkg_cartoni_per_pallet
 
-  // Calcola margine reale basato sul costo ultimo da movimenti
-  const costoReale = ultimoCostoAcquisto?.costo_unitario ?? prodotto.costo_ultimo
-  const margineReale = costoReale && prodotto.prezzo_vendita > 0
-    ? ((prodotto.prezzo_vendita - costoReale) / prodotto.prezzo_vendita) * 100
+  // Calcola margine ultima vendita (ultimo prezzo vendita - ultimo costo acquisto)
+  const margineUltimaVendita = ultimaVendita && ultimoCostoAcquisto && ultimaVendita.prezzo_unitario > 0
+    ? ((ultimaVendita.prezzo_unitario - ultimoCostoAcquisto.costo_unitario) / ultimaVendita.prezzo_unitario) * 100
     : null
 
   return (
@@ -317,59 +318,125 @@ export default async function DettaglioProdottoPage({
           {/* Sidebar (1/3) */}
           <div className="space-y-6">
 
-            {/* Card: Prezzi */}
+            {/* Card: Prezzi e Margini */}
             <div className="bg-white shadow-sm rounded-lg p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                Prezzi
+                Prezzi e Margini
               </h2>
               <div className="space-y-4">
-                <div className="bg-green-50 rounded-lg p-4 text-center">
-                  <dt className="text-xs font-medium text-green-600 uppercase">Prezzo Vendita</dt>
-                  <dd className="text-3xl font-bold text-green-700 mt-1">
-                    € {prodotto.prezzo_vendita.toFixed(2)}
-                  </dd>
-                </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {ultimoCostoAcquisto ? (
-                    <div className="bg-gray-50 rounded-lg p-3 text-center">
-                      <dt className="text-xs text-gray-500">Costo Ultimo</dt>
-                      <dd className="text-lg font-semibold text-gray-900">€ {ultimoCostoAcquisto.costo_unitario.toFixed(2)}</dd>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new Date(ultimoCostoAcquisto.data_movimento).toLocaleDateString('it-IT')}
-                      </p>
-                    </div>
-                  ) : prodotto.costo_ultimo != null ? (
-                    <div className="bg-gray-50 rounded-lg p-3 text-center">
-                      <dt className="text-xs text-gray-500">Costo Ultimo</dt>
-                      <dd className="text-lg font-semibold text-gray-900">€ {prodotto.costo_ultimo.toFixed(2)}</dd>
-                    </div>
-                  ) : null}
-                  {prodotto.costo_medio != null && (
-                    <div className="bg-gray-50 rounded-lg p-3 text-center">
-                      <dt className="text-xs text-gray-500">Costo Medio</dt>
-                      <dd className="text-lg font-semibold text-gray-900">€ {prodotto.costo_medio.toFixed(2)}</dd>
+                {/* Sezione: Ultimi Valori */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-400 uppercase mb-3">Ultimi Valori</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Ultima Vendita */}
+                    {ultimaVendita ? (
+                      <div className="bg-green-50 rounded-lg p-3 text-center">
+                        <dt className="text-xs text-green-600">Ultima Vendita</dt>
+                        <dd className="text-lg font-bold text-green-700">€ {ultimaVendita.prezzo_unitario.toFixed(2)}</dd>
+                        <p className="text-xs text-green-500 mt-1">
+                          {new Date(ultimaVendita.data_movimento).toLocaleDateString('it-IT')}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-lg p-3 text-center">
+                        <dt className="text-xs text-gray-400">Ultima Vendita</dt>
+                        <dd className="text-sm text-gray-400 mt-1">Nessuna</dd>
+                      </div>
+                    )}
+
+                    {/* Ultimo Costo */}
+                    {ultimoCostoAcquisto ? (
+                      <div className="bg-red-50 rounded-lg p-3 text-center">
+                        <dt className="text-xs text-red-600">Ultimo Costo</dt>
+                        <dd className="text-lg font-bold text-red-700">€ {ultimoCostoAcquisto.costo_unitario.toFixed(2)}</dd>
+                        <p className="text-xs text-red-500 mt-1">
+                          {new Date(ultimoCostoAcquisto.data_movimento).toLocaleDateString('it-IT')}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-lg p-3 text-center">
+                        <dt className="text-xs text-gray-400">Ultimo Costo</dt>
+                        <dd className="text-sm text-gray-400 mt-1">Nessuno</dd>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Margine Ultima Vendita */}
+                  {margineUltimaVendita != null && (
+                    <div className={`mt-3 rounded-lg p-3 text-center ${margineUltimaVendita > 20 ? 'bg-green-100' : margineUltimaVendita > 10 ? 'bg-amber-100' : 'bg-red-100'}`}>
+                      <dt className="text-xs text-gray-600">Margine Ultima Vendita</dt>
+                      <dd className={`text-xl font-bold ${margineUltimaVendita > 20 ? 'text-green-700' : margineUltimaVendita > 10 ? 'text-amber-700' : 'text-red-700'}`}>
+                        {margineUltimaVendita.toFixed(1)}%
+                      </dd>
                     </div>
                   )}
                 </div>
 
-                {margineReale != null && (
-                  <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                    <span className="text-sm text-gray-500">Margine</span>
-                    <span className={`text-sm font-semibold ${margineReale > 20 ? 'text-green-600' : margineReale > 10 ? 'text-amber-600' : 'text-red-600'}`}>
-                      {margineReale.toFixed(1)}%
-                    </span>
+                {/* Sezione: Valori Medi */}
+                {(statistichePrezzi.prezzo_medio_vendite || statistichePrezzi.costo_medio_acquisti) && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <h3 className="text-xs font-medium text-gray-400 uppercase mb-3">Valori Medi</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Venduto Medio */}
+                      {statistichePrezzi.prezzo_medio_vendite ? (
+                        <div className="bg-blue-50 rounded-lg p-3 text-center">
+                          <dt className="text-xs text-blue-600">Venduto Medio</dt>
+                          <dd className="text-lg font-bold text-blue-700">€ {statistichePrezzi.prezzo_medio_vendite.toFixed(2)}</dd>
+                          <p className="text-xs text-blue-500 mt-1">
+                            {statistichePrezzi.totale_vendite} vendite
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 rounded-lg p-3 text-center">
+                          <dt className="text-xs text-gray-400">Venduto Medio</dt>
+                          <dd className="text-sm text-gray-400 mt-1">N/D</dd>
+                        </div>
+                      )}
+
+                      {/* Costo Medio */}
+                      {statistichePrezzi.costo_medio_acquisti ? (
+                        <div className="bg-orange-50 rounded-lg p-3 text-center">
+                          <dt className="text-xs text-orange-600">Costo Medio</dt>
+                          <dd className="text-lg font-bold text-orange-700">€ {statistichePrezzi.costo_medio_acquisti.toFixed(2)}</dd>
+                          <p className="text-xs text-orange-500 mt-1">
+                            {statistichePrezzi.totale_acquisti} acquisti
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 rounded-lg p-3 text-center">
+                          <dt className="text-xs text-gray-400">Costo Medio</dt>
+                          <dd className="text-sm text-gray-400 mt-1">N/D</dd>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Margine Medio */}
+                    {statistichePrezzi.margine_medio_percentuale != null && (
+                      <div className={`mt-3 rounded-lg p-3 text-center ${statistichePrezzi.margine_medio_percentuale > 20 ? 'bg-green-100' : statistichePrezzi.margine_medio_percentuale > 10 ? 'bg-amber-100' : 'bg-red-100'}`}>
+                        <dt className="text-xs text-gray-600">Margine Medio</dt>
+                        <dd className={`text-xl font-bold ${statistichePrezzi.margine_medio_percentuale > 20 ? 'text-green-700' : statistichePrezzi.margine_medio_percentuale > 10 ? 'text-amber-700' : 'text-red-700'}`}>
+                          {statistichePrezzi.margine_medio_percentuale.toFixed(1)}%
+                        </dd>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                  <span className="text-sm text-gray-500">IVA</span>
-                  <span className="text-sm font-medium text-gray-900">{prodotto.aliquota_iva || 22}%</span>
-                </div>
-
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                  <span className="text-sm text-gray-500">Valuta</span>
-                  <span className="text-sm font-medium text-gray-900">{prodotto.valuta || 'EUR'}</span>
+                {/* Prezzo Listino Base */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-gray-500">Prezzo Listino</span>
+                    <span className="text-sm font-semibold text-gray-900">€ {prodotto.prezzo_vendita.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                    <span className="text-sm text-gray-500">IVA</span>
+                    <span className="text-sm font-medium text-gray-900">{prodotto.aliquota_iva || 22}%</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                    <span className="text-sm text-gray-500">Valuta</span>
+                    <span className="text-sm font-medium text-gray-900">{prodotto.valuta || 'EUR'}</span>
+                  </div>
                 </div>
               </div>
             </div>

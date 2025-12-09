@@ -772,6 +772,163 @@ export async function getUltimoCostoAcquisto(prodottoId: number): Promise<Ultimo
 }
 
 // =====================================================
+// GET: Ultima vendita prodotto (da movimenti ORD-V%)
+// =====================================================
+
+export type UltimaVendita = {
+  prezzo_unitario: number
+  data_movimento: string
+  documento_numero?: string
+  soggetto_ragione_sociale?: string
+}
+
+export async function getUltimaVendita(prodottoId: number): Promise<UltimaVendita | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return null
+  }
+
+  // Trova l'ultimo movimento di scarico da ORDINE DI VENDITA
+  // - segno = -1 (scarico)
+  // - documento_numero inizia con 'ORD-V' (ordine vendita)
+  const { data: movimento, error } = await supabase
+    .from('movimento_magazzino')
+    .select(`
+      costo_unitario,
+      data_movimento,
+      documento_numero,
+      soggetto_id
+    `)
+    .eq('prodotto_id', prodottoId)
+    .eq('segno', -1) // Solo scarichi
+    .like('documento_numero', 'ORD-V%') // Solo ordini di VENDITA
+    .not('costo_unitario', 'is', null) // Solo movimenti con prezzo
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error || !movimento || !movimento.costo_unitario) {
+    return null
+  }
+
+  // Se c'è un soggetto, recupera la ragione sociale
+  let soggettoRagioneSociale: string | undefined
+  if (movimento.soggetto_id) {
+    const { data: soggetto } = await supabase
+      .from('soggetto')
+      .select('ragione_sociale')
+      .eq('id', movimento.soggetto_id)
+      .single()
+
+    if (soggetto) {
+      soggettoRagioneSociale = soggetto.ragione_sociale
+    }
+  }
+
+  return {
+    prezzo_unitario: movimento.costo_unitario, // In vendita, costo_unitario = prezzo vendita
+    data_movimento: movimento.data_movimento,
+    documento_numero: movimento.documento_numero || undefined,
+    soggetto_ragione_sociale: soggettoRagioneSociale,
+  }
+}
+
+// =====================================================
+// GET: Statistiche prezzi prodotto (medie)
+// =====================================================
+
+export type StatistichePrezziProdotto = {
+  costo_medio_acquisti: number | null
+  prezzo_medio_vendite: number | null
+  margine_medio_percentuale: number | null
+  totale_acquisti: number
+  totale_vendite: number
+}
+
+export async function getStatistichePrezziProdotto(prodottoId: number): Promise<StatistichePrezziProdotto> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return {
+      costo_medio_acquisti: null,
+      prezzo_medio_vendite: null,
+      margine_medio_percentuale: null,
+      totale_acquisti: 0,
+      totale_vendite: 0,
+    }
+  }
+
+  // Query per media acquisti (ORD-A%)
+  const { data: acquisti } = await supabase
+    .from('movimento_magazzino')
+    .select('costo_unitario, quantita')
+    .eq('prodotto_id', prodottoId)
+    .eq('segno', 1)
+    .like('documento_numero', 'ORD-A%')
+    .not('costo_unitario', 'is', null)
+
+  // Query per media vendite (ORD-V%)
+  const { data: vendite } = await supabase
+    .from('movimento_magazzino')
+    .select('costo_unitario, quantita')
+    .eq('prodotto_id', prodottoId)
+    .eq('segno', -1)
+    .like('documento_numero', 'ORD-V%')
+    .not('costo_unitario', 'is', null)
+
+  // Calcola media ponderata acquisti
+  let costoMedioAcquisti: number | null = null
+  let totaleAcquisti = 0
+  if (acquisti && acquisti.length > 0) {
+    let sommaValori = 0
+    let sommaQuantita = 0
+    for (const m of acquisti) {
+      const qta = Math.abs(m.quantita || 1)
+      sommaValori += (m.costo_unitario || 0) * qta
+      sommaQuantita += qta
+    }
+    if (sommaQuantita > 0) {
+      costoMedioAcquisti = sommaValori / sommaQuantita
+    }
+    totaleAcquisti = acquisti.length
+  }
+
+  // Calcola media ponderata vendite
+  let prezzoMedioVendite: number | null = null
+  let totaleVendite = 0
+  if (vendite && vendite.length > 0) {
+    let sommaValori = 0
+    let sommaQuantita = 0
+    for (const m of vendite) {
+      const qta = Math.abs(m.quantita || 1)
+      sommaValori += (m.costo_unitario || 0) * qta
+      sommaQuantita += qta
+    }
+    if (sommaQuantita > 0) {
+      prezzoMedioVendite = sommaValori / sommaQuantita
+    }
+    totaleVendite = vendite.length
+  }
+
+  // Calcola margine medio
+  let margineMedioPercentuale: number | null = null
+  if (costoMedioAcquisti && prezzoMedioVendite && prezzoMedioVendite > 0) {
+    margineMedioPercentuale = ((prezzoMedioVendite - costoMedioAcquisti) / prezzoMedioVendite) * 100
+  }
+
+  return {
+    costo_medio_acquisti: costoMedioAcquisti,
+    prezzo_medio_vendite: prezzoMedioVendite,
+    margine_medio_percentuale: margineMedioPercentuale,
+    totale_acquisti: totaleAcquisti,
+    totale_vendite: totaleVendite,
+  }
+}
+
+// =====================================================
 // GET: Giacenze per tutti i prodotti
 // =====================================================
 
