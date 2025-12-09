@@ -8,6 +8,7 @@ import {
   updatePrezzoListinoProdotto,
   deletePrezzoListinoProdotto,
 } from '@/app/actions/listini'
+import { quickCreateListino } from '@/app/actions/quick-create'
 
 type ListinoOption = {
   id: number
@@ -25,15 +26,21 @@ type Props = {
 export default function PrezziListinoProdotto({
   prodottoId,
   prezzi: initialPrezzi,
-  listiniDisponibili,
+  listiniDisponibili: initialListini,
 }: Props) {
   const [prezzi, setPrezzi] = useState<PrezzoListinoProdotto[]>(initialPrezzi)
+  const [listiniDisponibili, setListiniDisponibili] = useState<ListinoOption[]>(initialListini)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPrezzo, setEditingPrezzo] = useState<PrezzoListinoProdotto | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'vendita' | 'acquisto'>('vendita')
   const [isMounted, setIsMounted] = useState(false)
+
+  // Quick Create Listino
+  const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false)
+  const [quickCreateError, setQuickCreateError] = useState<string | null>(null)
+  const [isCreatingListino, setIsCreatingListino] = useState(false)
 
   // Per React Portal - solo client-side
   useEffect(() => {
@@ -132,20 +139,65 @@ export default function PrezziListinoProdotto({
     return `${price.toFixed(2)}`
   }
 
+  // Quick Create Listino
+  const handleQuickCreateListino = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsCreatingListino(true)
+    setQuickCreateError(null)
+
+    const formData = new FormData(e.currentTarget)
+    // Imposta il tipo in base al tab attivo
+    formData.set('tipo', activeTab)
+
+    try {
+      const result = await quickCreateListino(formData)
+      if (result.success && result.data) {
+        // Aggiungi il nuovo listino alla lista
+        const newListino: ListinoOption = {
+          id: result.data.id,
+          codice: result.data.codice,
+          nome: result.data.nome,
+          tipo: activeTab,
+        }
+        setListiniDisponibili((prev) => [...prev, newListino])
+        setIsQuickCreateOpen(false)
+        // Apri direttamente il modal per aggiungere il prezzo
+        setIsModalOpen(true)
+      } else {
+        setQuickCreateError(result.error || 'Errore durante la creazione')
+      }
+    } catch {
+      setQuickCreateError('Errore durante la creazione del listino')
+    } finally {
+      setIsCreatingListino(false)
+    }
+  }
+
   return (
     <div className="bg-white shadow-sm rounded-lg p-6">
       <div className="mb-4 pb-4 border-b border-gray-200 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900">
           Prezzi Listino
         </h2>
-        <button
-          type="button"
-          onClick={() => handleOpenModal()}
-          disabled={listiniLiberi.length === 0}
-          className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-        >
-          + Aggiungi Prezzo
-        </button>
+        <div className="flex gap-2">
+          {listiniLiberi.length === 0 ? (
+            <button
+              type="button"
+              onClick={() => setIsQuickCreateOpen(true)}
+              className="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+            >
+              + Crea Listino
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleOpenModal()}
+              className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+            >
+              + Aggiungi Prezzo
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -438,6 +490,86 @@ export default function PrezziListinoProdotto({
                     : editingPrezzo
                       ? 'Aggiorna'
                       : 'Aggiungi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal Quick Create Listino */}
+      {isQuickCreateOpen && isMounted && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Crea Nuovo Listino {activeTab === 'vendita' ? 'Vendita' : 'Acquisto'}
+              </h3>
+            </div>
+
+            <form onSubmit={handleQuickCreateListino} className="p-6 space-y-4">
+              {quickCreateError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-700">{quickCreateError}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Codice <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="codice"
+                  required
+                  maxLength={20}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="es. LST-001"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="nome"
+                  required
+                  maxLength={100}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="es. Listino Base"
+                />
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-md">
+                <p className="text-sm text-gray-600">
+                  Tipo: <span className="font-medium">{activeTab === 'vendita' ? 'Vendita' : 'Acquisto'}</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Il tipo viene impostato automaticamente in base al tab selezionato
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsQuickCreateOpen(false)
+                    setQuickCreateError(null)
+                  }}
+                  disabled={isCreatingListino}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingListino}
+                  className="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                >
+                  {isCreatingListino ? 'Creazione...' : 'Crea Listino'}
                 </button>
               </div>
             </form>
