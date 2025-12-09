@@ -54,10 +54,11 @@ export type Cliente = {
   created_at: string
   updated_at: string
   agente?: {
-    id: string
+    id: number
     codice_agente?: string
     ragione_sociale: string
     email?: string
+    telefono?: string
   }
   trasportatore?: {
     id: number
@@ -210,11 +211,32 @@ export async function getClienti(): Promise<Cliente[]> {
     }
   }
 
-  // Combina clienti con le loro sedi e trasportatori
+  // Recupera agenti per i clienti che ne hanno uno assegnato
+  const agenteIds = clientiData
+    .map(c => c.agente_id)
+    .filter((id): id is number => id !== null && id !== undefined)
+
+  const agentiMap = new Map<number, { id: number; ragione_sociale: string; codice_agente?: string; email?: string; telefono?: string }>()
+
+  if (agenteIds.length > 0) {
+    const { data: agentiData } = await supabase
+      .from('soggetto')
+      .select('id, ragione_sociale, codice_agente, email, telefono')
+      .in('id', agenteIds)
+
+    if (agentiData) {
+      for (const a of agentiData) {
+        agentiMap.set(a.id, a)
+      }
+    }
+  }
+
+  // Combina clienti con le loro sedi, trasportatori e agenti
   const clientiConSedi = clientiData.map(cliente => ({
     ...cliente,
     sedi: sediByCliente.get(cliente.id) || [],
-    trasportatore: cliente.trasportatore_id ? trasportatoriMap.get(cliente.trasportatore_id) : undefined
+    trasportatore: cliente.trasportatore_id ? trasportatoriMap.get(cliente.trasportatore_id) : undefined,
+    agente: cliente.agente_id ? agentiMap.get(cliente.agente_id) : undefined
   }))
 
   return clientiConSedi
