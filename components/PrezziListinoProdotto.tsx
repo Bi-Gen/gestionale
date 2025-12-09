@@ -205,9 +205,6 @@ export default function PrezziListinoProdotto({
                 <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
                   Sconto Max
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
-                  Provvigione
-                </th>
                 <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">
                   Validita
                 </th>
@@ -240,14 +237,6 @@ export default function PrezziListinoProdotto({
                     {prezzo.sconto_max !== null && prezzo.sconto_max !== undefined
                       ? `${prezzo.sconto_max}%`
                       : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-500">
-                    {prezzo.provvigione_override !== null &&
-                    prezzo.provvigione_override !== undefined
-                      ? `${prezzo.provvigione_override}%`
-                      : prezzo.listino?.provvigione_default
-                        ? `${prezzo.listino.provvigione_default}% (default)`
-                        : '-'}
                   </td>
                   <td className="px-4 py-3 text-center text-xs text-gray-500">
                     {prezzo.data_inizio || prezzo.data_fine ? (
@@ -369,44 +358,24 @@ export default function PrezziListinoProdotto({
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Sconto Max */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sconto Max (%)
-                  </label>
-                  <input
-                    type="number"
-                    name="sconto_max"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    defaultValue={editingPrezzo?.sconto_max || ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="es. 20"
-                  />
-                </div>
-
-                {/* Provvigione Override */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Provvigione (%)
-                  </label>
-                  <input
-                    type="number"
-                    name="provvigione_override"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    defaultValue={editingPrezzo?.provvigione_override || ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder={
-                      editingPrezzo?.listino?.provvigione_default
-                        ? `Default: ${editingPrezzo.listino.provvigione_default}%`
-                        : 'Opzionale'
-                    }
-                  />
-                </div>
+              {/* Sconto Max */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sconto Max (%)
+                </label>
+                <input
+                  type="number"
+                  name="sconto_max"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  defaultValue={editingPrezzo?.sconto_max || ''}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="es. 20"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Sconto massimo applicabile su questo prezzo
+                </p>
               </div>
 
               {/* Date validita */}
