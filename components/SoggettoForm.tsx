@@ -117,6 +117,9 @@ export default function SoggettoForm({
     soggetto?.provvigione_agente_perc?.toString() || ''
   )
 
+  // Flag per permettere override manuale dei campi auto-compilati
+  const [overrideManuale, setOverrideManuale] = useState<boolean>(false)
+
   // Debug: log the initial values
   useEffect(() => {
     console.log('SoggettoForm Debug:', {
@@ -143,6 +146,9 @@ export default function SoggettoForm({
   const handleCategoriaChange = (catId: string) => {
     setCategoriaClienteId(catId)
 
+    // Se override manuale è attivo, non auto-compilare
+    if (overrideManuale) return
+
     if (catId) {
       const categoria = localCategorieCliente.find(c => c.id === parseInt(catId))
       if (categoria) {
@@ -154,17 +160,28 @@ export default function SoggettoForm({
           if (listino?.provvigione_default !== undefined && listino?.provvigione_default !== null) {
             setProvvigioneAgente(listino.provvigione_default.toString())
           }
+        } else {
+          // Nessun listino associato, reset
+          setListinoId('')
+          setProvvigioneAgente('')
         }
         // Auto-fill sconto se la categoria ha uno sconto default
         if (categoria.sconto_default !== undefined && categoria.sconto_default !== null) {
           setScontoPercentuale(categoria.sconto_default.toString())
         }
       }
+    } else {
+      // Nessuna categoria selezionata, reset campi
+      setListinoId('')
+      setProvvigioneAgente('')
+      setScontoPercentuale('')
     }
   }
 
-  // Handler per cambio listino diretto con auto-fill provvigione
+  // Handler per cambio listino diretto (solo se override attivo)
   const handleListinoChange = (listId: string | number | undefined) => {
+    if (!overrideManuale) return // Non permettere modifica se non in override
+
     setListinoId(listId?.toString() || '')
     if (listId) {
       const id = typeof listId === 'string' ? parseInt(listId) : listId
@@ -492,7 +509,18 @@ export default function SoggettoForm({
       {/* Dati Commerciali - Solo per Clienti */}
       {isCliente && (
         <div className="bg-white shadow-sm rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Dati Commerciali</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Dati Commerciali</h3>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={overrideManuale}
+                onChange={(e) => setOverrideManuale(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-gray-600">Modifica manuale</span>
+            </label>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Categoria Cliente con Quick Create */}
             <SelectConCreazione<CategoriaClienteOption>
@@ -505,47 +533,110 @@ export default function SoggettoForm({
               value={categoriaClienteId ? parseInt(categoriaClienteId) : undefined}
               onChange={(val) => handleCategoriaChange(val?.toString() || '')}
               placeholder="Nessuna categoria"
-              helpText="Selezionando una categoria verranno precompilati listino e sconto"
+              helpText="Selezionando una categoria verranno precompilati listino, provvigione e sconto"
               createUrl="/dashboard/configurazioni/categorie-cliente/nuovo"
               channelName="categoria-cliente-created"
               onCreated={(item) => setLocalCategorieCliente(prev => [...prev, item])}
             />
 
-            {/* Listino con Quick Create */}
-            <SelectConCreazione<ListinoOption>
-              name="listino_id"
-              label="Listino Prezzi"
-              entityName="Listino"
-              options={localListini}
-              valueField="id"
-              displayField="nome"
-              value={listinoId ? parseInt(listinoId) : undefined}
-              onChange={(val) => handleListinoChange(val)}
-              placeholder="Listino base"
-              helpText="Listino prezzi applicato a questo cliente"
-              createUrl="/dashboard/configurazioni/listini/nuovo"
-              channelName="listino-created"
-              onCreated={(item) => setLocalListini(prev => [...prev, item])}
-            />
+            {/* Listino - Read-only se non in override */}
+            <div>
+              <label htmlFor="listino_display" className="block text-sm font-medium text-gray-700 mb-1">
+                Listino Prezzi
+                {!overrideManuale && listinoId && (
+                  <span className="ml-2 text-xs text-blue-600">(auto)</span>
+                )}
+              </label>
+              {overrideManuale ? (
+                <SelectConCreazione<ListinoOption>
+                  name="listino_id"
+                  label=""
+                  entityName="Listino"
+                  options={localListini}
+                  valueField="id"
+                  displayField="nome"
+                  value={listinoId ? parseInt(listinoId) : undefined}
+                  onChange={(val) => handleListinoChange(val)}
+                  placeholder="Seleziona listino"
+                  createUrl="/dashboard/configurazioni/listini/nuovo"
+                  channelName="listino-created"
+                  onCreated={(item) => setLocalListini(prev => [...prev, item])}
+                />
+              ) : (
+                <>
+                  <input type="hidden" name="listino_id" value={listinoId} />
+                  <input
+                    type="text"
+                    id="listino_display"
+                    value={listinoId ? localListini.find(l => l.id === parseInt(listinoId))?.nome || '' : ''}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-700"
+                    placeholder="Determinato dalla categoria"
+                  />
+                </>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Listino prezzi per questo cliente
+              </p>
+            </div>
 
-            {/* Provvigione Agente */}
+            {/* Provvigione - Read-only se non in override */}
             <div>
               <label htmlFor="provvigione_agente_perc" className="block text-sm font-medium text-gray-700">
                 Provvigione %
+                {!overrideManuale && provvigioneAgente && (
+                  <span className="ml-2 text-xs text-blue-600">(auto)</span>
+                )}
               </label>
               <input
                 type="number"
                 name="provvigione_agente_perc"
                 id="provvigione_agente_perc"
                 value={provvigioneAgente}
-                onChange={(e) => setProvvigioneAgente(e.target.value)}
+                onChange={(e) => overrideManuale && setProvvigioneAgente(e.target.value)}
+                disabled={!overrideManuale}
                 min="0"
                 max="100"
                 step="0.01"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                className={`mt-1 block w-full rounded-md border px-3 py-2 ${
+                  overrideManuale
+                    ? 'border-gray-300 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500'
+                    : 'border-gray-200 bg-gray-50 text-gray-700'
+                }`}
+                placeholder="Determinata dal listino"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Provvigione default per questo cliente (auto-compilata dal listino)
+                Provvigione default per questo cliente
+              </p>
+            </div>
+
+            {/* Sconto - Read-only se non in override */}
+            <div>
+              <label htmlFor="sconto_percentuale" className="block text-sm font-medium text-gray-700 mb-1">
+                Sconto Cliente %
+                {!overrideManuale && scontoPercentuale && (
+                  <span className="ml-2 text-xs text-blue-600">(auto)</span>
+                )}
+              </label>
+              <input
+                type="number"
+                id="sconto_percentuale"
+                name="sconto_percentuale"
+                value={scontoPercentuale}
+                onChange={(e) => overrideManuale && setScontoPercentuale(e.target.value)}
+                disabled={!overrideManuale}
+                min="0"
+                max="100"
+                step="0.01"
+                className={`w-full px-3 py-2 border rounded-md ${
+                  overrideManuale
+                    ? 'border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    : 'border-gray-200 bg-gray-50 text-gray-700'
+                }`}
+                placeholder="Determinato dalla categoria"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Sconto percentuale applicato
               </p>
             </div>
 
@@ -567,36 +658,14 @@ export default function SoggettoForm({
                     <option key={agente.id} value={agente.id}>
                       {agente.codice_agente ? `[${agente.codice_agente}] ` : ''}
                       {agente.ragione_sociale}
-                      {agente.provvigione_percentuale ? ` - Provv. ${agente.provvigione_percentuale}%` : ''}
                     </option>
                   ))}
                 </select>
                 <p className="mt-1 text-xs text-gray-500">
-                  Agente di vendita responsabile (la provvigione effettiva è definita nel listino)
+                  Agente di vendita responsabile
                 </p>
               </div>
             )}
-
-            {/* Sconto */}
-            <div>
-              <label htmlFor="sconto_percentuale" className="block text-sm font-medium text-gray-700 mb-1">
-                Sconto Cliente %
-              </label>
-              <input
-                type="number"
-                id="sconto_percentuale"
-                name="sconto_percentuale"
-                value={scontoPercentuale}
-                onChange={(e) => setScontoPercentuale(e.target.value)}
-                min="0"
-                max="100"
-                step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Sconto abituale applicato a questo cliente
-              </p>
-            </div>
           </div>
         </div>
       )}
