@@ -305,20 +305,40 @@ export default function ProdottoForm({
       </div>
 
       {/* ========================================= */}
-      {/* SEZIONE 2: PREZZI E COSTI */}
+      {/* SEZIONE 2: COSTI E PREZZI DI RIFERIMENTO */}
       {/* ========================================= */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-          💰 Prezzi e Costi
+        <h2 className="text-lg font-semibold text-gray-900 mb-2 pb-2 border-b border-gray-200">
+          💰 Costi e Prezzi di Riferimento
         </h2>
 
+        {/* Info box esplicativo */}
+        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-800">
+            <strong>Come funziona la determinazione del prezzo:</strong>
+          </p>
+          <ol className="text-sm text-blue-700 mt-1 ml-4 list-decimal">
+            <li>Prima si cerca nel <strong>listino assegnato al cliente</strong></li>
+            <li>Se non trovato, si cerca nel <strong>listino predefinito</strong></li>
+            <li>Come fallback, si usa il <strong>prezzo base</strong> definito qui sotto</li>
+          </ol>
+          <p className="text-xs text-blue-600 mt-2">
+            I prezzi effettivi di vendita/acquisto si gestiscono nella sezione &quot;Prezzi Listino&quot; più in basso.
+          </p>
+        </div>
+
         <div className="space-y-6">
-          {/* Costi */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="costo_ultimo" className="block text-sm font-medium text-gray-700">
-                Costo Ultimo Acquisto (€)
-              </label>
+          {/* Sottosezione: Costi Interni */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+              Costi Interni (per calcolo margini)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4 border-l-2 border-orange-200">
+              <div>
+                <label htmlFor="costo_ultimo" className="block text-sm font-medium text-gray-700">
+                  Costo Ultimo Acquisto (€)
+                </label>
               <input
                 type="number"
                 name="costo_ultimo"
@@ -329,7 +349,7 @@ export default function ProdottoForm({
                 defaultValue={initialData?.costo_ultimo}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
               />
-              <p className="mt-1 text-xs text-gray-500">Ultimo costo di acquisto effettivo</p>
+              <p className="mt-1 text-xs text-gray-500">Aggiornato automaticamente dai movimenti di magazzino</p>
             </div>
 
             <div>
@@ -345,53 +365,71 @@ export default function ProdottoForm({
                 placeholder="0.00"
                 defaultValue={initialData?.costo_medio}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-gray-50 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                readOnly
               />
-              <p className="mt-1 text-xs text-gray-500">Calcolato automaticamente</p>
+              <p className="mt-1 text-xs text-gray-500">Calcolato automaticamente dal sistema</p>
+            </div>
             </div>
           </div>
 
-          {/* Prezzi Base */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="prezzo_acquisto" className="block text-sm font-medium text-gray-700">
-                Prezzo Acquisto Standard (€)
-              </label>
-              <input
-                type="number"
-                name="prezzo_acquisto"
-                id="prezzo_acquisto"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                defaultValue={initialData?.prezzo_acquisto}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
+          {/* Sottosezione: Prezzi Base (Fallback) */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              Prezzi Base (Fallback)
+            </h3>
+            <p className="text-xs text-gray-500 mb-3 pl-4">
+              Usati solo se il prodotto non è presente in nessun listino
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4 border-l-2 border-green-200">
+              <div>
+                <label htmlFor="prezzo_acquisto" className="block text-sm font-medium text-gray-700">
+                  Prezzo Acquisto Standard (€)
+                </label>
+                <input
+                  type="number"
+                  name="prezzo_acquisto"
+                  id="prezzo_acquisto"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  defaultValue={initialData?.prezzo_acquisto}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+                <p className="mt-1 text-xs text-gray-500">Prezzo di riferimento per ordini a fornitore</p>
+              </div>
 
-            <div>
-              <label htmlFor="prezzo_vendita" className="block text-sm font-medium text-gray-700">
-                Prezzo Vendita Base (€) *
-              </label>
-              <input
-                type="number"
-                name="prezzo_vendita"
-                id="prezzo_vendita"
-                step="0.01"
-                min="0"
-                required
-                placeholder="0.00"
-                defaultValue={initialData?.prezzo_vendita}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
+              <div>
+                <label htmlFor="prezzo_vendita" className="block text-sm font-medium text-gray-700">
+                  Prezzo Vendita Base (€) *
+                </label>
+                <input
+                  type="number"
+                  name="prezzo_vendita"
+                  id="prezzo_vendita"
+                  step="0.01"
+                  min="0"
+                  required
+                  placeholder="0.00"
+                  defaultValue={initialData?.prezzo_vendita}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+                <p className="mt-1 text-xs text-gray-500">Prezzo di fallback se non definito nei listini</p>
+              </div>
             </div>
           </div>
 
-          {/* Margine, IVA e Valuta */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div>
-              <label htmlFor="valuta" className="block text-sm font-medium text-gray-700">
-                Valuta
-              </label>
+          {/* Sottosezione: Parametri Fiscali e Margini */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+              Parametri Fiscali e Margini
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pl-4 border-l-2 border-purple-200">
+              <div>
+                <label htmlFor="valuta" className="block text-sm font-medium text-gray-700">
+                  Valuta
+                </label>
               <select
                 name="valuta"
                 id="valuta"
@@ -455,6 +493,7 @@ export default function ProdottoForm({
                 defaultValue={initialData?.aliquota_iva || '22'}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
               />
+            </div>
             </div>
           </div>
 
