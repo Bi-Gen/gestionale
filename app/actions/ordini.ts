@@ -19,6 +19,45 @@ export type PrezzoCliente = {
 }
 
 // =====================================================
+// TIPI PER STATISTICHE VENDITA
+// =====================================================
+
+export type StatisticheVenditaProdotto = {
+  // Statistiche vendite generali
+  prezzo_medio_vendita: number | null
+  prezzo_min_vendita: number | null
+  prezzo_max_vendita: number | null
+  quantita_totale_venduta: number | null
+  numero_vendite: number
+
+  // Ultima vendita generale
+  ultima_vendita_prezzo: number | null
+  ultima_vendita_data: string | null
+  ultima_vendita_quantita: number | null
+
+  // Ultima vendita allo stesso cliente
+  ultima_vendita_cliente_prezzo: number | null
+  ultima_vendita_cliente_data: string | null
+  ultima_vendita_cliente_quantita: number | null
+
+  // Costi
+  costo_ultimo: number | null
+  costo_medio: number | null
+
+  // Margini
+  margine_medio_euro: number | null
+  margine_medio_percentuale: number | null
+  margine_ultimo_vendita_euro: number | null
+  margine_ultimo_vendita_perc: number | null
+}
+
+// Tipo combinato per info complete prodotto in vendita
+export type InfoProdottoVendita = {
+  prezzo: PrezzoCliente | null
+  statistiche: StatisticheVenditaProdotto | null
+}
+
+// =====================================================
 // FUNZIONE RECUPERO PREZZO CLIENTE
 // =====================================================
 
@@ -88,6 +127,66 @@ export async function getPrezziClienteBulk(
 
   await Promise.all(promises)
   return results
+}
+
+// =====================================================
+// FUNZIONE RECUPERO STATISTICHE VENDITA
+// =====================================================
+
+/**
+ * Recupera statistiche storiche di vendita per un prodotto
+ * Include: prezzi medi, margini, ultima vendita, costi
+ */
+export async function getStatisticheVenditaProdotto(
+  prodottoId: number,
+  clienteId?: number,
+  mesiStorico: number = 12
+): Promise<StatisticheVenditaProdotto | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return null
+  }
+
+  const { data, error } = await supabase
+    .rpc('get_statistiche_vendita_prodotto', {
+      p_prodotto_id: prodottoId,
+      p_cliente_id: clienteId || null,
+      p_mesi_storico: mesiStorico
+    })
+
+  if (error) {
+    console.error('Error fetching statistiche vendita:', error)
+    return null
+  }
+
+  // La funzione RPC ritorna un array (RETURNS TABLE)
+  if (data && data.length > 0) {
+    return data[0] as StatisticheVenditaProdotto
+  }
+
+  return null
+}
+
+/**
+ * Recupera tutte le info necessarie per il panel decisionale
+ * in un'unica chiamata: prezzo listino + statistiche storiche
+ */
+export async function getInfoProdottoVendita(
+  prodottoId: number,
+  clienteId: number
+): Promise<InfoProdottoVendita> {
+  // Esegui le chiamate in parallelo per performance
+  const [prezzo, statistiche] = await Promise.all([
+    getPrezzoCliente(prodottoId, clienteId),
+    getStatisticheVenditaProdotto(prodottoId, clienteId)
+  ])
+
+  return {
+    prezzo,
+    statistiche
+  }
 }
 
 // =====================================================

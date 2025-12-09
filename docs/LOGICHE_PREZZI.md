@@ -152,4 +152,68 @@ Nel form vendita (`VenditaForm.tsx`):
 
 ---
 
+## 7. PANEL SUPPORTO DECISIONALE
+
+### Funzione DB: `get_statistiche_vendita_prodotto(p_prodotto_id, p_cliente_id, p_mesi_storico)`
+
+**Server Action:** `getStatisticheVenditaProdotto(prodottoId, clienteId)` in `app/actions/ordini.ts`
+
+**Campi restituiti:**
+
+```
+Statistiche Vendite (ultimi 12 mesi):
+├── prezzo_medio_vendita      → Media ponderata prezzi vendita
+├── prezzo_min_vendita        → Prezzo minimo applicato
+├── prezzo_max_vendita        → Prezzo massimo applicato
+├── quantita_totale_venduta   → Quantità totale venduta
+└── numero_vendite            → Numero ordini evasi
+
+Ultima Vendita:
+├── ultima_vendita_prezzo     → Prezzo ultima vendita (generale)
+├── ultima_vendita_data       → Data ultima vendita
+├── ultima_vendita_cliente_*  → Stessi dati per lo specifico cliente
+
+Costi:
+├── costo_ultimo              → Ultimo costo di acquisto
+└── costo_medio               → Costo medio nel periodo
+
+Margini Calcolati:
+├── margine_medio_euro        → (prezzo_medio - costo_medio) in €
+├── margine_medio_percentuale → ((prezzo_medio - costo_medio) / costo_medio) * 100
+├── margine_ultimo_vendita_*  → Stessi calcoli per ultima vendita
+```
+
+### Visualizzazione nel Form Vendita
+
+Il panel "Analisi Storica" mostra:
+
+1. **Costi** - Costo ultimo e medio
+2. **Vendite** - Prezzo medio, min/max, numero vendite
+3. **Margine Medio** - In percentuale e € per pezzo (colore: verde >20%, giallo >10%, rosso <10%)
+4. **Ultima Vendita** - Prezzo e data
+5. **Storico Cliente** - Ultima vendita allo stesso cliente (se esiste)
+6. **Margine Attuale** - Confronto margine corrente vs media storica
+7. **Prezzo Suggerito** - Calcolato come: `costo_ultimo * (1 + margine_medio_percentuale%)`
+8. **Provvigione Agente** - Se il listino ha provvigione configurata:
+   - Calcolo costo provvigione sulla riga
+   - Margine netto dopo provvigione
+
+### Logica Prezzo Suggerito
+
+```
+prezzo_suggerito = costo_ultimo * (1 + margine_medio_percentuale / 100)
+```
+
+Esempio: Se costo_ultimo = €10.00 e margine_medio = 25%
+→ prezzo_suggerito = 10 * 1.25 = €12.50
+
+### Logica Provvigione Agente
+
+```
+costo_provvigione = subtotale_riga * (provvigione_percentuale / 100)
+margine_netto = subtotale - (costo_ultimo * quantita) - costo_provvigione
+```
+
+---
+
 *Ultimo aggiornamento: Dicembre 2024*

@@ -1,6 +1,11 @@
 'use client'
 
-import { createOrdine, getPrezzoCliente, type PrezzoCliente } from '@/app/actions/ordini'
+import {
+  createOrdine,
+  getInfoProdottoVendita,
+  type PrezzoCliente,
+  type StatisticheVenditaProdotto
+} from '@/app/actions/ordini'
 import Link from 'next/link'
 import { type Cliente } from '@/app/actions/clienti'
 import { type Prodotto } from '@/app/actions/prodotti'
@@ -18,7 +23,10 @@ type DettaglioRiga = {
     listino_codice: string | null
     fonte: string
     sconto_max: number | null
+    provvigione: number | null
   }
+  // Statistiche storiche
+  statistiche?: StatisticheVenditaProdotto | null
 }
 
 export default function VenditaForm({
@@ -38,28 +46,28 @@ export default function VenditaForm({
   const [selectedClienteId, setSelectedClienteId] = useState<string>('')
   const [loadingPrezzi, setLoadingPrezzi] = useState<boolean>(false)
 
-  // Funzione per recuperare il prezzo dal listino cliente
-  const fetchPrezzoListino = useCallback(async (
+  // Funzione per recuperare prezzo e statistiche
+  const fetchInfoProdotto = useCallback(async (
     prodottoId: string,
     clienteId: string
-  ): Promise<PrezzoCliente | null> => {
-    if (!prodottoId || !clienteId) return null
+  ): Promise<{ prezzo: PrezzoCliente | null, statistiche: StatisticheVenditaProdotto | null }> => {
+    if (!prodottoId || !clienteId) return { prezzo: null, statistiche: null }
 
     try {
-      const prezzo = await getPrezzoCliente(
+      const info = await getInfoProdottoVendita(
         parseInt(prodottoId),
         parseInt(clienteId)
       )
-      return prezzo
+      return info
     } catch (error) {
-      console.error('Errore recupero prezzo listino:', error)
-      return null
+      console.error('Errore recupero info prodotto:', error)
+      return { prezzo: null, statistiche: null }
     }
   }, [])
 
-  // Quando cambia il cliente, aggiorna i prezzi di tutti i prodotti selezionati
+  // Quando cambia il cliente, aggiorna prezzi e statistiche di tutti i prodotti
   useEffect(() => {
-    const aggiornaPrezziBulk = async () => {
+    const aggiornaInfoBulk = async () => {
       if (!selectedClienteId) return
 
       const prodottiSelezionati = dettagli.filter(d => d.prodotto_id)
@@ -71,7 +79,7 @@ export default function VenditaForm({
         dettagli.map(async (dettaglio) => {
           if (!dettaglio.prodotto_id) return dettaglio
 
-          const prezzoInfo = await fetchPrezzoListino(dettaglio.prodotto_id, selectedClienteId)
+          const { prezzo: prezzoInfo, statistiche } = await fetchInfoProdotto(dettaglio.prodotto_id, selectedClienteId)
           const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
 
           if (prezzoInfo && prezzoInfo.prezzo !== null) {
@@ -82,8 +90,10 @@ export default function VenditaForm({
               listino_info: {
                 listino_codice: prezzoInfo.listino_codice,
                 fonte: prezzoInfo.fonte,
-                sconto_max: prezzoInfo.sconto_max
-              }
+                sconto_max: prezzoInfo.sconto_max,
+                provvigione: prezzoInfo.provvigione
+              },
+              statistiche
             }
           } else if (prodotto) {
             // Fallback al prezzo base se non trovato nel listino
@@ -95,8 +105,10 @@ export default function VenditaForm({
               listino_info: {
                 listino_codice: null,
                 fonte: 'prezzo_base',
-                sconto_max: null
-              }
+                sconto_max: null,
+                provvigione: null
+              },
+              statistiche
             }
           }
           return dettaglio
@@ -107,7 +119,7 @@ export default function VenditaForm({
       setLoadingPrezzi(false)
     }
 
-    aggiornaPrezziBulk()
+    aggiornaInfoBulk()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClienteId])
 
@@ -131,9 +143,9 @@ export default function VenditaForm({
 
     const nuoviDettagli = [...dettagli]
 
-    // Se c'è un cliente selezionato, cerca il prezzo nel listino
+    // Se c'è un cliente selezionato, cerca prezzo e statistiche
     if (selectedClienteId) {
-      const prezzoInfo = await fetchPrezzoListino(prodottoId, selectedClienteId)
+      const { prezzo: prezzoInfo, statistiche } = await fetchInfoProdotto(prodottoId, selectedClienteId)
 
       if (prezzoInfo && prezzoInfo.prezzo !== null) {
         nuoviDettagli[index] = {
@@ -145,8 +157,10 @@ export default function VenditaForm({
           listino_info: {
             listino_codice: prezzoInfo.listino_codice,
             fonte: prezzoInfo.fonte,
-            sconto_max: prezzoInfo.sconto_max
-          }
+            sconto_max: prezzoInfo.sconto_max,
+            provvigione: prezzoInfo.provvigione
+          },
+          statistiche
         }
         setDettagli(nuoviDettagli)
         return
@@ -165,8 +179,10 @@ export default function VenditaForm({
       listino_info: {
         listino_codice: null,
         fonte: 'prezzo_base',
-        sconto_max: null
-      }
+        sconto_max: null,
+        provvigione: null
+      },
+      statistiche: null
     }
     setDettagli(nuoviDettagli)
   }
@@ -469,14 +485,192 @@ export default function VenditaForm({
                       </div>
                     )}
 
-                    {/* Prezzi disponibili */}
-                    <div className="flex gap-4 p-2 bg-blue-50 rounded text-blue-900">
-                      <span className="font-medium">Riferimenti:</span>
-                      <span>Prezzo Base: €{prodotto.prezzo_vendita.toFixed(2)}</span>
-                      {prodotto.prezzo_acquisto && <span>Acquisto: €{prodotto.prezzo_acquisto.toFixed(2)}</span>}
-                      {prodotto.costo_ultimo && <span>Costo Ultimo: €{prodotto.costo_ultimo.toFixed(2)}</span>}
-                      {prodotto.margine_percentuale && <span>Margine: {prodotto.margine_percentuale}%</span>}
-                    </div>
+                    {/* Panel Statistiche e Supporto Decisionale */}
+                    {dettaglio.statistiche && dettaglio.statistiche.numero_vendite > 0 ? (
+                      <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                        <div className="text-xs font-semibold text-purple-800 mb-2">
+                          Analisi Storica (ultimi 12 mesi)
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                          {/* Costi */}
+                          <div className="bg-white p-2 rounded shadow-sm">
+                            <div className="text-gray-500 mb-1">Costi</div>
+                            <div className="space-y-1">
+                              {dettaglio.statistiche.costo_ultimo !== null && (
+                                <div>Ultimo: <span className="font-medium text-gray-900">€{dettaglio.statistiche.costo_ultimo.toFixed(2)}</span></div>
+                              )}
+                              {dettaglio.statistiche.costo_medio !== null && (
+                                <div>Medio: <span className="font-medium text-gray-900">€{dettaglio.statistiche.costo_medio.toFixed(2)}</span></div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Prezzi Vendita Storici */}
+                          <div className="bg-white p-2 rounded shadow-sm">
+                            <div className="text-gray-500 mb-1">Vendite ({dettaglio.statistiche.numero_vendite})</div>
+                            <div className="space-y-1">
+                              {dettaglio.statistiche.prezzo_medio_vendita !== null && (
+                                <div>Medio: <span className="font-medium text-blue-700">€{dettaglio.statistiche.prezzo_medio_vendita.toFixed(2)}</span></div>
+                              )}
+                              {dettaglio.statistiche.prezzo_min_vendita !== null && dettaglio.statistiche.prezzo_max_vendita !== null && (
+                                <div className="text-gray-500">
+                                  Min/Max: €{dettaglio.statistiche.prezzo_min_vendita.toFixed(2)} - €{dettaglio.statistiche.prezzo_max_vendita.toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Margini */}
+                          <div className="bg-white p-2 rounded shadow-sm">
+                            <div className="text-gray-500 mb-1">Margine Medio</div>
+                            <div className="space-y-1">
+                              {dettaglio.statistiche.margine_medio_percentuale !== null && (
+                                <div className={`font-bold text-lg ${
+                                  dettaglio.statistiche.margine_medio_percentuale >= 20 ? 'text-green-600' :
+                                  dettaglio.statistiche.margine_medio_percentuale >= 10 ? 'text-yellow-600' :
+                                  'text-red-600'
+                                }`}>
+                                  {dettaglio.statistiche.margine_medio_percentuale.toFixed(1)}%
+                                </div>
+                              )}
+                              {dettaglio.statistiche.margine_medio_euro !== null && (
+                                <div className="text-gray-600">€{dettaglio.statistiche.margine_medio_euro.toFixed(2)}/pz</div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Ultima Vendita */}
+                          <div className="bg-white p-2 rounded shadow-sm">
+                            <div className="text-gray-500 mb-1">Ultima Vendita</div>
+                            <div className="space-y-1">
+                              {dettaglio.statistiche.ultima_vendita_prezzo !== null && (
+                                <div>€{dettaglio.statistiche.ultima_vendita_prezzo.toFixed(2)}</div>
+                              )}
+                              {dettaglio.statistiche.ultima_vendita_data && (
+                                <div className="text-gray-500">{new Date(dettaglio.statistiche.ultima_vendita_data).toLocaleDateString('it-IT')}</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Ultima vendita a questo cliente */}
+                        {dettaglio.statistiche.ultima_vendita_cliente_prezzo !== null && (
+                          <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+                            <span className="text-green-800 font-medium">Storico cliente:</span>
+                            <span className="ml-2">Ultima vendita a €{dettaglio.statistiche.ultima_vendita_cliente_prezzo.toFixed(2)}</span>
+                            {dettaglio.statistiche.ultima_vendita_cliente_data && (
+                              <span className="text-green-600 ml-1">
+                                ({new Date(dettaglio.statistiche.ultima_vendita_cliente_data).toLocaleDateString('it-IT')})
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Confronto margine attuale vs medio */}
+                        {dettaglio.statistiche.costo_ultimo !== null && dettaglio.prezzo_unitario > 0 && (
+                          <div className="mt-2 p-2 bg-white rounded border">
+                            {(() => {
+                              const margineAttuale = ((dettaglio.prezzo_unitario - dettaglio.statistiche.costo_ultimo!) / dettaglio.statistiche.costo_ultimo!) * 100
+                              const margineMedio = dettaglio.statistiche.margine_medio_percentuale || 0
+                              const differenza = margineAttuale - margineMedio
+                              return (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-gray-600">Margine attuale:</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-bold ${
+                                      margineAttuale >= 20 ? 'text-green-600' :
+                                      margineAttuale >= 10 ? 'text-yellow-600' :
+                                      'text-red-600'
+                                    }`}>
+                                      {margineAttuale.toFixed(1)}%
+                                    </span>
+                                    {margineMedio > 0 && (
+                                      <span className={`text-xs px-2 py-0.5 rounded ${
+                                        differenza >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                      }`}>
+                                        {differenza >= 0 ? '+' : ''}{differenza.toFixed(1)}% vs media
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Prezzo Suggerito e Provvigione */}
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {/* Prezzo Suggerito basato su margine medio */}
+                          {dettaglio.statistiche.costo_ultimo !== null && dettaglio.statistiche.margine_medio_percentuale !== null && (
+                            <div className="p-2 bg-amber-50 rounded border border-amber-200">
+                              {(() => {
+                                const prezzoSuggerito = dettaglio.statistiche.costo_ultimo! * (1 + dettaglio.statistiche.margine_medio_percentuale! / 100)
+                                const differenzaPrezzo = dettaglio.prezzo_unitario - prezzoSuggerito
+                                return (
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <span className="text-amber-800 font-medium text-xs">Prezzo suggerito:</span>
+                                      <span className="ml-2 font-bold text-amber-900">€{prezzoSuggerito.toFixed(2)}</span>
+                                    </div>
+                                    {Math.abs(differenzaPrezzo) > 0.01 && (
+                                      <span className={`text-xs px-2 py-0.5 rounded ${
+                                        differenzaPrezzo >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                      }`}>
+                                        {differenzaPrezzo >= 0 ? '+' : ''}€{differenzaPrezzo.toFixed(2)}
+                                      </span>
+                                    )}
+                                  </div>
+                                )
+                              })()}
+                              <div className="text-xs text-amber-600 mt-1">
+                                (Costo €{dettaglio.statistiche.costo_ultimo!.toFixed(2)} + {dettaglio.statistiche.margine_medio_percentuale}% margine medio)
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Calcolo Provvigione Agente */}
+                          {dettaglio.listino_info?.provvigione !== null && dettaglio.listino_info?.provvigione !== undefined && dettaglio.listino_info.provvigione > 0 && (
+                            <div className="p-2 bg-pink-50 rounded border border-pink-200">
+                              {(() => {
+                                const subtotaleRiga = calcolaSubtotale(dettaglio)
+                                const costoProvvigione = subtotaleRiga * (dettaglio.listino_info!.provvigione! / 100)
+                                const margineDopoProvvigione = dettaglio.statistiche?.costo_ultimo !== null
+                                  ? subtotaleRiga - dettaglio.statistiche!.costo_ultimo! * dettaglio.quantita - costoProvvigione
+                                  : null
+                                return (
+                                  <>
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <span className="text-pink-800 font-medium text-xs">Provvigione agente:</span>
+                                        <span className="ml-2 font-bold text-pink-900">€{costoProvvigione.toFixed(2)}</span>
+                                      </div>
+                                      <span className="text-xs text-pink-600">{dettaglio.listino_info!.provvigione}%</span>
+                                    </div>
+                                    {margineDopoProvvigione !== null && (
+                                      <div className="text-xs text-pink-600 mt-1">
+                                        Margine netto riga: <span className={`font-medium ${margineDopoProvvigione >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                                          €{margineDopoProvvigione.toFixed(2)}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </>
+                                )
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* Fallback: mostra riferimenti base se non ci sono statistiche */
+                      <div className="flex gap-4 p-2 bg-blue-50 rounded text-blue-900">
+                        <span className="font-medium">Riferimenti:</span>
+                        <span>Prezzo Base: €{prodotto.prezzo_vendita.toFixed(2)}</span>
+                        {prodotto.prezzo_acquisto && <span>Acquisto: €{prodotto.prezzo_acquisto.toFixed(2)}</span>}
+                        {prodotto.costo_ultimo && <span>Costo Ultimo: €{prodotto.costo_ultimo.toFixed(2)}</span>}
+                        {prodotto.margine_percentuale && <span>Margine: {prodotto.margine_percentuale}%</span>}
+                      </div>
+                    )}
 
                     {/* Warning giacenza insufficiente */}
                     {giacenzaInsufficiente && (
