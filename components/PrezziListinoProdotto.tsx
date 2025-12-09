@@ -139,6 +139,7 @@ export default function PrezziListinoProdotto({
           Prezzi Listino
         </h2>
         <button
+          type="button"
           onClick={() => handleOpenModal()}
           disabled={listiniLiberi.length === 0}
           className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
@@ -150,6 +151,7 @@ export default function PrezziListinoProdotto({
       {/* Tabs */}
       <div className="flex gap-4 mb-4 border-b border-gray-200">
         <button
+          type="button"
           onClick={() => setActiveTab('vendita')}
           className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'vendita'
@@ -160,6 +162,7 @@ export default function PrezziListinoProdotto({
           Vendita ({prezziVendita.length})
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('acquisto')}
           className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'acquisto'
@@ -177,6 +180,7 @@ export default function PrezziListinoProdotto({
           Nessun prezzo configurato per i listini di {activeTab}.
           {listiniLiberi.length > 0 && (
             <button
+              type="button"
               onClick={() => handleOpenModal()}
               className="ml-1 text-blue-600 hover:text-blue-700"
             >
@@ -258,12 +262,14 @@ export default function PrezziListinoProdotto({
                   <td className="px-4 py-3 text-right">
                     <div className="flex gap-2 justify-end">
                       <button
+                        type="button"
                         onClick={() => handleOpenModal(prezzo)}
                         className="text-blue-600 hover:text-blue-700 text-sm"
                       >
                         Modifica
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDelete(prezzo)}
                         className="text-red-600 hover:text-red-700 text-sm"
                       >
