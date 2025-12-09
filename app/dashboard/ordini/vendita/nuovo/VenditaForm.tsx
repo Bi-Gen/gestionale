@@ -255,6 +255,41 @@ export default function VenditaForm({
     return dettagli.reduce((sum, d) => sum + calcolaSubtotale(d), 0)
   }
 
+  // Calcola il peso totale dell'ordine in kg
+  const calcolaPesoTotale = () => {
+    return dettagli.reduce((sum, dettaglio) => {
+      if (!dettaglio.prodotto_id) return sum
+      const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
+      const pesoUnitario = prodotto?.peso_kg || 0
+      return sum + (dettaglio.quantita * pesoUnitario)
+    }, 0)
+  }
+
+  // Calcola il costo di trasporto basato sulle tariffe del trasportatore
+  const calcolaCostoTrasporto = (trasportatore: { costo_trasporto_kg?: number; peso_minimo_fatturabile?: number; costo_minimo_trasporto?: number } | undefined | null) => {
+    if (!trasportatore?.costo_trasporto_kg) return null
+
+    const pesoTotale = calcolaPesoTotale()
+    const costoKg = trasportatore.costo_trasporto_kg
+    const pesoMinimo = trasportatore.peso_minimo_fatturabile || 0
+    const costoMinimo = trasportatore.costo_minimo_trasporto || 0
+
+    // Applica peso minimo fatturabile
+    const pesoEffettivo = Math.max(pesoTotale, pesoMinimo)
+    let costoCalcolato = pesoEffettivo * costoKg
+
+    // Applica costo minimo
+    if (costoCalcolato < costoMinimo) {
+      costoCalcolato = costoMinimo
+    }
+
+    return {
+      pesoTotale,
+      pesoEffettivo,
+      costoCalcolato: Math.round(costoCalcolato * 100) / 100
+    }
+  }
+
   return (
     <form action={createOrdine} className="space-y-6">
       {/* Campo hidden per il tipo */}
@@ -809,44 +844,73 @@ export default function VenditaForm({
             </div>
 
             {/* Trasporto */}
-            {(hasTrasporto || sedeSelezionata?.trasportatore) && (
-              <div className="border border-orange-200 rounded-lg p-4 bg-orange-50">
-                <h3 className="text-sm font-medium text-orange-900 mb-3">Trasporto</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 uppercase">Trasportatore</dt>
-                    <dd className="mt-1 text-sm font-medium text-gray-900">
-                      {trasportatoreEffettivo?.ragione_sociale || <span className="text-gray-400 italic">Non assegnato</span>}
-                    </dd>
-                    {trasportatoreEffettivo?.costo_trasporto_kg && (
-                      <dd className="text-xs text-gray-500">{trasportatoreEffettivo.costo_trasporto_kg.toFixed(2)} €/kg</dd>
-                    )}
-                    {sedeSelezionata?.trasportatore && (
-                      <dd className="text-xs text-orange-600 mt-1">Trasportatore dedicato sede</dd>
-                    )}
-                    <input type="hidden" name="trasportatore_id" value={trasportatoreIdEffettivo || ''} />
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 uppercase">Termini di Resa</dt>
-                    {cliente.incoterm ? (
-                      <>
-                        <dd className="mt-1 text-sm font-medium text-gray-900">{cliente.incoterm.nome}</dd>
-                        <dd className={`text-xs px-2 py-0.5 rounded inline-block mt-1 ${
-                          cliente.incoterm.trasporto_a_carico === 'compratore'
-                            ? 'text-green-700 bg-green-100'
-                            : 'text-orange-700 bg-orange-100'
-                        }`}>
-                          {cliente.incoterm.trasporto_a_carico === 'compratore' ? 'Cliente paga' : 'Noi paghiamo'}
-                        </dd>
-                      </>
-                    ) : (
-                      <dd className="mt-1 text-sm text-gray-400 italic">Non definito</dd>
-                    )}
-                    <input type="hidden" name="incoterm_id" value={cliente.incoterm_default_id || ''} />
+            {(hasTrasporto || sedeSelezionata?.trasportatore) && (() => {
+              const costoTrasportoInfo = calcolaCostoTrasporto(trasportatoreEffettivo)
+
+              return (
+                <div className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                  <h3 className="text-sm font-medium text-orange-900 mb-3">Trasporto</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <dt className="text-xs font-medium text-gray-500 uppercase">Trasportatore</dt>
+                      <dd className="mt-1 text-sm font-medium text-gray-900">
+                        {trasportatoreEffettivo?.ragione_sociale || <span className="text-gray-400 italic">Non assegnato</span>}
+                      </dd>
+                      {trasportatoreEffettivo?.costo_trasporto_kg && (
+                        <dd className="text-xs text-gray-500">{trasportatoreEffettivo.costo_trasporto_kg.toFixed(2)} €/kg</dd>
+                      )}
+                      {sedeSelezionata?.trasportatore && (
+                        <dd className="text-xs text-orange-600 mt-1">Trasportatore dedicato sede</dd>
+                      )}
+                      <input type="hidden" name="trasportatore_id" value={trasportatoreIdEffettivo || ''} />
+                    </div>
+                    <div>
+                      <dt className="text-xs font-medium text-gray-500 uppercase">Termini di Resa</dt>
+                      {cliente.incoterm ? (
+                        <>
+                          <dd className="mt-1 text-sm font-medium text-gray-900">{cliente.incoterm.nome}</dd>
+                          <dd className={`text-xs px-2 py-0.5 rounded inline-block mt-1 ${
+                            cliente.incoterm.trasporto_a_carico === 'compratore'
+                              ? 'text-green-700 bg-green-100'
+                              : 'text-orange-700 bg-orange-100'
+                          }`}>
+                            {cliente.incoterm.trasporto_a_carico === 'compratore' ? 'Cliente paga' : 'Noi paghiamo'}
+                          </dd>
+                        </>
+                      ) : (
+                        <dd className="mt-1 text-sm text-gray-400 italic">Non definito</dd>
+                      )}
+                      <input type="hidden" name="incoterm_id" value={cliente.incoterm_default_id || ''} />
+                    </div>
+                    {/* Calcolo Costo Trasporto */}
+                    <div className="bg-white rounded-lg p-3 border border-orange-300">
+                      <dt className="text-xs font-medium text-gray-500 uppercase mb-2">Stima Costo Trasporto</dt>
+                      {costoTrasportoInfo ? (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>Peso ordine:</span>
+                            <span className="font-medium">{costoTrasportoInfo.pesoTotale.toFixed(2)} kg</span>
+                          </div>
+                          {costoTrasportoInfo.pesoEffettivo > costoTrasportoInfo.pesoTotale && (
+                            <div className="flex justify-between text-xs text-orange-600">
+                              <span>Peso minimo:</span>
+                              <span className="font-medium">{costoTrasportoInfo.pesoEffettivo.toFixed(2)} kg</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-sm font-bold text-orange-700 pt-1 border-t border-orange-200">
+                            <span>Costo stimato:</span>
+                            <span>€ {costoTrasportoInfo.costoCalcolato.toFixed(2)}</span>
+                          </div>
+                          <input type="hidden" name="costo_trasporto_stimato" value={costoTrasportoInfo.costoCalcolato} />
+                        </div>
+                      ) : (
+                        <dd className="text-xs text-gray-400 italic">Tariffa non configurata</dd>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Metodo Pagamento */}
             {hasPagamento && (
