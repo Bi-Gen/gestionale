@@ -1,9 +1,10 @@
 import { getTipiSoggetto } from '@/app/actions/tipi-soggetto'
-import { createSoggetto } from '@/app/actions/soggetti'
+import { createSoggetto, getTrasportatori } from '@/app/actions/soggetti'
 import { getAgentiAttivi } from '@/app/actions/agenti'
 import { getCategorieClienteAttive } from '@/app/actions/categorie-cliente'
 import { getCategorieFornitoreAttive } from '@/app/actions/categorie-fornitore'
 import { getListiniAttivi } from '@/app/actions/listini'
+import { getIncotermsAttivi } from '@/app/actions/incoterm'
 import SoggettoForm from '@/components/SoggettoForm'
 
 export default async function NuovoSoggettoPage({
@@ -11,9 +12,11 @@ export default async function NuovoSoggettoPage({
 }: {
   searchParams: Promise<{ tipo?: string; return?: string; error?: string }>
 }) {
-  const [tipiSoggetto, agenti, categorieCliente, categorieFornitore, listini] = await Promise.all([
+  const [tipiSoggetto, agenti, trasportatori, incoterms, categorieCliente, categorieFornitore, listini] = await Promise.all([
     getTipiSoggetto(),
     getAgentiAttivi(),
+    getTrasportatori(),
+    getIncotermsAttivi(),
     getCategorieClienteAttive(),
     getCategorieFornitoreAttive(),
     getListiniAttivi('vendita')
@@ -58,6 +61,8 @@ export default async function NuovoSoggettoPage({
         tipiSoggetto={tipiSoggetto}
         tipoPreselezionato={tipoPreselezionato}
         agenti={agenti}
+        trasportatori={trasportatori}
+        incoterms={incoterms}
         categorieCliente={categorieCliente}
         categorieFornitore={categorieFornitore}
         listini={listini}

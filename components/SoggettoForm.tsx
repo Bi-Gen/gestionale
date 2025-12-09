@@ -37,11 +37,26 @@ type CategoriaFornitoreOption = {
   colore?: string
 }
 
+type TrasportatoreOption = {
+  id: number
+  ragione_sociale: string
+  costo_trasporto_kg?: number
+}
+
+type IncotermOption = {
+  id: number
+  codice: string
+  nome: string
+  trasporto_a_carico: 'venditore' | 'compratore' | 'condiviso'
+}
+
 type SoggettoFormProps = {
   soggetto?: Soggetto
   tipiSoggetto: TipoSoggetto[]
   tipoPreselezionato?: TipoSoggetto
   agenti?: AgenteOption[]
+  trasportatori?: TrasportatoreOption[]
+  incoterms?: IncotermOption[]
   categorieCliente?: CategoriaClienteOption[]
   categorieFornitore?: CategoriaFornitoreOption[]
   listini?: ListinoOption[]
@@ -55,6 +70,8 @@ export default function SoggettoForm({
   tipiSoggetto,
   tipoPreselezionato,
   agenti = [],
+  trasportatori = [],
+  incoterms = [],
   categorieCliente = [],
   categorieFornitore = [],
   listini = [],
@@ -104,6 +121,8 @@ export default function SoggettoForm({
   const [tipoSoggettoId, setTipoSoggettoId] = useState(() => getInitialTipoSoggettoId())
   const [attivo, setAttivo] = useState(soggetto?.attivo ?? true)
   const [agenteId, setAgenteId] = useState<string>(soggetto?.agente_id?.toString() || '')
+  const [trasportatoreId, setTrasportatoreId] = useState<string>(soggetto?.trasportatore_id?.toString() || '')
+  const [incotermId, setIncotermId] = useState<string>(soggetto?.incoterm_default_id?.toString() || '')
   const [categoriaClienteId, setCategoriaClienteId] = useState<string>(
     soggetto?.categoria_cliente_id?.toString() || ''
   )
@@ -133,9 +152,13 @@ export default function SoggettoForm({
   // Get selected tipo_soggetto codice for backward compatibility
   const selectedTipoSoggetto = localTipiSoggetto.find(t => t.id === parseInt(tipoSoggettoId))
 
-  // Check if selected type is Cliente or Fornitore
+  // Check if selected type is Cliente, Fornitore or Trasportatore
   const isCliente = selectedTipoSoggetto?.codice === 'CLI'
   const isFornitore = selectedTipoSoggetto?.codice === 'FOR'
+  // Supporta codici TRA, TRASP o nome contenente "trasport"
+  const isTrasportatore = selectedTipoSoggetto?.codice === 'TRA' ||
+    selectedTipoSoggetto?.codice === 'TRASP' ||
+    selectedTipoSoggetto?.nome?.toLowerCase().includes('trasport')
 
   // State for categoria fornitore
   const [categoriaFornitoreId, setCategoriaFornitoreId] = useState<string>(
@@ -666,6 +689,78 @@ export default function SoggettoForm({
                 </p>
               </div>
             )}
+
+            {/* Trasportatore */}
+            {trasportatori.length > 0 && (
+              <div>
+                <label htmlFor="trasportatore_id" className="block text-sm font-medium text-gray-700 mb-1">
+                  Trasportatore Predefinito
+                </label>
+                <select
+                  id="trasportatore_id"
+                  name="trasportatore_id"
+                  value={trasportatoreId}
+                  onChange={(e) => setTrasportatoreId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Nessun trasportatore</option>
+                  {trasportatori.map((trasp) => (
+                    <option key={trasp.id} value={trasp.id}>
+                      {trasp.ragione_sociale}
+                      {trasp.costo_trasporto_kg ? ` (${trasp.costo_trasporto_kg.toFixed(2)} €/kg)` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Corriere predefinito per le spedizioni
+                </p>
+              </div>
+            )}
+
+            {/* Incoterm - Chi paga il trasporto */}
+            {incoterms.length > 0 && (
+              <div>
+                <label htmlFor="incoterm_default_id" className="block text-sm font-medium text-gray-700 mb-1">
+                  Termini di Resa (Incoterm)
+                </label>
+                <select
+                  id="incoterm_default_id"
+                  name="incoterm_default_id"
+                  value={incotermId}
+                  onChange={(e) => setIncotermId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleziona...</option>
+                  {incoterms.map((inc) => (
+                    <option key={inc.id} value={inc.id}>
+                      {inc.codice} - {inc.nome}
+                    </option>
+                  ))}
+                </select>
+                {incotermId && (() => {
+                  const selectedIncoterm = incoterms.find(i => i.id === parseInt(incotermId))
+                  if (!selectedIncoterm) return null
+                  const chiPaga = selectedIncoterm.trasporto_a_carico === 'compratore'
+                    ? 'Cliente paga il trasporto'
+                    : selectedIncoterm.trasporto_a_carico === 'venditore'
+                    ? 'Noi paghiamo il trasporto'
+                    : 'Trasporto condiviso'
+                  const colorClass = selectedIncoterm.trasporto_a_carico === 'compratore'
+                    ? 'text-green-600 bg-green-50'
+                    : selectedIncoterm.trasporto_a_carico === 'venditore'
+                    ? 'text-orange-600 bg-orange-50'
+                    : 'text-blue-600 bg-blue-50'
+                  return (
+                    <p className={`mt-1 text-xs px-2 py-1 rounded ${colorClass}`}>
+                      {chiPaga}
+                    </p>
+                  )
+                })()}
+                <p className="mt-1 text-xs text-gray-500">
+                  Determina chi paga il trasporto
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -747,6 +842,81 @@ export default function SoggettoForm({
                 Termini di pagamento concordati
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dati Trasporto - Solo per Trasportatori */}
+      {isTrasportatore && (
+        <div className="bg-white shadow-sm rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Costi Trasporto</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Costo per Kg */}
+            <div>
+              <label htmlFor="costo_trasporto_kg" className="block text-sm font-medium text-gray-700 mb-1">
+                Costo per Kg (€)
+              </label>
+              <input
+                type="number"
+                id="costo_trasporto_kg"
+                name="costo_trasporto_kg"
+                defaultValue={soggetto?.costo_trasporto_kg}
+                min="0"
+                step="0.0001"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0.50"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Tariffa per ogni kg trasportato
+              </p>
+            </div>
+
+            {/* Peso Minimo Fatturabile */}
+            <div>
+              <label htmlFor="peso_minimo_fatturabile" className="block text-sm font-medium text-gray-700 mb-1">
+                Peso Minimo (Kg)
+              </label>
+              <input
+                type="number"
+                id="peso_minimo_fatturabile"
+                name="peso_minimo_fatturabile"
+                defaultValue={soggetto?.peso_minimo_fatturabile}
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="10"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Peso minimo fatturabile (opzionale)
+              </p>
+            </div>
+
+            {/* Costo Minimo Ordine */}
+            <div>
+              <label htmlFor="costo_minimo_trasporto" className="block text-sm font-medium text-gray-700 mb-1">
+                Costo Minimo (€)
+              </label>
+              <input
+                type="number"
+                id="costo_minimo_trasporto"
+                name="costo_minimo_trasporto"
+                defaultValue={soggetto?.costo_minimo_trasporto}
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="15.00"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Importo minimo per spedizione (opzionale)
+              </p>
+            </div>
+          </div>
+
+          {/* Preview calcolo */}
+          <div className="mt-4 p-3 bg-blue-50 rounded-md">
+            <p className="text-sm text-blue-700">
+              <strong>Esempio:</strong> Con un costo di 0.50€/kg, un ordine di 25kg costa 12.50€
+            </p>
           </div>
         </div>
       )}

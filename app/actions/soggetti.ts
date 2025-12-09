@@ -50,6 +50,15 @@ export type Soggetto = {
   categoria_fornitore_id?: number
   giorni_consegna?: number
   sconto_fornitore?: number
+  // Campi trasportatore (per clienti)
+  trasportatore_id?: number
+  // NOTA: Chi paga il trasporto si deduce da incoterm_default_id
+  // (incoterm.trasporto_a_carico = 'compratore' → cliente paga, 'venditore' → noi paghiamo)
+  incoterm_default_id?: number
+  // Campi costi trasporto (per soggetti trasportatori)
+  costo_trasporto_kg?: number
+  peso_minimo_fatturabile?: number
+  costo_minimo_trasporto?: number
   note?: string
   allegati?: any
   attivo: boolean
@@ -83,6 +92,11 @@ export type Soggetto = {
     id: number
     codice_agente?: string
     ragione_sociale: string
+  }
+  trasportatore?: {
+    id: number
+    ragione_sociale: string
+    costo_trasporto_kg?: number
   }
 }
 
@@ -285,6 +299,14 @@ export async function createSoggetto(formData: FormData) {
     attivo: formData.get('attivo') === 'true',
     // Agente assegnato (solo per clienti)
     agente_id: formData.get('agente_id') ? parseInt(formData.get('agente_id') as string) : null,
+    // Trasportatore predefinito (solo per clienti)
+    trasportatore_id: formData.get('trasportatore_id') ? parseInt(formData.get('trasportatore_id') as string) : null,
+    // Incoterm predefinito (determina chi paga il trasporto)
+    incoterm_default_id: formData.get('incoterm_default_id') ? parseInt(formData.get('incoterm_default_id') as string) : null,
+    // Campi trasporto (solo per trasportatori)
+    costo_trasporto_kg: formData.get('costo_trasporto_kg') ? parseFloat(formData.get('costo_trasporto_kg') as string) : null,
+    peso_minimo_fatturabile: formData.get('peso_minimo_fatturabile') ? parseFloat(formData.get('peso_minimo_fatturabile') as string) : null,
+    costo_minimo_trasporto: formData.get('costo_minimo_trasporto') ? parseFloat(formData.get('costo_minimo_trasporto') as string) : null,
     // Set tipo array for backward compatibility
     tipo: formData.get('tipo_soggetto_codice') === 'CLI' ? ['cliente'] :
           formData.get('tipo_soggetto_codice') === 'FOR' ? ['fornitore'] :
@@ -359,6 +381,14 @@ export async function updateSoggetto(id: number, formData: FormData) {
     attivo: formData.get('attivo') === 'true',
     // Agente assegnato (solo per clienti)
     agente_id: formData.get('agente_id') ? parseInt(formData.get('agente_id') as string) : null,
+    // Trasportatore predefinito (solo per clienti)
+    trasportatore_id: formData.get('trasportatore_id') ? parseInt(formData.get('trasportatore_id') as string) : null,
+    // Incoterm predefinito (determina chi paga il trasporto)
+    incoterm_default_id: formData.get('incoterm_default_id') ? parseInt(formData.get('incoterm_default_id') as string) : null,
+    // Campi trasporto (solo per trasportatori)
+    costo_trasporto_kg: formData.get('costo_trasporto_kg') ? parseFloat(formData.get('costo_trasporto_kg') as string) : null,
+    peso_minimo_fatturabile: formData.get('peso_minimo_fatturabile') ? parseFloat(formData.get('peso_minimo_fatturabile') as string) : null,
+    costo_minimo_trasporto: formData.get('costo_minimo_trasporto') ? parseFloat(formData.get('costo_minimo_trasporto') as string) : null,
     // Update tipo array for backward compatibility
     tipo: formData.get('tipo_soggetto_codice') === 'CLI' ? ['cliente'] :
           formData.get('tipo_soggetto_codice') === 'FOR' ? ['fornitore'] :
@@ -407,4 +437,41 @@ export async function deleteSoggetto(id: number) {
   revalidatePath('/dashboard/clienti')
   revalidatePath('/dashboard/fornitori')
   redirect('/dashboard/soggetti?success=Soggetto eliminato con successo')
+}
+
+// GET: Lista trasportatori (soggetti con tipo trasporto)
+export async function getTrasportatori() {
+  const supabase = await createClient()
+
+  // Cerca soggetti con tipo contenente "trasport" nel nome o con codice TRA/TRASP
+  const { data, error } = await supabase
+    .from('soggetto')
+    .select(`
+      id,
+      ragione_sociale,
+      costo_trasporto_kg,
+      peso_minimo_fatturabile,
+      costo_minimo_trasporto,
+      tipo_soggetto:tipo_soggetto_id(id, codice, nome)
+    `)
+    .eq('attivo', true)
+    .order('ragione_sociale', { ascending: true })
+
+  if (error) {
+    console.error('Errore recupero trasportatori:', error)
+    return []
+  }
+
+  // Filtra solo i soggetti che sono trasportatori (per codice o nome tipo)
+  return (data || []).filter((s: any) => {
+    const codice = s.tipo_soggetto?.codice?.toUpperCase()
+    const nome = s.tipo_soggetto?.nome?.toLowerCase() || ''
+    return codice === 'TRA' || codice === 'TRASP' || nome.includes('trasport')
+  }).map((s: any) => ({
+    id: s.id,
+    ragione_sociale: s.ragione_sociale,
+    costo_trasporto_kg: s.costo_trasporto_kg,
+    peso_minimo_fatturabile: s.peso_minimo_fatturabile,
+    costo_minimo_trasporto: s.costo_minimo_trasporto,
+  }))
 }
