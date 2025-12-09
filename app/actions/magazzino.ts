@@ -741,8 +741,7 @@ export async function getUltimoCostoAcquisto(prodottoId: number): Promise<Ultimo
     .eq('segno', 1) // Solo carichi
     .like('documento_numero', 'ORD-A%') // Solo ordini di ACQUISTO (esclude MOV-, ORD-V, ecc.)
     .not('costo_unitario', 'is', null) // Solo movimenti con costo
-    .order('data_movimento', { ascending: false })
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }) // Ordina per timestamp creazione (più preciso)
     .limit(1)
     .single()
 
