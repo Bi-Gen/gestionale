@@ -2,6 +2,7 @@ import { getOrdine } from '@/app/actions/ordini'
 import { getClienti } from '@/app/actions/clienti'
 import { getFornitori } from '@/app/actions/fornitori'
 import { getProdotti } from '@/app/actions/prodotti'
+import { getMagazzini } from '@/app/actions/magazzino'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import ModificaOrdineCompleto from './ModificaOrdineCompleto'
@@ -21,16 +22,18 @@ export default async function ModificaOrdinePage({
     redirect('/dashboard/ordini?error=Ordine non trovato')
   }
 
-  const [clienti, fornitori, prodotti] = await Promise.all([
+  const [clienti, fornitori, prodotti, magazzini] = await Promise.all([
     getClienti(),
     getFornitori(),
-    getProdotti()
+    getProdotti(),
+    getMagazzini()
   ])
 
   // Serializza i dati per il Client Component
   const clientiSerialized = JSON.parse(JSON.stringify(clienti))
   const fornitoriSerialized = JSON.parse(JSON.stringify(fornitori))
   const prodottiSerialized = JSON.parse(JSON.stringify(prodotti))
+  const magazziniSerialized = JSON.parse(JSON.stringify(magazzini))
   const dettagliSerialized = JSON.parse(JSON.stringify(ordine.dettagli || []))
 
   return (
@@ -69,6 +72,7 @@ export default async function ModificaOrdinePage({
             clienti={clientiSerialized}
             fornitori={fornitoriSerialized}
             prodotti={prodottiSerialized}
+            magazzini={magazziniSerialized}
             dettagliEsistenti={dettagliSerialized}
           />
         </div>

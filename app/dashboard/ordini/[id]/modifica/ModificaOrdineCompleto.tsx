@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { type Cliente } from '@/app/actions/clienti'
 import { type Fornitore } from '@/app/actions/fornitori'
 import { type Prodotto } from '@/app/actions/prodotti'
+import { type Magazzino } from '@/app/actions/magazzino'
 import { useState, useEffect, useCallback } from 'react'
 
 type DettaglioRiga = {
@@ -36,12 +37,14 @@ export default function ModificaOrdineCompleto({
   clienti,
   fornitori,
   prodotti,
+  magazzini,
   dettagliEsistenti
 }: {
   ordine: Ordine
   clienti: Cliente[]
   fornitori: Fornitore[]
   prodotti: Prodotto[]
+  magazzini: Magazzino[]
   dettagliEsistenti: any[]
 }) {
   const [fornitoreSelezionato, setFornitoreSelezionato] = useState<string>(ordine.fornitore_id || '')
@@ -295,58 +298,82 @@ export default function ModificaOrdineCompleto({
         </div>
       </div>
 
-      {/* Cliente o Fornitore */}
-      {ordine.tipo === 'vendita' ? (
+      {/* Cliente/Fornitore e Magazzino */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {ordine.tipo === 'vendita' ? (
+          <div>
+            <label htmlFor="cliente_id" className="block text-sm font-medium text-gray-700">
+              Cliente *
+            </label>
+            <select
+              name="cliente_id"
+              id="cliente_id"
+              required
+              value={selectedClienteId}
+              onChange={(e) => setSelectedClienteId(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            >
+              <option value="">Seleziona un cliente</option>
+              {clienti.map((cliente) => (
+                <option key={cliente.id} value={cliente.id}>
+                  {cliente.ragione_sociale}
+                </option>
+              ))}
+            </select>
+            {loadingPrezzi && (
+              <p className="mt-1 text-sm text-blue-600">Aggiornamento prezzi in corso...</p>
+            )}
+          </div>
+        ) : (
+          <div>
+            <label htmlFor="fornitore_id" className="block text-sm font-medium text-gray-700">
+              Fornitore *
+            </label>
+            <select
+              name="fornitore_id"
+              id="fornitore_id"
+              required
+              value={fornitoreSelezionato}
+              onChange={(e) => setFornitoreSelezionato(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            >
+              <option value="">Seleziona un fornitore</option>
+              {fornitori.map((fornitore) => (
+                <option key={fornitore.id} value={fornitore.id}>
+                  {fornitore.ragione_sociale}
+                </option>
+              ))}
+            </select>
+            {fornitoreSelezionato && (
+              <p className="mt-1 text-sm text-gray-600">
+                Mostrando solo prodotti di questo fornitore
+              </p>
+            )}
+          </div>
+        )}
+
         <div>
-          <label htmlFor="cliente_id" className="block text-sm font-medium text-gray-700">
-            Cliente *
+          <label htmlFor="magazzino_id" className="block text-sm font-medium text-gray-700">
+            Magazzino
           </label>
           <select
-            name="cliente_id"
-            id="cliente_id"
-            required
-            value={selectedClienteId}
-            onChange={(e) => setSelectedClienteId(e.target.value)}
+            name="magazzino_id"
+            id="magazzino_id"
+            defaultValue={ordine.magazzino_id || magazzini.find(m => m.principale)?.id || ''}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
           >
-            <option value="">Seleziona un cliente</option>
-            {clienti.map((cliente) => (
-              <option key={cliente.id} value={cliente.id}>
-                {cliente.ragione_sociale}
+            <option value="">Magazzino principale</option>
+            {magazzini.map((magazzino) => (
+              <option key={magazzino.id} value={magazzino.id}>
+                {magazzino.codice} - {magazzino.nome} {magazzino.principale && '(Principale)'}
               </option>
             ))}
           </select>
-          {loadingPrezzi && (
-            <p className="mt-1 text-sm text-blue-600">Aggiornamento prezzi in corso...</p>
-          )}
+          <p className="mt-1 text-xs text-gray-500">
+            {ordine.tipo === 'vendita' ? 'Da quale magazzino scaricare i prodotti' : 'In quale magazzino caricare i prodotti'}
+          </p>
         </div>
-      ) : (
-        <div>
-          <label htmlFor="fornitore_id" className="block text-sm font-medium text-gray-700">
-            Fornitore *
-          </label>
-          <select
-            name="fornitore_id"
-            id="fornitore_id"
-            required
-            value={fornitoreSelezionato}
-            onChange={(e) => setFornitoreSelezionato(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-          >
-            <option value="">Seleziona un fornitore</option>
-            {fornitori.map((fornitore) => (
-              <option key={fornitore.id} value={fornitore.id}>
-                {fornitore.ragione_sociale}
-              </option>
-            ))}
-          </select>
-          {fornitoreSelezionato && (
-            <p className="mt-1 text-sm text-gray-600">
-              Mostrando solo prodotti di questo fornitore
-            </p>
-          )}
-        </div>
-      )}
+      </div>
 
       {/* Prodotti */}
       <div className="border-t pt-6">

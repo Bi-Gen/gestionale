@@ -109,7 +109,7 @@ export async function getClienti(): Promise<Cliente[]> {
 
   // Query clienti con relazioni base
   // Filtro solo soggetti con 'cliente' nell'array tipo
-  const { data, error } = await supabase
+  const { data: clientiData, error: clientiError } = await supabase
     .from('soggetto')
     .select(`
       *,
@@ -136,12 +136,62 @@ export async function getClienti(): Promise<Cliente[]> {
     .contains('tipo', ['cliente'])
     .order('ragione_sociale', { ascending: true })
 
-  if (error) {
-    console.error('Error fetching clienti:', error)
+  if (clientiError) {
+    console.error('Error fetching clienti:', clientiError)
     return []
   }
 
-  return data || []
+  if (!clientiData || clientiData.length === 0) {
+    return []
+  }
+
+  // Recupera sedi per tutti i clienti in una query separata
+  const clienteIds = clientiData.map(c => c.id)
+  const { data: sediData } = await supabase
+    .from('sede_cliente')
+    .select(`
+      id,
+      cliente_id,
+      codice,
+      denominazione,
+      indirizzo,
+      civico,
+      cap,
+      citta,
+      provincia,
+      trasportatore_id,
+      predefinito,
+      per_spedizione,
+      per_fatturazione,
+      trasportatore:soggetto!trasportatore_id(
+        id,
+        ragione_sociale,
+        costo_trasporto_kg
+      )
+    `)
+    .in('cliente_id', clienteIds)
+    .eq('attivo', true)
+    .order('predefinito', { ascending: false })
+
+  // Mappa sedi ai rispettivi clienti
+  const sediByCliente = new Map<number, typeof sediData>()
+  if (sediData) {
+    for (const sede of sediData) {
+      const clienteId = sede.cliente_id
+      if (!sediByCliente.has(clienteId)) {
+        sediByCliente.set(clienteId, [])
+      }
+      sediByCliente.get(clienteId)!.push(sede)
+    }
+  }
+
+  // Combina clienti con le loro sedi
+  const clientiConSedi = clientiData.map(cliente => ({
+    ...cliente,
+    sedi: sediByCliente.get(cliente.id) || []
+  }))
+
+  return clientiConSedi
 }
 
 export async function getCliente(id: string): Promise<Cliente | null> {
