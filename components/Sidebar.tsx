@@ -31,6 +31,8 @@ export default function Sidebar({ userName, userEmail, userAvatar }: SidebarProp
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     // 'area centrale': true, // Commentato per ora
     anagrafiche: true, // Aperta di default
+    ordini: true, // Aperta di default
+    magazzino: false,
     // 'contabilità': false, // Commentato per ora
     configurazioni: false,
     profilo: false,
@@ -90,6 +92,45 @@ export default function Sidebar({ userName, userEmail, userAvatar }: SidebarProp
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          )
+        },
+      ],
+    },
+    {
+      title: 'ORDINI',
+      icon: '🛒',
+      items: [
+        {
+          name: 'Ordini Vendita',
+          href: '/dashboard/ordini/vendita',
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          )
+        },
+        {
+          name: 'Ordini Acquisto',
+          href: '/dashboard/ordini/acquisto',
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          )
+        },
+      ],
+    },
+    {
+      title: 'MAGAZZINO',
+      icon: '📦',
+      items: [
+        {
+          name: 'Movimenti',
+          href: '/dashboard/magazzino/movimenti',
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
             </svg>
           )
         },

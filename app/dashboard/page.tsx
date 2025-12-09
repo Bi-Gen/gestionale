@@ -37,6 +37,39 @@ export default async function DashboardPage() {
         </Link>
 
         <Link
+          href="/dashboard/ordini/vendita"
+          className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-4 mb-3">
+            <div className="text-3xl">🛒</div>
+            <h3 className="text-xl font-semibold text-gray-900">Ordini Vendita</h3>
+          </div>
+          <p className="text-gray-600">Crea e gestisci ordini di vendita</p>
+        </Link>
+
+        <Link
+          href="/dashboard/ordini/acquisto"
+          className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-4 mb-3">
+            <div className="text-3xl">🛍️</div>
+            <h3 className="text-xl font-semibold text-gray-900">Ordini Acquisto</h3>
+          </div>
+          <p className="text-gray-600">Crea e gestisci ordini ai fornitori</p>
+        </Link>
+
+        <Link
+          href="/dashboard/magazzino/movimenti"
+          className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-4 mb-3">
+            <div className="text-3xl">📊</div>
+            <h3 className="text-xl font-semibold text-gray-900">Movimenti</h3>
+          </div>
+          <p className="text-gray-600">Visualizza movimenti di magazzino</p>
+        </Link>
+
+        <Link
           href="/dashboard/configurazioni"
           className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
         >
@@ -54,20 +87,8 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 opacity-60">
             <div className="flex items-center gap-3">
-              <div className="text-2xl">🛒</div>
-              <span className="text-gray-500">Ordini</span>
-            </div>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 opacity-60">
-            <div className="flex items-center gap-3">
               <div className="text-2xl">🧾</div>
               <span className="text-gray-500">Fatture</span>
-            </div>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 opacity-60">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl">📊</div>
-              <span className="text-gray-500">Magazzino</span>
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 opacity-60">
