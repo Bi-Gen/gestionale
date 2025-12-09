@@ -64,6 +64,7 @@ export default function VenditaForm({
     { prodotto_id: '', quantita: 1, prezzo_unitario: 0, sconto_percentuale: 0 }
   ])
   const [selectedClienteId, setSelectedClienteId] = useState<string>('')
+  const [selectedSedeId, setSelectedSedeId] = useState<string>('')
   const [loadingPrezzi, setLoadingPrezzi] = useState<boolean>(false)
 
   // Funzione per recuperare prezzo, statistiche e giacenza
@@ -336,74 +337,6 @@ export default function VenditaForm({
           </p>
         </div>
       </div>
-
-      {/* Sezione Info Cliente (Read-Only) */}
-      {selectedClienteId && (() => {
-        const cliente = clienti.find(c => c.id.toString() === selectedClienteId)
-        if (!cliente) return null
-
-        const hasTrasporto = cliente.trasportatore || cliente.incoterm
-        const hasPagamento = cliente.metodo_pagamento
-
-        if (!hasTrasporto && !hasPagamento) return null
-
-        return (
-          <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-            <h3 className="text-sm font-medium text-blue-900 mb-3">
-              Condizioni Cliente
-              <span className="text-xs font-normal text-blue-600 ml-2">(da anagrafica cliente)</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Trasportatore */}
-              <div>
-                <dt className="text-xs font-medium text-gray-500 uppercase">Trasportatore</dt>
-                <dd className="mt-1 text-sm font-medium text-gray-900">
-                  {cliente.trasportatore?.ragione_sociale || <span className="text-gray-400 italic">Non assegnato</span>}
-                </dd>
-                {cliente.trasportatore?.costo_trasporto_kg && (
-                  <dd className="text-xs text-gray-500">{cliente.trasportatore.costo_trasporto_kg.toFixed(2)} €/kg</dd>
-                )}
-                <input type="hidden" name="trasportatore_id" value={cliente.trasportatore_id || ''} />
-              </div>
-
-              {/* Termini di Resa */}
-              <div>
-                <dt className="text-xs font-medium text-gray-500 uppercase">Termini di Resa</dt>
-                {cliente.incoterm ? (
-                  <>
-                    <dd className="mt-1 text-sm font-medium text-gray-900">{cliente.incoterm.nome}</dd>
-                    <dd className={`text-xs px-2 py-0.5 rounded inline-block mt-1 ${
-                      cliente.incoterm.trasporto_a_carico === 'compratore'
-                        ? 'text-green-700 bg-green-100'
-                        : 'text-orange-700 bg-orange-100'
-                    }`}>
-                      {cliente.incoterm.trasporto_a_carico === 'compratore' ? 'Cliente paga' : 'Noi paghiamo'}
-                    </dd>
-                  </>
-                ) : (
-                  <dd className="mt-1 text-sm text-gray-400 italic">Non definito</dd>
-                )}
-                <input type="hidden" name="incoterm_id" value={cliente.incoterm_default_id || ''} />
-              </div>
-
-              {/* Metodo di Pagamento */}
-              <div>
-                <dt className="text-xs font-medium text-gray-500 uppercase">Metodo Pagamento</dt>
-                {cliente.metodo_pagamento ? (
-                  <>
-                    <dd className="mt-1 text-sm font-medium text-gray-900">{cliente.metodo_pagamento.nome}</dd>
-                    {cliente.metodo_pagamento.giorni_scadenza !== undefined && cliente.metodo_pagamento.giorni_scadenza > 0 && (
-                      <dd className="text-xs text-gray-500">{cliente.metodo_pagamento.giorni_scadenza} giorni</dd>
-                    )}
-                  </>
-                ) : (
-                  <dd className="mt-1 text-sm text-gray-400 italic">Non definito</dd>
-                )}
-              </div>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* Sezione Prodotti */}
       <div className="border-t pt-6">
@@ -822,6 +755,114 @@ export default function VenditaForm({
           </div>
         </div>
       </div>
+
+      {/* Sezione Spedizione e Condizioni (Read-Only da cliente) */}
+      {selectedClienteId && (() => {
+        const cliente = clienti.find(c => c.id.toString() === selectedClienteId)
+        if (!cliente) return null
+
+        const hasTrasporto = cliente.trasportatore || cliente.incoterm
+        const hasPagamento = cliente.metodo_pagamento
+        const hasSedi = cliente.sedi && cliente.sedi.length > 0
+
+        // Determina il trasportatore effettivo (dalla sede selezionata o dal cliente)
+        const sedeSelezionata = cliente.sedi?.find(s => s.id.toString() === selectedSedeId)
+        const trasportatoreEffettivo = sedeSelezionata?.trasportatore || cliente.trasportatore
+        const trasportatoreIdEffettivo = sedeSelezionata?.trasportatore_id || cliente.trasportatore_id
+
+        return (
+          <div className="space-y-4">
+            {/* Sede di Spedizione */}
+            <div className="border border-green-200 rounded-lg p-4 bg-green-50">
+              <h3 className="text-sm font-medium text-green-900 mb-3">Indirizzo di Spedizione</h3>
+              {hasSedi ? (
+                <div>
+                  <select
+                    value={selectedSedeId}
+                    onChange={(e) => setSelectedSedeId(e.target.value)}
+                    className="block w-full rounded-md border border-green-300 px-3 py-2 text-gray-900 bg-white focus:border-green-500 focus:outline-none focus:ring-green-500"
+                  >
+                    <option value="">Sede Principale (indirizzo cliente)</option>
+                    {cliente.sedi?.filter(s => s.per_spedizione !== false).map((sede) => (
+                      <option key={sede.id} value={sede.id}>
+                        {sede.denominazione} - {sede.citta} {sede.provincia && `(${sede.provincia})`}
+                        {sede.predefinito && ' ★'}
+                      </option>
+                    ))}
+                  </select>
+                  {sedeSelezionata ? (
+                    <div className="mt-2 text-sm text-gray-700">
+                      <span className="font-medium">Indirizzo:</span> {sedeSelezionata.indirizzo} {sedeSelezionata.civico}, {sedeSelezionata.cap} {sedeSelezionata.citta} {sedeSelezionata.provincia && `(${sedeSelezionata.provincia})`}
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-sm text-gray-700">
+                      <span className="font-medium">Indirizzo:</span> {cliente.indirizzo} {cliente.civico}, {cliente.cap} {cliente.citta} {cliente.provincia && `(${cliente.provincia})`}
+                    </div>
+                  )}
+                  <input type="hidden" name="sede_cliente_id" value={selectedSedeId || ''} />
+                </div>
+              ) : (
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">Indirizzo:</span> {cliente.indirizzo} {cliente.civico}, {cliente.cap} {cliente.citta} {cliente.provincia && `(${cliente.provincia})`}
+                </div>
+              )}
+            </div>
+
+            {/* Trasporto */}
+            {(hasTrasporto || sedeSelezionata?.trasportatore) && (
+              <div className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                <h3 className="text-sm font-medium text-orange-900 mb-3">Trasporto</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <dt className="text-xs font-medium text-gray-500 uppercase">Trasportatore</dt>
+                    <dd className="mt-1 text-sm font-medium text-gray-900">
+                      {trasportatoreEffettivo?.ragione_sociale || <span className="text-gray-400 italic">Non assegnato</span>}
+                    </dd>
+                    {trasportatoreEffettivo?.costo_trasporto_kg && (
+                      <dd className="text-xs text-gray-500">{trasportatoreEffettivo.costo_trasporto_kg.toFixed(2)} €/kg</dd>
+                    )}
+                    {sedeSelezionata?.trasportatore && (
+                      <dd className="text-xs text-orange-600 mt-1">Trasportatore dedicato sede</dd>
+                    )}
+                    <input type="hidden" name="trasportatore_id" value={trasportatoreIdEffettivo || ''} />
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-gray-500 uppercase">Termini di Resa</dt>
+                    {cliente.incoterm ? (
+                      <>
+                        <dd className="mt-1 text-sm font-medium text-gray-900">{cliente.incoterm.nome}</dd>
+                        <dd className={`text-xs px-2 py-0.5 rounded inline-block mt-1 ${
+                          cliente.incoterm.trasporto_a_carico === 'compratore'
+                            ? 'text-green-700 bg-green-100'
+                            : 'text-orange-700 bg-orange-100'
+                        }`}>
+                          {cliente.incoterm.trasporto_a_carico === 'compratore' ? 'Cliente paga' : 'Noi paghiamo'}
+                        </dd>
+                      </>
+                    ) : (
+                      <dd className="mt-1 text-sm text-gray-400 italic">Non definito</dd>
+                    )}
+                    <input type="hidden" name="incoterm_id" value={cliente.incoterm_default_id || ''} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Metodo Pagamento */}
+            {hasPagamento && (
+              <div className="border border-purple-200 rounded-lg p-4 bg-purple-50">
+                <h3 className="text-sm font-medium text-purple-900 mb-3">Metodo di Pagamento</h3>
+                <div className="text-sm">
+                  <span className="font-medium text-gray-900">{cliente.metodo_pagamento?.nome}</span>
+                  {cliente.metodo_pagamento?.giorni_scadenza !== undefined && cliente.metodo_pagamento.giorni_scadenza > 0 && (
+                    <span className="text-gray-500 ml-2">({cliente.metodo_pagamento.giorni_scadenza} giorni)</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       <div>
         <label htmlFor="stato" className="block text-sm font-medium text-gray-700">

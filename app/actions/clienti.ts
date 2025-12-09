@@ -78,6 +78,25 @@ export type Cliente = {
     nome: string
     giorni_scadenza?: number
   }
+  sedi?: Array<{
+    id: number
+    codice?: string
+    denominazione: string
+    indirizzo?: string
+    civico?: string
+    cap?: string
+    citta?: string
+    provincia?: string
+    trasportatore_id?: number
+    predefinito: boolean
+    per_spedizione: boolean
+    per_fatturazione: boolean
+    trasportatore?: {
+      id: number
+      ragione_sociale: string
+      costo_trasporto_kg?: number
+    }
+  }>
 }
 
 export async function getClienti(): Promise<Cliente[]> {
@@ -122,6 +141,25 @@ export async function getClienti(): Promise<Cliente[]> {
         codice,
         nome,
         giorni_scadenza
+      ),
+      sedi:sede_cliente(
+        id,
+        codice,
+        denominazione,
+        indirizzo,
+        civico,
+        cap,
+        citta,
+        provincia,
+        trasportatore_id,
+        predefinito,
+        per_spedizione,
+        per_fatturazione,
+        trasportatore:trasportatore_id(
+          id,
+          ragione_sociale,
+          costo_trasporto_kg
+        )
       )
     `)
     .eq('tipo_soggetto_id', tipoCliente.id)

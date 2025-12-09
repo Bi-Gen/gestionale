@@ -6,6 +6,7 @@ import { getCategorieFornitoreAttive } from '@/app/actions/categorie-fornitore'
 import { getListiniAttivi } from '@/app/actions/listini'
 import { getIncotermsAttivi } from '@/app/actions/incoterm'
 import { getMetodiPagamentoAttivi } from '@/app/actions/metodi-pagamento'
+import { getSediCliente } from '@/app/actions/sedi-cliente'
 import SoggettoForm from '@/components/SoggettoForm'
 import { notFound } from 'next/navigation'
 
@@ -19,7 +20,7 @@ export default async function ModificaSoggettoPage({
   const { id } = await params
   const searchParamsResolved = await searchParams
 
-  const [soggetto, tipiSoggetto, agenti, trasportatori, incoterms, metodiPagamento, categorieCliente, categorieFornitore, listini] = await Promise.all([
+  const [soggetto, tipiSoggetto, agenti, trasportatori, incoterms, metodiPagamento, categorieCliente, categorieFornitore, listini, sedi] = await Promise.all([
     getSoggetto(parseInt(id)),
     getTipiSoggetto(),
     getAgentiAttivi(),
@@ -28,7 +29,8 @@ export default async function ModificaSoggettoPage({
     getMetodiPagamentoAttivi(),
     getCategorieClienteAttive(),
     getCategorieFornitoreAttive(),
-    getListiniAttivi('vendita')
+    getListiniAttivi('vendita'),
+    getSediCliente(parseInt(id))
   ])
 
   if (!soggetto) {
@@ -63,6 +65,7 @@ export default async function ModificaSoggettoPage({
         categorieCliente={categorieCliente}
         categorieFornitore={categorieFornitore}
         listini={listini}
+        sedi={sedi}
         returnUrl={searchParamsResolved.return}
         action={updateSoggetto.bind(null, soggetto.id)}
         submitLabel="Salva Modifiche"

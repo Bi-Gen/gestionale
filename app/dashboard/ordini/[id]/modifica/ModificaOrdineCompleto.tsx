@@ -14,19 +14,6 @@ import { type Fornitore } from '@/app/actions/fornitori'
 import { type Prodotto } from '@/app/actions/prodotti'
 import { useState, useEffect, useCallback } from 'react'
 
-type TrasportatoreOption = {
-  id: number
-  ragione_sociale: string
-  costo_trasporto_kg?: number
-}
-
-type IncotermOption = {
-  id: number
-  codice: string
-  nome: string
-  trasporto_a_carico: 'venditore' | 'compratore' | 'condiviso'
-}
-
 type DettaglioRiga = {
   id?: string
   prodotto_id: string
@@ -49,24 +36,19 @@ export default function ModificaOrdineCompleto({
   clienti,
   fornitori,
   prodotti,
-  trasportatori = [],
-  incoterms = [],
   dettagliEsistenti
 }: {
   ordine: Ordine
   clienti: Cliente[]
   fornitori: Fornitore[]
   prodotti: Prodotto[]
-  trasportatori?: TrasportatoreOption[]
-  incoterms?: IncotermOption[]
   dettagliEsistenti: any[]
 }) {
   const [fornitoreSelezionato, setFornitoreSelezionato] = useState<string>(ordine.fornitore_id || '')
   const [selectedClienteId, setSelectedClienteId] = useState<string>(ordine.cliente_id || '')
   const [loadingPrezzi, setLoadingPrezzi] = useState(false)
-  // Trasporto - inizializza dai dati ordine esistente
-  const [trasportatoreId, setTrasportatoreId] = useState<string>(ordine.trasportatore_id?.toString() || '')
-  const [incotermId, setIncotermId] = useState<string>(ordine.incoterm_id?.toString() || '')
+  // Sede cliente - inizializza dalla sede dell'ordine esistente
+  const [selectedSedeId, setSelectedSedeId] = useState<string>(ordine.sede_cliente_id?.toString() || '')
   const [dettagli, setDettagli] = useState<DettaglioRiga[]>(
     dettagliEsistenti.length > 0
       ? dettagliEsistenti.map(d => ({
@@ -363,73 +345,6 @@ export default function ModificaOrdineCompleto({
               Mostrando solo prodotti di questo fornitore
             </p>
           )}
-        </div>
-      )}
-
-      {/* Sezione Trasporto (solo per vendita) */}
-      {ordine.tipo === 'vendita' && selectedClienteId && (trasportatori.length > 0 || incoterms.length > 0) && (
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Trasporto</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Incoterm - Chi paga */}
-            {incoterms.length > 0 && (
-              <div>
-                <label htmlFor="incoterm_id" className="block text-sm font-medium text-gray-700">
-                  Chi paga il trasporto
-                </label>
-                <select
-                  name="incoterm_id"
-                  id="incoterm_id"
-                  value={incotermId}
-                  onChange={(e) => setIncotermId(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                >
-                  <option value="">Seleziona...</option>
-                  {incoterms.map((inc) => (
-                    <option key={inc.id} value={inc.id}>
-                      {inc.nome}
-                    </option>
-                  ))}
-                </select>
-                {incotermId && (() => {
-                  const selectedIncoterm = incoterms.find(i => i.id.toString() === incotermId)
-                  if (!selectedIncoterm) return null
-                  const isClientePaga = selectedIncoterm.trasporto_a_carico === 'compratore'
-                  return (
-                    <p className={`mt-1 text-xs px-2 py-1 rounded ${
-                      isClientePaga ? 'text-green-700 bg-green-100' : 'text-orange-700 bg-orange-100'
-                    }`}>
-                      {isClientePaga ? 'Il cliente paga il trasporto' : 'Noi paghiamo il trasporto'}
-                    </p>
-                  )
-                })()}
-              </div>
-            )}
-
-            {/* Trasportatore */}
-            {trasportatori.length > 0 && (
-              <div>
-                <label htmlFor="trasportatore_id" className="block text-sm font-medium text-gray-700">
-                  Trasportatore
-                </label>
-                <select
-                  name="trasportatore_id"
-                  id="trasportatore_id"
-                  value={trasportatoreId}
-                  onChange={(e) => setTrasportatoreId(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                >
-                  <option value="">Nessun trasportatore</option>
-                  {trasportatori.map((trasp) => (
-                    <option key={trasp.id} value={trasp.id}>
-                      {trasp.ragione_sociale}
-                      {trasp.costo_trasporto_kg ? ` (${trasp.costo_trasporto_kg.toFixed(2)} €/kg)` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
         </div>
       )}
 
@@ -738,6 +653,113 @@ export default function ModificaOrdineCompleto({
           </div>
         </div>
       </div>
+
+      {/* Sezione Spedizione e Condizioni (Read-Only da cliente) - Solo per vendita */}
+      {ordine.tipo === 'vendita' && selectedClienteId && (() => {
+        const cliente = clienti.find(c => c.id.toString() === selectedClienteId)
+        if (!cliente) return null
+
+        const hasTrasporto = cliente.trasportatore || cliente.incoterm
+        const hasPagamento = cliente.metodo_pagamento
+        const hasSedi = cliente.sedi && cliente.sedi.length > 0
+
+        const sedeSelezionata = cliente.sedi?.find(s => s.id.toString() === selectedSedeId)
+        const trasportatoreEffettivo = sedeSelezionata?.trasportatore || cliente.trasportatore
+        const trasportatoreIdEffettivo = sedeSelezionata?.trasportatore_id || cliente.trasportatore_id
+
+        return (
+          <div className="space-y-4">
+            {/* Sede di Spedizione */}
+            <div className="border border-green-200 rounded-lg p-4 bg-green-50">
+              <h3 className="text-sm font-medium text-green-900 mb-3">Indirizzo di Spedizione</h3>
+              {hasSedi ? (
+                <div>
+                  <select
+                    value={selectedSedeId}
+                    onChange={(e) => setSelectedSedeId(e.target.value)}
+                    className="block w-full rounded-md border border-green-300 px-3 py-2 text-gray-900 bg-white focus:border-green-500 focus:outline-none focus:ring-green-500"
+                  >
+                    <option value="">Sede Principale (indirizzo cliente)</option>
+                    {cliente.sedi?.filter(s => s.per_spedizione !== false).map((sede) => (
+                      <option key={sede.id} value={sede.id}>
+                        {sede.denominazione} - {sede.citta} {sede.provincia && `(${sede.provincia})`}
+                        {sede.predefinito && ' ★'}
+                      </option>
+                    ))}
+                  </select>
+                  {sedeSelezionata ? (
+                    <div className="mt-2 text-sm text-gray-700">
+                      <span className="font-medium">Indirizzo:</span> {sedeSelezionata.indirizzo} {sedeSelezionata.civico}, {sedeSelezionata.cap} {sedeSelezionata.citta} {sedeSelezionata.provincia && `(${sedeSelezionata.provincia})`}
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-sm text-gray-700">
+                      <span className="font-medium">Indirizzo:</span> {cliente.indirizzo} {cliente.civico}, {cliente.cap} {cliente.citta} {cliente.provincia && `(${cliente.provincia})`}
+                    </div>
+                  )}
+                  <input type="hidden" name="sede_cliente_id" value={selectedSedeId || ''} />
+                </div>
+              ) : (
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">Indirizzo:</span> {cliente.indirizzo} {cliente.civico}, {cliente.cap} {cliente.citta} {cliente.provincia && `(${cliente.provincia})`}
+                </div>
+              )}
+            </div>
+
+            {/* Trasporto */}
+            {(hasTrasporto || sedeSelezionata?.trasportatore) && (
+              <div className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                <h3 className="text-sm font-medium text-orange-900 mb-3">Trasporto</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <dt className="text-xs font-medium text-gray-500 uppercase">Trasportatore</dt>
+                    <dd className="mt-1 text-sm font-medium text-gray-900">
+                      {trasportatoreEffettivo?.ragione_sociale || <span className="text-gray-400 italic">Non assegnato</span>}
+                    </dd>
+                    {trasportatoreEffettivo?.costo_trasporto_kg && (
+                      <dd className="text-xs text-gray-500">{trasportatoreEffettivo.costo_trasporto_kg.toFixed(2)} €/kg</dd>
+                    )}
+                    {sedeSelezionata?.trasportatore && (
+                      <dd className="text-xs text-orange-600 mt-1">Trasportatore dedicato sede</dd>
+                    )}
+                    <input type="hidden" name="trasportatore_id" value={trasportatoreIdEffettivo || ''} />
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-gray-500 uppercase">Termini di Resa</dt>
+                    {cliente.incoterm ? (
+                      <>
+                        <dd className="mt-1 text-sm font-medium text-gray-900">{cliente.incoterm.nome}</dd>
+                        <dd className={`text-xs px-2 py-0.5 rounded inline-block mt-1 ${
+                          cliente.incoterm.trasporto_a_carico === 'compratore'
+                            ? 'text-green-700 bg-green-100'
+                            : 'text-orange-700 bg-orange-100'
+                        }`}>
+                          {cliente.incoterm.trasporto_a_carico === 'compratore' ? 'Cliente paga' : 'Noi paghiamo'}
+                        </dd>
+                      </>
+                    ) : (
+                      <dd className="mt-1 text-sm text-gray-400 italic">Non definito</dd>
+                    )}
+                    <input type="hidden" name="incoterm_id" value={cliente.incoterm_default_id || ''} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Metodo Pagamento */}
+            {hasPagamento && (
+              <div className="border border-purple-200 rounded-lg p-4 bg-purple-50">
+                <h3 className="text-sm font-medium text-purple-900 mb-3">Metodo di Pagamento</h3>
+                <div className="text-sm">
+                  <span className="font-medium text-gray-900">{cliente.metodo_pagamento?.nome}</span>
+                  {cliente.metodo_pagamento?.giorni_scadenza !== undefined && cliente.metodo_pagamento.giorni_scadenza > 0 && (
+                    <span className="text-gray-500 ml-2">({cliente.metodo_pagamento.giorni_scadenza} giorni)</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Stato */}
       <div>

@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Soggetto } from '@/app/actions/soggetti'
 import { TipoSoggetto } from '@/app/actions/tipi-soggetto'
+import { type SedeCliente } from '@/app/actions/sedi-cliente'
 import SelectConCreazione from './SelectConCreazione'
+import SediClienteManager from './SediClienteManager'
 
 type AgenteOption = {
   id: string | number
@@ -68,6 +70,7 @@ type SoggettoFormProps = {
   categorieCliente?: CategoriaClienteOption[]
   categorieFornitore?: CategoriaFornitoreOption[]
   listini?: ListinoOption[]
+  sedi?: SedeCliente[]
   returnUrl?: string
   action: (formData: FormData) => Promise<void>
   submitLabel: string
@@ -84,6 +87,7 @@ export default function SoggettoForm({
   categorieCliente = [],
   categorieFornitore = [],
   listini = [],
+  sedi = [],
   returnUrl,
   action,
   submitLabel
@@ -799,6 +803,15 @@ export default function SoggettoForm({
             )}
           </div>
         </div>
+      )}
+
+      {/* Sedi Cliente - Solo per Clienti esistenti */}
+      {isCliente && soggetto?.id && (
+        <SediClienteManager
+          clienteId={soggetto.id}
+          sedi={sedi}
+          trasportatori={trasportatori}
+        />
       )}
 
       {/* Dati Commerciali - Solo per Fornitori */}

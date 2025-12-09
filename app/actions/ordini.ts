@@ -286,6 +286,7 @@ export type Ordine = {
   magazzino_id?: number
   trasportatore_id?: number
   incoterm_id?: number
+  sede_cliente_id?: number
   costo_trasporto?: number
   peso_totale_kg?: number
   stato: string
@@ -314,6 +315,12 @@ export type Ordine = {
     codice: string
     nome: string
     trasporto_a_carico: 'venditore' | 'compratore' | 'condiviso'
+  }
+  sede_cliente?: {
+    id: number
+    denominazione: string
+    indirizzo?: string
+    citta?: string
   }
 }
 
@@ -508,12 +515,15 @@ export async function createOrdine(formData: FormData) {
     }
   }
 
-  // Trasportatore e incoterm
+  // Trasportatore, incoterm e sede cliente
   const trasportatoreId = formData.get('trasportatore_id')
     ? parseInt(formData.get('trasportatore_id') as string)
     : null
   const incotermId = formData.get('incoterm_id')
     ? parseInt(formData.get('incoterm_id') as string)
+    : null
+  const sedeClienteId = formData.get('sede_cliente_id')
+    ? parseInt(formData.get('sede_cliente_id') as string)
     : null
   const costoTrasporto = formData.get('costo_trasporto')
     ? parseFloat(formData.get('costo_trasporto') as string)
@@ -532,6 +542,7 @@ export async function createOrdine(formData: FormData) {
     magazzino_id: magazzinoId,
     trasportatore_id: trasportatoreId,
     incoterm_id: incotermId,
+    sede_cliente_id: sedeClienteId,
     costo_trasporto: costoTrasporto,
     peso_totale_kg: pesoTotaleKg,
     stato: validation.data.stato || 'bozza',
@@ -644,12 +655,15 @@ export async function updateOrdine(id: string, formData: FormData) {
     ? parseInt(formData.get('magazzino_id') as string)
     : undefined
 
-  // Trasportatore e incoterm
+  // Trasportatore, incoterm e sede cliente
   const trasportatoreId = formData.get('trasportatore_id')
     ? parseInt(formData.get('trasportatore_id') as string)
     : null
   const incotermId = formData.get('incoterm_id')
     ? parseInt(formData.get('incoterm_id') as string)
+    : null
+  const sedeClienteId = formData.get('sede_cliente_id')
+    ? parseInt(formData.get('sede_cliente_id') as string)
     : null
   const costoTrasporto = formData.get('costo_trasporto')
     ? parseFloat(formData.get('costo_trasporto') as string)
@@ -666,6 +680,7 @@ export async function updateOrdine(id: string, formData: FormData) {
     magazzino_id: magazzinoId,
     trasportatore_id: trasportatoreId,
     incoterm_id: incotermId,
+    sede_cliente_id: sedeClienteId,
     costo_trasporto: costoTrasporto,
     peso_totale_kg: pesoTotaleKg,
     stato: validation.data.stato || 'bozza',
