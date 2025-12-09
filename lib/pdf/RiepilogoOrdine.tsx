@@ -19,11 +19,14 @@ type Props = {
     data_ordine: string
     stato: string
     note?: string
+    data_consegna_prevista?: string
   }
   cliente: {
     ragione_sociale: string
     partita_iva?: string
     codice_fiscale?: string
+    codice_univoco?: string // SDI
+    pec?: string
     email?: string
     telefono?: string
     indirizzo?: string
@@ -56,14 +59,23 @@ type Props = {
     trasportatore?: string
     costo_stimato?: number
     peso_totale?: number
+    incoterm?: string
+    incoterm_nome?: string
+    trasporto_a_carico?: string
   }
   pagamento?: {
     metodo?: string
     giorni_scadenza?: number
   }
+  agente?: {
+    ragione_sociale?: string
+    codice_agente?: string
+    telefono?: string
+    email?: string
+  }
 }
 
-export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpedizione, dettagli, totali, trasporto, pagamento }: Props) {
+export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpedizione, dettagli, totali, trasporto, pagamento, agente }: Props) {
   return (
     <Document>
       <Page size="A4" style={commonStyles.page}>
@@ -84,11 +96,16 @@ export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpe
             <Text style={commonStyles.documentTitle}>RIEPILOGO ORDINE</Text>
             <Text style={commonStyles.documentNumber}>N. {ordine.numero_ordine}</Text>
             <Text style={commonStyles.documentDate}>Data: {new Date(ordine.data_ordine).toLocaleDateString('it-IT')}</Text>
+            {ordine.data_consegna_prevista && (
+              <Text style={[commonStyles.documentDate, { marginTop: 5, color: '#059669' }]}>
+                Consegna prevista: {new Date(ordine.data_consegna_prevista).toLocaleDateString('it-IT')}
+              </Text>
+            )}
           </View>
         </View>
 
         {/* Cliente e Spedizione */}
-        <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+        <View style={{ flexDirection: 'row', marginBottom: 15 }}>
           {/* Cliente */}
           <View style={{ width: '48%' }}>
             <Text style={commonStyles.sectionTitle}>CLIENTE</Text>
@@ -100,7 +117,9 @@ export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpe
             )}
             {cliente.partita_iva && <Text style={commonStyles.companyInfo}>P.IVA: {cliente.partita_iva}</Text>}
             {cliente.codice_fiscale && <Text style={commonStyles.companyInfo}>C.F.: {cliente.codice_fiscale}</Text>}
-            {cliente.email && <Text style={commonStyles.companyInfo}>Email: {cliente.email}</Text>}
+            {cliente.codice_univoco && <Text style={commonStyles.companyInfo}>SDI: {cliente.codice_univoco}</Text>}
+            {cliente.pec && <Text style={commonStyles.companyInfo}>PEC: {cliente.pec}</Text>}
+            {cliente.email && !cliente.pec && <Text style={commonStyles.companyInfo}>Email: {cliente.email}</Text>}
             {cliente.telefono && <Text style={commonStyles.companyInfo}>Tel: {cliente.telefono}</Text>}
           </View>
 
@@ -126,6 +145,65 @@ export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpe
           </View>
         </View>
 
+        {/* Info Trasporto e Pagamento */}
+        <View style={{ flexDirection: 'row', marginBottom: 15, backgroundColor: '#F9FAFB', padding: 10, borderRadius: 4 }}>
+          {/* Trasporto */}
+          <View style={{ width: '32%' }}>
+            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151', marginBottom: 5 }}>TRASPORTO</Text>
+            {trasporto?.trasportatore && (
+              <Text style={{ fontSize: 9, color: '#4B5563' }}>{trasporto.trasportatore}</Text>
+            )}
+            {trasporto?.incoterm && (
+              <Text style={{ fontSize: 9, color: '#4B5563' }}>
+                {trasporto.incoterm} {trasporto.incoterm_nome && `- ${trasporto.incoterm_nome}`}
+              </Text>
+            )}
+            {trasporto?.trasporto_a_carico && (
+              <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>
+                ({trasporto.trasporto_a_carico === 'compratore' ? 'Franco fabbrica' : 'Franco destino'})
+              </Text>
+            )}
+            {trasporto?.peso_totale !== undefined && trasporto.peso_totale > 0 && (
+              <Text style={{ fontSize: 9, color: '#4B5563', marginTop: 2 }}>Peso: {trasporto.peso_totale.toFixed(2)} kg</Text>
+            )}
+          </View>
+
+          {/* Pagamento */}
+          <View style={{ width: '32%', marginLeft: '2%' }}>
+            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151', marginBottom: 5 }}>PAGAMENTO</Text>
+            {pagamento?.metodo ? (
+              <>
+                <Text style={{ fontSize: 9, color: '#4B5563' }}>{pagamento.metodo}</Text>
+                {pagamento.giorni_scadenza !== undefined && pagamento.giorni_scadenza > 0 && (
+                  <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>
+                    Scadenza: {pagamento.giorni_scadenza} giorni
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Text style={{ fontSize: 9, color: '#9CA3AF' }}>Da definire</Text>
+            )}
+          </View>
+
+          {/* Agente */}
+          <View style={{ width: '32%', marginLeft: '2%' }}>
+            <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151', marginBottom: 5 }}>AGENTE</Text>
+            {agente?.ragione_sociale ? (
+              <>
+                <Text style={{ fontSize: 9, color: '#4B5563' }}>{agente.ragione_sociale}</Text>
+                {agente.codice_agente && (
+                  <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>Cod: {agente.codice_agente}</Text>
+                )}
+                {agente.telefono && (
+                  <Text style={{ fontSize: 8, color: '#6B7280' }}>Tel: {agente.telefono}</Text>
+                )}
+              </>
+            ) : (
+              <Text style={{ fontSize: 9, color: '#9CA3AF' }}>-</Text>
+            )}
+          </View>
+        </View>
+
         {/* Tabella Prodotti */}
         <View style={commonStyles.section}>
           <Text style={commonStyles.sectionTitle}>DETTAGLIO ORDINE</Text>
@@ -134,7 +212,7 @@ export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpe
             <View style={commonStyles.tableHeader}>
               <Text style={[commonStyles.tableHeaderCell, { width: productTableWidths.codice }]}>Codice</Text>
               <Text style={[commonStyles.tableHeaderCell, { width: productTableWidths.descrizione }]}>Descrizione</Text>
-              <Text style={[commonStyles.tableHeaderCell, { width: productTableWidths.quantita, textAlign: 'right' }]}>Qtà</Text>
+              <Text style={[commonStyles.tableHeaderCell, { width: productTableWidths.quantita, textAlign: 'right' }]}>Qta</Text>
               <Text style={[commonStyles.tableHeaderCell, { width: productTableWidths.prezzo, textAlign: 'right' }]}>Prezzo</Text>
               <Text style={[commonStyles.tableHeaderCell, { width: productTableWidths.sconto, textAlign: 'right' }]}>Sconto</Text>
               <Text style={[commonStyles.tableHeaderCell, { width: productTableWidths.totale, textAlign: 'right' }]}>Totale</Text>
@@ -149,13 +227,13 @@ export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpe
                   {item.quantita} {item.unita}
                 </Text>
                 <Text style={[commonStyles.tableCell, { width: productTableWidths.prezzo, textAlign: 'right' }]}>
-                  € {item.prezzo_unitario.toFixed(2)}
+                  {item.prezzo_unitario.toFixed(2)}
                 </Text>
                 <Text style={[commonStyles.tableCell, { width: productTableWidths.sconto, textAlign: 'right' }]}>
                   {item.sconto_percentuale > 0 ? `${item.sconto_percentuale}%` : '-'}
                 </Text>
                 <Text style={[commonStyles.tableCell, { width: productTableWidths.totale, textAlign: 'right' }]}>
-                  € {item.totale.toFixed(2)}
+                  {item.totale.toFixed(2)}
                 </Text>
               </View>
             ))}
@@ -166,56 +244,22 @@ export default function RiepilogoOrdine({ azienda, ordine, cliente, indirizzoSpe
         <View style={commonStyles.totalsSection}>
           <View style={commonStyles.totalRow}>
             <Text style={commonStyles.totalLabel}>Imponibile:</Text>
-            <Text style={commonStyles.totalValue}>€ {totali.imponibile.toFixed(2)}</Text>
+            <Text style={commonStyles.totalValue}>EUR {totali.imponibile.toFixed(2)}</Text>
           </View>
           <View style={commonStyles.totalRow}>
             <Text style={commonStyles.totalLabel}>IVA (22%):</Text>
-            <Text style={commonStyles.totalValue}>€ {totali.iva.toFixed(2)}</Text>
+            <Text style={commonStyles.totalValue}>EUR {totali.iva.toFixed(2)}</Text>
           </View>
-          {trasporto?.costo_stimato && trasporto.costo_stimato > 0 && (
+          {trasporto?.costo_stimato !== undefined && trasporto.costo_stimato > 0 && (
             <View style={commonStyles.totalRow}>
               <Text style={commonStyles.totalLabel}>Trasporto stimato:</Text>
-              <Text style={commonStyles.totalValue}>€ {trasporto.costo_stimato.toFixed(2)}</Text>
+              <Text style={commonStyles.totalValue}>EUR {trasporto.costo_stimato.toFixed(2)}</Text>
             </View>
           )}
           <View style={commonStyles.grandTotal}>
             <Text style={commonStyles.grandTotalLabel}>TOTALE:</Text>
-            <Text style={commonStyles.grandTotalValue}>€ {totali.totale.toFixed(2)}</Text>
+            <Text style={commonStyles.grandTotalValue}>EUR {totali.totale.toFixed(2)}</Text>
           </View>
-        </View>
-
-        {/* Info Trasporto e Pagamento */}
-        <View style={{ flexDirection: 'row', marginTop: 20 }}>
-          {trasporto?.trasportatore && (
-            <View style={{ width: '48%' }}>
-              <Text style={commonStyles.sectionTitle}>TRASPORTO</Text>
-              <View style={commonStyles.row}>
-                <Text style={commonStyles.label}>Trasportatore:</Text>
-                <Text style={commonStyles.value}>{trasporto.trasportatore}</Text>
-              </View>
-              {trasporto.peso_totale !== undefined && (
-                <View style={commonStyles.row}>
-                  <Text style={commonStyles.label}>Peso totale:</Text>
-                  <Text style={commonStyles.value}>{trasporto.peso_totale.toFixed(2)} kg</Text>
-                </View>
-              )}
-            </View>
-          )}
-          {pagamento?.metodo && (
-            <View style={{ width: trasporto?.trasportatore ? '48%' : '100%', marginLeft: trasporto?.trasportatore ? '4%' : 0 }}>
-              <Text style={commonStyles.sectionTitle}>PAGAMENTO</Text>
-              <View style={commonStyles.row}>
-                <Text style={commonStyles.label}>Metodo:</Text>
-                <Text style={commonStyles.value}>{pagamento.metodo}</Text>
-              </View>
-              {pagamento.giorni_scadenza !== undefined && pagamento.giorni_scadenza > 0 && (
-                <View style={commonStyles.row}>
-                  <Text style={commonStyles.label}>Scadenza:</Text>
-                  <Text style={commonStyles.value}>{pagamento.giorni_scadenza} giorni</Text>
-                </View>
-              )}
-            </View>
-          )}
         </View>
 
         {/* Note */}

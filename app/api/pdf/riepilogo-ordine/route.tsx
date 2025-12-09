@@ -30,16 +30,30 @@ export async function GET(request: NextRequest) {
           numero_ordine: dati.ordine.numero_ordine,
           data_ordine: dati.ordine.data_ordine,
           stato: dati.ordine.stato,
-          note: dati.ordine.note
+          note: dati.ordine.note,
+          data_consegna_prevista: dati.ordine.data_consegna_prevista
         }}
         cliente={dati.cliente}
         indirizzoSpedizione={dati.indirizzoSpedizione || undefined}
         dettagli={dati.dettagli}
         totali={dati.totali}
-        trasporto={dati.trasportatore ? {
-          trasportatore: dati.trasportatore.ragione_sociale,
+        trasporto={{
+          trasportatore: dati.trasportatore?.ragione_sociale,
           costo_stimato: dati.ordine.costo_trasporto,
-          peso_totale: dati.ordine.peso_totale_kg
+          peso_totale: dati.ordine.peso_totale_kg,
+          incoterm: dati.incoterm?.codice,
+          incoterm_nome: dati.incoterm?.nome,
+          trasporto_a_carico: dati.incoterm?.trasporto_a_carico
+        }}
+        pagamento={dati.metodoPagamento ? {
+          metodo: dati.metodoPagamento.nome,
+          giorni_scadenza: dati.metodoPagamento.giorni_scadenza
+        } : undefined}
+        agente={dati.agente ? {
+          ragione_sociale: dati.agente.ragione_sociale,
+          codice_agente: dati.agente.codice_agente,
+          telefono: dati.agente.telefono,
+          email: dati.agente.email
         } : undefined}
       />
     )

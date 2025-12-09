@@ -861,6 +861,7 @@ export type OrdineCompletoPDF = {
     note?: string
     costo_trasporto?: number
     peso_totale_kg?: number
+    data_consegna_prevista?: string
   }
   azienda: {
     nome: string
@@ -878,6 +879,8 @@ export type OrdineCompletoPDF = {
     ragione_sociale: string
     partita_iva?: string
     codice_fiscale?: string
+    codice_univoco?: string // SDI
+    pec?: string
     email?: string
     telefono?: string
     indirizzo?: string
@@ -901,6 +904,18 @@ export type OrdineCompletoPDF = {
   incoterm?: {
     codice: string
     nome: string
+    trasporto_a_carico?: string
+  }
+  metodoPagamento?: {
+    codice: string
+    nome: string
+    giorni_scadenza: number
+  }
+  agente?: {
+    ragione_sociale: string
+    codice_agente?: string
+    telefono?: string
+    email?: string
   }
   dettagli: Array<{
     codice: string
@@ -951,19 +966,20 @@ export async function getOrdinePDF(id: string): Promise<OrdineCompletoPDF | null
     .from('ordini')
     .select(`
       numero_ordine, data_ordine, tipo, stato, totale, note, costo_trasporto, peso_totale_kg,
-      cliente_id, sede_cliente_id, trasportatore_id, incoterm_id
+      cliente_id, sede_cliente_id, trasportatore_id, incoterm_id, metodo_pagamento_id, agente_id,
+      data_consegna_prevista
     `)
     .eq('id', id)
     .single()
 
   if (!ordine) return null
 
-  // Cliente completo
+  // Cliente completo (con SDI e PEC)
   let cliente = null
   if (ordine.cliente_id) {
     const { data } = await supabase
       .from('soggetto')
-      .select('ragione_sociale, partita_iva, codice_fiscale, email, telefono, indirizzo, cap, citta, provincia')
+      .select('ragione_sociale, partita_iva, codice_fiscale, codice_univoco, pec, email, telefono, indirizzo, cap, citta, provincia')
       .eq('id', ordine.cliente_id)
       .single()
     cliente = data
@@ -996,10 +1012,32 @@ export async function getOrdinePDF(id: string): Promise<OrdineCompletoPDF | null
   if (ordine.incoterm_id) {
     const { data } = await supabase
       .from('incoterm')
-      .select('codice, nome')
+      .select('codice, nome, trasporto_a_carico')
       .eq('id', ordine.incoterm_id)
       .single()
     incoterm = data
+  }
+
+  // Metodo pagamento
+  let metodoPagamento = null
+  if (ordine.metodo_pagamento_id) {
+    const { data } = await supabase
+      .from('metodo_pagamento')
+      .select('codice, nome, giorni_scadenza')
+      .eq('id', ordine.metodo_pagamento_id)
+      .single()
+    metodoPagamento = data
+  }
+
+  // Agente
+  let agente = null
+  if (ordine.agente_id) {
+    const { data } = await supabase
+      .from('soggetto')
+      .select('ragione_sociale, codice_agente, telefono, email')
+      .eq('id', ordine.agente_id)
+      .single()
+    agente = data
   }
 
   // Dettagli prodotti
@@ -1042,13 +1080,16 @@ export async function getOrdinePDF(id: string): Promise<OrdineCompletoPDF | null
       totale: parseFloat(String(ordine.totale)),
       note: ordine.note,
       costo_trasporto: ordine.costo_trasporto ? parseFloat(String(ordine.costo_trasporto)) : undefined,
-      peso_totale_kg: ordine.peso_totale_kg ? parseFloat(String(ordine.peso_totale_kg)) : undefined
+      peso_totale_kg: ordine.peso_totale_kg ? parseFloat(String(ordine.peso_totale_kg)) : undefined,
+      data_consegna_prevista: ordine.data_consegna_prevista || undefined
     },
     azienda,
     cliente: cliente || undefined,
     indirizzoSpedizione: indirizzoSpedizione || undefined,
     trasportatore: trasportatore || undefined,
     incoterm: incoterm || undefined,
+    metodoPagamento: metodoPagamento || undefined,
+    agente: agente || undefined,
     dettagli,
     totali: {
       imponibile: Math.round(imponibile * 100) / 100,
