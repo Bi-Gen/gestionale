@@ -27,6 +27,7 @@ interface ProdottoFormProps {
   submitLabel?: string
   prezziListino?: PrezzoListinoProdotto[]
   listiniDisponibili?: ListinoOption[]
+  isNuovoProdotto?: boolean
 }
 
 export default function ProdottoForm({
@@ -39,6 +40,7 @@ export default function ProdottoForm({
   submitLabel = 'Salva Prodotto',
   prezziListino = [],
   listiniDisponibili = [],
+  isNuovoProdotto = false,
 }: ProdottoFormProps) {
   // Stati per validazione client-side
   const [eanError, setEanError] = useState('')
@@ -463,11 +465,25 @@ export default function ProdottoForm({
       {/* SEZIONE PREZZI LISTINO (solo in modifica) */}
       {/* ========================================= */}
       {initialData?.id && (
-        <PrezziListinoProdotto
-          prodottoId={initialData.id}
-          prezzi={prezziListino}
-          listiniDisponibili={listiniDisponibili}
-        />
+        <>
+          {isNuovoProdotto && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+              <div className="flex-shrink-0 text-2xl">🎉</div>
+              <div>
+                <h3 className="font-semibold text-green-800">Prodotto creato con successo!</h3>
+                <p className="text-sm text-green-700 mt-1">
+                  Ora puoi completare la configurazione aggiungendo i prezzi per i vari listini.
+                  Clicca su &quot;+ Aggiungi Prezzo&quot; nella sezione qui sotto per associare il prodotto ai listini di vendita o acquisto.
+                </p>
+              </div>
+            </div>
+          )}
+          <PrezziListinoProdotto
+            prodottoId={initialData.id}
+            prezzi={prezziListino}
+            listiniDisponibili={listiniDisponibili}
+          />
+        </>
       )}
 
       {/* ========================================= */}

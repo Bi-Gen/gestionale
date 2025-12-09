@@ -13,10 +13,11 @@ export default async function ModificaProdottoPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; nuovo?: string }>
 }) {
   const { id } = await params
   const query = await searchParams
+  const isNuovoProdotto = query.nuovo === 'true'
 
   // Carica tutti i dati necessari in parallelo
   const [prodotto, fornitori, macrofamiglie, famiglie, linee, prezziListino, listini] = await Promise.all([
@@ -74,6 +75,7 @@ export default async function ModificaProdottoPage({
           submitLabel="Salva Modifiche"
           prezziListino={prezziListino}
           listiniDisponibili={listiniDisponibili}
+          isNuovoProdotto={isNuovoProdotto}
         />
       </main>
     </div>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   PrezzoListinoProdotto,
   addPrezzoListinoProdotto,
@@ -32,6 +33,12 @@ export default function PrezziListinoProdotto({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'vendita' | 'acquisto'>('vendita')
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Per React Portal - solo client-side
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Filtra prezzi per tipo
   const prezziVendita = prezzi.filter((p) => p.listino?.tipo === 'vendita')
@@ -271,8 +278,8 @@ export default function PrezziListinoProdotto({
         </div>
       )}
 
-      {/* Modal */}
-      {isModalOpen && (
+      {/* Modal - reso via Portal per evitare form annidati */}
+      {isModalOpen && isMounted && createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -460,7 +467,8 @@ export default function PrezziListinoProdotto({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

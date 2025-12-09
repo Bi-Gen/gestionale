@@ -272,7 +272,8 @@ export async function createProdotto(formData: FormData) {
   }
 
   revalidatePath('/dashboard/prodotti')
-  redirect('/dashboard/prodotti?success=Prodotto creato con successo')
+  // Redirect alla pagina modifica per permettere di aggiungere prezzi listino
+  redirect(`/dashboard/prodotti/${newProdotto.id}/modifica?nuovo=true`)
 }
 
 export async function updateProdotto(id: string, formData: FormData) {
