@@ -328,47 +328,76 @@ export default function ProdottoForm({
         </div>
 
         <div className="space-y-6">
-          {/* Sottosezione: Costi Interni */}
+          {/* Sottosezione: Costi Interni (Read-Only) */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-              Costi Interni (per calcolo margini)
+              Costi Interni (automatici - sola lettura)
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4 border-l-2 border-orange-200">
+            <p className="text-xs text-gray-500 mb-3 pl-4">
+              Questi valori vengono aggiornati automaticamente dai movimenti di magazzino
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-4 border-l-2 border-orange-200">
               <div>
-                <label htmlFor="costo_ultimo" className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-500">
                   Costo Ultimo Acquisto (€)
                 </label>
-              <input
-                type="number"
-                name="costo_ultimo"
-                id="costo_ultimo"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                defaultValue={initialData?.costo_ultimo}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-              <p className="mt-1 text-xs text-gray-500">Aggiornato automaticamente dai movimenti di magazzino</p>
-            </div>
+                <div className="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700">
+                  {initialData?.costo_ultimo != null ? `€ ${Number(initialData.costo_ultimo).toFixed(2)}` : '—'}
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Dall&apos;ultimo carico magazzino</p>
+              </div>
 
-            <div>
-              <label htmlFor="costo_medio" className="block text-sm font-medium text-gray-700">
-                Costo Medio Ponderato (€)
-              </label>
-              <input
-                type="number"
-                name="costo_medio"
-                id="costo_medio"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                defaultValue={initialData?.costo_medio}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-gray-50 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                readOnly
-              />
-              <p className="mt-1 text-xs text-gray-500">Calcolato automaticamente dal sistema</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-500">
+                  Costo Medio Ponderato (€)
+                </label>
+                <div className="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700">
+                  {initialData?.costo_medio != null ? `€ ${Number(initialData.costo_medio).toFixed(2)}` : '—'}
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Media ponderata dei carichi</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500">
+                  Margine Calcolato (%)
+                </label>
+                <div className="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700">
+                  {initialData?.margine_percentuale != null ? `${Number(initialData.margine_percentuale).toFixed(2)}%` : '—'}
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Su prezzo vendita base</p>
+              </div>
             </div>
+          </div>
+
+          {/* Sottosezione: Costo Override (Opzionale) */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+              Costo Manuale (opzionale)
+            </h3>
+            <p className="text-xs text-gray-500 mb-3 pl-4">
+              Usa questo campo solo se vuoi impostare manualmente un costo di riferimento (es. prodotto nuovo senza movimenti)
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4 border-l-2 border-yellow-200">
+              <div>
+                <label htmlFor="costo_override" className="block text-sm font-medium text-gray-700">
+                  Costo Override (€)
+                </label>
+                <input
+                  type="number"
+                  name="costo_override"
+                  id="costo_override"
+                  step="0.01"
+                  min="0"
+                  placeholder="Lascia vuoto per usare costo automatico"
+                  defaultValue={initialData?.costo_override}
+                  className="mt-1 block w-full rounded-md border border-yellow-300 px-3 py-2 text-gray-900 focus:border-yellow-500 focus:outline-none focus:ring-yellow-500"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Se compilato, questo valore ha priorità sui costi automatici per il calcolo margini
+                </p>
+              </div>
             </div>
           </div>
 
@@ -419,81 +448,63 @@ export default function ProdottoForm({
             </div>
           </div>
 
-          {/* Sottosezione: Parametri Fiscali e Margini */}
+          {/* Sottosezione: Parametri Fiscali e Limiti */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-              Parametri Fiscali e Margini
+              Parametri Fiscali e Limiti
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pl-4 border-l-2 border-purple-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-4 border-l-2 border-purple-200">
               <div>
                 <label htmlFor="valuta" className="block text-sm font-medium text-gray-700">
                   Valuta
                 </label>
-              <select
-                name="valuta"
-                id="valuta"
-                defaultValue={initialData?.valuta || 'EUR'}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              >
-                <option value="EUR">EUR (€)</option>
-                <option value="USD">USD ($)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="CHF">CHF (Fr)</option>
-              </select>
-            </div>
+                <select
+                  name="valuta"
+                  id="valuta"
+                  defaultValue={initialData?.valuta || 'EUR'}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                >
+                  <option value="EUR">EUR (€)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="CHF">CHF (Fr)</option>
+                </select>
+              </div>
 
-            <div>
-              <label htmlFor="margine_percentuale" className="block text-sm font-medium text-gray-700">
-                Margine %
-              </label>
-              <input
-                type="number"
-                name="margine_percentuale"
-                id="margine_percentuale"
-                step="0.01"
-                min="0"
-                max="100"
-                placeholder="0.00"
-                defaultValue={initialData?.margine_percentuale}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-gray-50 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-              <p className="mt-1 text-xs text-gray-500">Calcolato automaticamente</p>
-            </div>
+              <div>
+                <label htmlFor="sconto_massimo" className="block text-sm font-medium text-gray-700">
+                  Sconto Massimo %
+                </label>
+                <input
+                  type="number"
+                  name="sconto_massimo"
+                  id="sconto_massimo"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  placeholder="0.00"
+                  defaultValue={initialData?.sconto_massimo}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
 
-            <div>
-              <label htmlFor="sconto_massimo" className="block text-sm font-medium text-gray-700">
-                Sconto Massimo %
-              </label>
-              <input
-                type="number"
-                name="sconto_massimo"
-                id="sconto_massimo"
-                step="0.01"
-                min="0"
-                max="100"
-                placeholder="0.00"
-                defaultValue={initialData?.sconto_massimo}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="aliquota_iva" className="block text-sm font-medium text-gray-700">
-                Aliquota IVA %
-              </label>
-              <input
-                type="number"
-                name="aliquota_iva"
-                id="aliquota_iva"
-                step="0.01"
-                min="0"
-                max="100"
-                placeholder="22.00"
-                defaultValue={initialData?.aliquota_iva || '22'}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
+              <div>
+                <label htmlFor="aliquota_iva" className="block text-sm font-medium text-gray-700">
+                  Aliquota IVA %
+                </label>
+                <input
+                  type="number"
+                  name="aliquota_iva"
+                  id="aliquota_iva"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  placeholder="22.00"
+                  defaultValue={initialData?.aliquota_iva || '22'}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                />
+              </div>
             </div>
           </div>
 

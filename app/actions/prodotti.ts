@@ -23,8 +23,9 @@ export type Prodotto = {
   famiglia_id?: number
   linea_id?: number
   misura?: string
-  costo_ultimo?: number
-  costo_medio?: number
+  costo_ultimo?: number    // Read-only, aggiornato dai movimenti
+  costo_medio?: number     // Read-only, calcolato dal sistema
+  costo_override?: number  // Costo manuale opzionale
   prezzo_acquisto?: number
   prezzo_vendita: number
   aliquota_iva?: number
@@ -177,11 +178,10 @@ export async function createProdotto(formData: FormData) {
     misura: validation.data.misura || null,
 
     // Prezzi e costi
-    costo_ultimo: validation.data.costo_ultimo ? parseFloat(validation.data.costo_ultimo) : null,
-    costo_medio: validation.data.costo_medio ? parseFloat(validation.data.costo_medio) : null,
+    // NOTA: costo_ultimo, costo_medio, margine_percentuale sono gestiti automaticamente dal sistema
+    costo_override: validation.data.costo_override ? parseFloat(validation.data.costo_override) : null,
     prezzo_acquisto: validation.data.prezzo_acquisto ? parseFloat(validation.data.prezzo_acquisto) : null,
     prezzo_vendita: parseFloat(validation.data.prezzo_vendita),
-    margine_percentuale: validation.data.margine_percentuale ? parseFloat(validation.data.margine_percentuale) : null,
     sconto_massimo: validation.data.sconto_massimo ? parseFloat(validation.data.sconto_massimo) : null,
     aliquota_iva: validation.data.aliquota_iva ? parseFloat(validation.data.aliquota_iva) : 22.00,
     valuta: validation.data.valuta || 'EUR',
@@ -311,11 +311,10 @@ export async function updateProdotto(id: string, formData: FormData) {
     misura: validation.data.misura || null,
 
     // Prezzi e costi
-    costo_ultimo: validation.data.costo_ultimo ? parseFloat(validation.data.costo_ultimo) : null,
-    costo_medio: validation.data.costo_medio ? parseFloat(validation.data.costo_medio) : null,
+    // NOTA: costo_ultimo, costo_medio, margine_percentuale sono gestiti automaticamente dal sistema
+    costo_override: validation.data.costo_override ? parseFloat(validation.data.costo_override) : null,
     prezzo_acquisto: validation.data.prezzo_acquisto ? parseFloat(validation.data.prezzo_acquisto) : null,
     prezzo_vendita: parseFloat(validation.data.prezzo_vendita),
-    margine_percentuale: validation.data.margine_percentuale ? parseFloat(validation.data.margine_percentuale) : null,
     sconto_massimo: validation.data.sconto_massimo ? parseFloat(validation.data.sconto_massimo) : null,
     aliquota_iva: validation.data.aliquota_iva ? parseFloat(validation.data.aliquota_iva) : 22.00,
     valuta: validation.data.valuta || 'EUR',

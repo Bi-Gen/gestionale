@@ -77,20 +77,15 @@ export const prodottoSchema = z.object({
     .optional(),
 
   // === PREZZI E COSTI ===
-  costo_ultimo: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || val.length === 0 || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
-      'Costo ultimo deve essere un numero positivo'
-    ),
+  // NOTA: costo_ultimo, costo_medio, margine_percentuale sono calcolati automaticamente
+  // dal sistema e non vengono più inviati dal form (sono read-only)
 
-  costo_medio: z
+  costo_override: z
     .string()
     .optional()
     .refine(
       (val) => !val || val.length === 0 || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0),
-      'Costo medio deve essere un numero positivo'
+      'Costo override deve essere un numero positivo'
     ),
 
   prezzo_acquisto: z
@@ -104,15 +99,6 @@ export const prodottoSchema = z.object({
   prezzo_vendita: z
     .string()
     .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, 'Prezzo vendita è obbligatorio e deve essere un numero positivo'),
-
-
-  margine_percentuale: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || val.length === 0 || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100),
-      'Margine deve essere tra 0 e 100'
-    ),
 
   sconto_massimo: z
     .string()
@@ -390,12 +376,10 @@ export function validateProdottoFormData(formData: FormData) {
     linea_id: (formData.get('linea_id') as string) || undefined,
     misura: (formData.get('misura') as string) || undefined,
 
-    // Prezzi e costi
-    costo_ultimo: (formData.get('costo_ultimo') as string) || undefined,
-    costo_medio: (formData.get('costo_medio') as string) || undefined,
+    // Prezzi e costi (costo_ultimo, costo_medio, margine_percentuale sono read-only)
+    costo_override: (formData.get('costo_override') as string) || undefined,
     prezzo_acquisto: (formData.get('prezzo_acquisto') as string) || undefined,
     prezzo_vendita: formData.get('prezzo_vendita') as string,
-    margine_percentuale: (formData.get('margine_percentuale') as string) || undefined,
     sconto_massimo: (formData.get('sconto_massimo') as string) || undefined,
     aliquota_iva: (formData.get('aliquota_iva') as string) || undefined,
     valuta: (formData.get('valuta') as string)?.toUpperCase() || 'EUR',
