@@ -1079,3 +1079,108 @@ export async function getMovimentoById(id: number): Promise<MovimentoDettaglio |
     ordine: ordineRes.data || undefined,
   }
 }
+
+// =====================================================
+// GET: Giacenza impegnata (da ordini non evasi)
+// =====================================================
+
+export type GiacenzaCompleta = {
+  giacenza_reale: number
+  giacenza_impegnata_vendita: number // Quantità impegnata da ordini vendita non evasi
+  giacenza_impegnata_acquisto: number // Quantità in arrivo da ordini acquisto non evasi
+  giacenza_disponibile: number // giacenza_reale - impegnata_vendita
+  giacenza_prevista: number // giacenza_disponibile + in_arrivo
+}
+
+export async function getGiacenzaCompleta(
+  prodottoId: number,
+  magazzinoId?: number
+): Promise<GiacenzaCompleta> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return {
+      giacenza_reale: 0,
+      giacenza_impegnata_vendita: 0,
+      giacenza_impegnata_acquisto: 0,
+      giacenza_disponibile: 0,
+      giacenza_prevista: 0,
+    }
+  }
+
+  // 1. Recupera giacenza reale dal prodotto
+  const { data: prodotto } = await supabase
+    .from('prodotto')
+    .select('quantita_magazzino')
+    .eq('id', prodottoId)
+    .single()
+
+  const giacenzaReale = prodotto?.quantita_magazzino || 0
+
+  // 2. Somma quantità impegnata da ordini VENDITA non evasi (bozza, confermato)
+  let queryVendita = supabase
+    .from('dettagli_ordini')
+    .select(`
+      quantita,
+      ordini!inner (
+        id,
+        tipo,
+        stato,
+        magazzino_id
+      )
+    `)
+    .eq('prodotto_id', prodottoId)
+    .eq('ordini.tipo', 'vendita')
+    .in('ordini.stato', ['bozza', 'confermato'])
+
+  if (magazzinoId) {
+    queryVendita = queryVendita.eq('ordini.magazzino_id', magazzinoId)
+  }
+
+  const { data: dettagliVendita } = await queryVendita
+
+  const impegnataVendita = (dettagliVendita || []).reduce(
+    (sum, d: any) => sum + (d.quantita || 0),
+    0
+  )
+
+  // 3. Somma quantità in arrivo da ordini ACQUISTO non evasi (bozza, confermato)
+  let queryAcquisto = supabase
+    .from('dettagli_ordini')
+    .select(`
+      quantita,
+      ordini!inner (
+        id,
+        tipo,
+        stato,
+        magazzino_id
+      )
+    `)
+    .eq('prodotto_id', prodottoId)
+    .eq('ordini.tipo', 'acquisto')
+    .in('ordini.stato', ['bozza', 'confermato'])
+
+  if (magazzinoId) {
+    queryAcquisto = queryAcquisto.eq('ordini.magazzino_id', magazzinoId)
+  }
+
+  const { data: dettagliAcquisto } = await queryAcquisto
+
+  const impegnataAcquisto = (dettagliAcquisto || []).reduce(
+    (sum, d: any) => sum + (d.quantita || 0),
+    0
+  )
+
+  // Calcola giacenze derivate
+  const giacenzaDisponibile = giacenzaReale - impegnataVendita
+  const giacenzaPrevista = giacenzaDisponibile + impegnataAcquisto
+
+  return {
+    giacenza_reale: giacenzaReale,
+    giacenza_impegnata_vendita: impegnataVendita,
+    giacenza_impegnata_acquisto: impegnataAcquisto,
+    giacenza_disponibile: giacenzaDisponibile,
+    giacenza_prevista: giacenzaPrevista,
+  }
+}

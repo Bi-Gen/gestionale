@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/server'
 import { validateOrdineFormData } from '@/lib/validations/ordini'
 import {
   getUltimoCostoAcquisto,
-  getStatistichePrezziProdotto
+  getStatistichePrezziProdotto,
+  getGiacenzaCompleta,
+  type GiacenzaCompleta
 } from '@/app/actions/magazzino'
 
 // =====================================================
@@ -59,7 +61,11 @@ export type StatisticheVenditaProdotto = {
 export type InfoProdottoVendita = {
   prezzo: PrezzoCliente | null
   statistiche: StatisticheVenditaProdotto | null
+  giacenza: GiacenzaCompleta | null
 }
+
+// Re-export del tipo per uso nei componenti
+export type { GiacenzaCompleta }
 
 // =====================================================
 // FUNZIONE RECUPERO PREZZO CLIENTE
@@ -246,21 +252,23 @@ export async function getStatisticheVenditaProdotto(
 
 /**
  * Recupera tutte le info necessarie per il panel decisionale
- * in un'unica chiamata: prezzo listino + statistiche storiche
+ * in un'unica chiamata: prezzo listino + statistiche storiche + giacenza
  */
 export async function getInfoProdottoVendita(
   prodottoId: number,
   clienteId: number
 ): Promise<InfoProdottoVendita> {
   // Esegui le chiamate in parallelo per performance
-  const [prezzo, statistiche] = await Promise.all([
+  const [prezzo, statistiche, giacenza] = await Promise.all([
     getPrezzoCliente(prodottoId, clienteId),
-    getStatisticheVenditaProdotto(prodottoId, clienteId)
+    getStatisticheVenditaProdotto(prodottoId, clienteId),
+    getGiacenzaCompleta(prodottoId)
   ])
 
   return {
     prezzo,
-    statistiche
+    statistiche,
+    giacenza
   }
 }
 

@@ -4,7 +4,8 @@ import {
   createOrdine,
   getInfoProdottoVendita,
   type PrezzoCliente,
-  type StatisticheVenditaProdotto
+  type StatisticheVenditaProdotto,
+  type GiacenzaCompleta
 } from '@/app/actions/ordini'
 import Link from 'next/link'
 import { type Cliente } from '@/app/actions/clienti'
@@ -27,6 +28,8 @@ type DettaglioRiga = {
   }
   // Statistiche storiche
   statistiche?: StatisticheVenditaProdotto | null
+  // Giacenza completa
+  giacenza?: GiacenzaCompleta | null
 }
 
 export default function VenditaForm({
@@ -46,12 +49,12 @@ export default function VenditaForm({
   const [selectedClienteId, setSelectedClienteId] = useState<string>('')
   const [loadingPrezzi, setLoadingPrezzi] = useState<boolean>(false)
 
-  // Funzione per recuperare prezzo e statistiche
+  // Funzione per recuperare prezzo, statistiche e giacenza
   const fetchInfoProdotto = useCallback(async (
     prodottoId: string,
     clienteId: string
-  ): Promise<{ prezzo: PrezzoCliente | null, statistiche: StatisticheVenditaProdotto | null }> => {
-    if (!prodottoId || !clienteId) return { prezzo: null, statistiche: null }
+  ): Promise<{ prezzo: PrezzoCliente | null, statistiche: StatisticheVenditaProdotto | null, giacenza: GiacenzaCompleta | null }> => {
+    if (!prodottoId || !clienteId) return { prezzo: null, statistiche: null, giacenza: null }
 
     try {
       const info = await getInfoProdottoVendita(
@@ -61,7 +64,7 @@ export default function VenditaForm({
       return info
     } catch (error) {
       console.error('Errore recupero info prodotto:', error)
-      return { prezzo: null, statistiche: null }
+      return { prezzo: null, statistiche: null, giacenza: null }
     }
   }, [])
 
@@ -79,7 +82,7 @@ export default function VenditaForm({
         dettagli.map(async (dettaglio) => {
           if (!dettaglio.prodotto_id) return dettaglio
 
-          const { prezzo: prezzoInfo, statistiche } = await fetchInfoProdotto(dettaglio.prodotto_id, selectedClienteId)
+          const { prezzo: prezzoInfo, statistiche, giacenza } = await fetchInfoProdotto(dettaglio.prodotto_id, selectedClienteId)
           const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
 
           if (prezzoInfo && prezzoInfo.prezzo !== null) {
@@ -93,7 +96,8 @@ export default function VenditaForm({
                 sconto_max: prezzoInfo.sconto_max,
                 provvigione: prezzoInfo.provvigione
               },
-              statistiche
+              statistiche,
+              giacenza
             }
           } else if (prodotto) {
             // Fallback al prezzo base se non trovato nel listino
@@ -108,7 +112,8 @@ export default function VenditaForm({
                 sconto_max: null,
                 provvigione: null
               },
-              statistiche
+              statistiche,
+              giacenza
             }
           }
           return dettaglio
@@ -143,9 +148,9 @@ export default function VenditaForm({
 
     const nuoviDettagli = [...dettagli]
 
-    // Se c'è un cliente selezionato, cerca prezzo e statistiche
+    // Se c'è un cliente selezionato, cerca prezzo, statistiche e giacenza
     if (selectedClienteId) {
-      const { prezzo: prezzoInfo, statistiche } = await fetchInfoProdotto(prodottoId, selectedClienteId)
+      const { prezzo: prezzoInfo, statistiche, giacenza } = await fetchInfoProdotto(prodottoId, selectedClienteId)
 
       if (prezzoInfo && prezzoInfo.prezzo !== null) {
         nuoviDettagli[index] = {
@@ -160,7 +165,8 @@ export default function VenditaForm({
             sconto_max: prezzoInfo.sconto_max,
             provvigione: prezzoInfo.provvigione
           },
-          statistiche
+          statistiche,
+          giacenza
         }
         setDettagli(nuoviDettagli)
         return
@@ -182,7 +188,8 @@ export default function VenditaForm({
         sconto_max: null,
         provvigione: null
       },
-      statistiche: null
+      statistiche: null,
+      giacenza: null
     }
     setDettagli(nuoviDettagli)
   }
@@ -329,7 +336,11 @@ export default function VenditaForm({
         <div className="space-y-4">
           {dettagli.map((dettaglio, index) => {
             const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
-            const giacenzaDisponibile = prodotto?.quantita_magazzino || 0
+            // Usa giacenza dal dettaglio se disponibile, altrimenti fallback a prodotto
+            const giacenzaReale = dettaglio.giacenza?.giacenza_reale ?? prodotto?.quantita_magazzino ?? 0
+            const giacenzaImpegnata = dettaglio.giacenza?.giacenza_impegnata_vendita ?? 0
+            const giacenzaInArrivo = dettaglio.giacenza?.giacenza_impegnata_acquisto ?? 0
+            const giacenzaDisponibile = dettaglio.giacenza?.giacenza_disponibile ?? giacenzaReale
             // Priorità: sconto_max dal listino > sconto_massimo prodotto > 100
             const scontoMassimo = dettaglio.listino_info?.sconto_max ?? prodotto?.sconto_massimo ?? 100
             const sconto = dettaglio.quantita * dettaglio.prezzo_unitario * (dettaglio.sconto_percentuale / 100)
@@ -451,11 +462,25 @@ export default function VenditaForm({
                 {/* Info prodotto */}
                 {prodotto && (
                   <div className="space-y-2 text-xs">
-                    <div className="flex gap-4 text-gray-600">
+                    {/* Info Giacenza Completa */}
+                    <div className="flex flex-wrap gap-4 text-gray-600 p-2 bg-gray-50 rounded">
                       <span>Unità: {prodotto.unita_misura || 'PZ'}</span>
-                      <span className={giacenzaDisponibile > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                        Giacenza disponibile: {giacenzaDisponibile} {prodotto.unita_misura || 'PZ'}
+                      <span className="text-gray-700">
+                        Reale: <span className="font-medium">{giacenzaReale}</span>
                       </span>
+                      {giacenzaImpegnata > 0 && (
+                        <span className="text-orange-600">
+                          Impegnata: <span className="font-medium">-{giacenzaImpegnata}</span>
+                        </span>
+                      )}
+                      <span className={giacenzaDisponibile > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                        Disponibile: {giacenzaDisponibile}
+                      </span>
+                      {giacenzaInArrivo > 0 && (
+                        <span className="text-blue-600">
+                          In arrivo: <span className="font-medium">+{giacenzaInArrivo}</span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Info Listino applicato */}
