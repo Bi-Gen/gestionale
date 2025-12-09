@@ -27,6 +27,7 @@ type ListinoOption = {
   id: number
   codice: string
   nome: string
+  provvigione_default?: number
 }
 
 type CategoriaFornitoreOption = {
@@ -112,6 +113,9 @@ export default function SoggettoForm({
   const [scontoPercentuale, setScontoPercentuale] = useState<string>(
     soggetto?.sconto_percentuale?.toString() || ''
   )
+  const [provvigioneAgente, setProvvigioneAgente] = useState<string>(
+    soggetto?.provvigione_agente_perc?.toString() || ''
+  )
 
   // Debug: log the initial values
   useEffect(() => {
@@ -145,11 +149,28 @@ export default function SoggettoForm({
         // Auto-fill listino se la categoria ne ha uno associato
         if (categoria.listino_id) {
           setListinoId(categoria.listino_id.toString())
+          // Auto-fill provvigione dal listino
+          const listino = localListini.find(l => l.id === categoria.listino_id)
+          if (listino?.provvigione_default !== undefined && listino?.provvigione_default !== null) {
+            setProvvigioneAgente(listino.provvigione_default.toString())
+          }
         }
         // Auto-fill sconto se la categoria ha uno sconto default
         if (categoria.sconto_default !== undefined && categoria.sconto_default !== null) {
           setScontoPercentuale(categoria.sconto_default.toString())
         }
+      }
+    }
+  }
+
+  // Handler per cambio listino diretto con auto-fill provvigione
+  const handleListinoChange = (listId: string | number | undefined) => {
+    setListinoId(listId?.toString() || '')
+    if (listId) {
+      const id = typeof listId === 'string' ? parseInt(listId) : listId
+      const listino = localListini.find(l => l.id === id)
+      if (listino?.provvigione_default !== undefined && listino?.provvigione_default !== null) {
+        setProvvigioneAgente(listino.provvigione_default.toString())
       }
     }
   }
@@ -499,13 +520,34 @@ export default function SoggettoForm({
               valueField="id"
               displayField="nome"
               value={listinoId ? parseInt(listinoId) : undefined}
-              onChange={(val) => setListinoId(val?.toString() || '')}
+              onChange={(val) => handleListinoChange(val)}
               placeholder="Listino base"
               helpText="Listino prezzi applicato a questo cliente"
               createUrl="/dashboard/configurazioni/listini/nuovo"
               channelName="listino-created"
               onCreated={(item) => setLocalListini(prev => [...prev, item])}
             />
+
+            {/* Provvigione Agente */}
+            <div>
+              <label htmlFor="provvigione_agente_perc" className="block text-sm font-medium text-gray-700">
+                Provvigione %
+              </label>
+              <input
+                type="number"
+                name="provvigione_agente_perc"
+                id="provvigione_agente_perc"
+                value={provvigioneAgente}
+                onChange={(e) => setProvvigioneAgente(e.target.value)}
+                min="0"
+                max="100"
+                step="0.01"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Provvigione default per questo cliente (auto-compilata dal listino)
+              </p>
+            </div>
 
             {/* Agente */}
             {agenti.length > 0 && (

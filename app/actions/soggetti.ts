@@ -38,6 +38,7 @@ export type Soggetto = {
   zona_vendita?: string
   agente_id?: number
   sconto_percentuale?: number
+  provvigione_agente_perc?: number
   fido_massimo?: number
   fido_utilizzato?: number
   pagamento_id?: number
