@@ -108,11 +108,12 @@ export async function getClienti(): Promise<Cliente[]> {
   }
 
   // Query clienti con relazioni base e sedi
+  // Uso hint espliciti per evitare ambiguità FK (sede_cliente ha 2 FK verso soggetto)
   const { data, error } = await supabase
     .from('soggetto')
     .select(`
       *,
-      trasportatore:trasportatore_id(
+      trasportatore:soggetto!trasportatore_id(
         id,
         ragione_sociale,
         costo_trasporto_kg,
@@ -131,7 +132,7 @@ export async function getClienti(): Promise<Cliente[]> {
         nome,
         giorni_scadenza
       ),
-      sedi:sede_cliente(
+      sedi:sede_cliente!cliente_id(
         id,
         codice,
         denominazione,
@@ -144,7 +145,7 @@ export async function getClienti(): Promise<Cliente[]> {
         predefinito,
         per_spedizione,
         per_fatturazione,
-        trasportatore:trasportatore_id(
+        trasportatore:soggetto!trasportatore_id(
           id,
           ragione_sociale,
           costo_trasporto_kg
