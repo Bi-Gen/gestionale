@@ -1,17 +1,24 @@
 'use client'
 
-import { createOrdine } from '@/app/actions/ordini'
+import { createOrdine, getPrezzoCliente, type PrezzoCliente } from '@/app/actions/ordini'
 import Link from 'next/link'
 import { type Cliente } from '@/app/actions/clienti'
 import { type Prodotto } from '@/app/actions/prodotti'
 import { type Magazzino } from '@/app/actions/magazzino'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 type DettaglioRiga = {
   prodotto_id: string
   quantita: number
   prezzo_unitario: number
+  prezzo_listino_originale?: number  // Prezzo originale dal listino per confronto
   sconto_percentuale: number
+  // Info prezzo dal listino
+  listino_info?: {
+    listino_codice: string | null
+    fonte: string
+    sconto_max: number | null
+  }
 }
 
 export default function VenditaForm({
@@ -28,13 +35,81 @@ export default function VenditaForm({
   const [dettagli, setDettagli] = useState<DettaglioRiga[]>([
     { prodotto_id: '', quantita: 1, prezzo_unitario: 0, sconto_percentuale: 0 }
   ])
+  const [selectedClienteId, setSelectedClienteId] = useState<string>('')
+  const [loadingPrezzi, setLoadingPrezzi] = useState<boolean>(false)
 
-  // Debug: mostra i dati dei prodotti
-  useEffect(() => {
-    if (prodotti.length > 0) {
-      console.log('Prodotti ricevuti (vendita):', prodotti[0])
+  // Funzione per recuperare il prezzo dal listino cliente
+  const fetchPrezzoListino = useCallback(async (
+    prodottoId: string,
+    clienteId: string
+  ): Promise<PrezzoCliente | null> => {
+    if (!prodottoId || !clienteId) return null
+
+    try {
+      const prezzo = await getPrezzoCliente(
+        parseInt(prodottoId),
+        parseInt(clienteId)
+      )
+      return prezzo
+    } catch (error) {
+      console.error('Errore recupero prezzo listino:', error)
+      return null
     }
-  }, [prodotti])
+  }, [])
+
+  // Quando cambia il cliente, aggiorna i prezzi di tutti i prodotti selezionati
+  useEffect(() => {
+    const aggiornaPrezziBulk = async () => {
+      if (!selectedClienteId) return
+
+      const prodottiSelezionati = dettagli.filter(d => d.prodotto_id)
+      if (prodottiSelezionati.length === 0) return
+
+      setLoadingPrezzi(true)
+
+      const nuoviDettagli = await Promise.all(
+        dettagli.map(async (dettaglio) => {
+          if (!dettaglio.prodotto_id) return dettaglio
+
+          const prezzoInfo = await fetchPrezzoListino(dettaglio.prodotto_id, selectedClienteId)
+          const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
+
+          if (prezzoInfo && prezzoInfo.prezzo !== null) {
+            return {
+              ...dettaglio,
+              prezzo_unitario: prezzoInfo.prezzo,
+              prezzo_listino_originale: prezzoInfo.prezzo,
+              listino_info: {
+                listino_codice: prezzoInfo.listino_codice,
+                fonte: prezzoInfo.fonte,
+                sconto_max: prezzoInfo.sconto_max
+              }
+            }
+          } else if (prodotto) {
+            // Fallback al prezzo base se non trovato nel listino
+            const prezzoBase = prodotto.prezzo_vendita || 0
+            return {
+              ...dettaglio,
+              prezzo_unitario: prezzoBase,
+              prezzo_listino_originale: prezzoBase,
+              listino_info: {
+                listino_codice: null,
+                fonte: 'prezzo_base',
+                sconto_max: null
+              }
+            }
+          }
+          return dettaglio
+        })
+      )
+
+      setDettagli(nuoviDettagli)
+      setLoadingPrezzi(false)
+    }
+
+    aggiornaPrezziBulk()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClienteId])
 
   const aggiungiRiga = () => {
     setDettagli([...dettagli, { prodotto_id: '', quantita: 1, prezzo_unitario: 0, sconto_percentuale: 0 }])
@@ -46,9 +121,8 @@ export default function VenditaForm({
     }
   }
 
-  const aggiornaProdotto = (index: number, prodottoId: string) => {
+  const aggiornaProdotto = async (index: number, prodottoId: string) => {
     const prodotto = prodotti.find(p => p.id.toString() === prodottoId)
-    console.log('Prodotto selezionato (vendita):', prodotto)
 
     if (!prodotto) {
       console.error('Prodotto non trovato per ID:', prodottoId)
@@ -57,22 +131,54 @@ export default function VenditaForm({
 
     const nuoviDettagli = [...dettagli]
 
-    // Per vendita: usa prezzo_vendita
-    const prezzoSuggerito = prodotto.prezzo_vendita || 0
+    // Se c'è un cliente selezionato, cerca il prezzo nel listino
+    if (selectedClienteId) {
+      const prezzoInfo = await fetchPrezzoListino(prodottoId, selectedClienteId)
 
-    console.log('Dati prodotto vendita:', {
-      prezzo_vendita: prodotto.prezzo_vendita,
-      giacenza: prodotto.quantita_magazzino,
-      sconto_massimo: prodotto.sconto_massimo
-    })
+      if (prezzoInfo && prezzoInfo.prezzo !== null) {
+        nuoviDettagli[index] = {
+          ...nuoviDettagli[index],
+          prodotto_id: prodottoId,
+          prezzo_unitario: prezzoInfo.prezzo,
+          prezzo_listino_originale: prezzoInfo.prezzo,
+          sconto_percentuale: 0,
+          listino_info: {
+            listino_codice: prezzoInfo.listino_codice,
+            fonte: prezzoInfo.fonte,
+            sconto_max: prezzoInfo.sconto_max
+          }
+        }
+        setDettagli(nuoviDettagli)
+        return
+      }
+    }
+
+    // Fallback: usa prezzo_vendita base
+    const prezzoSuggerito = prodotto.prezzo_vendita || 0
 
     nuoviDettagli[index] = {
       ...nuoviDettagli[index],
       prodotto_id: prodottoId,
       prezzo_unitario: prezzoSuggerito,
-      sconto_percentuale: 0
+      prezzo_listino_originale: prezzoSuggerito,
+      sconto_percentuale: 0,
+      listino_info: {
+        listino_codice: null,
+        fonte: 'prezzo_base',
+        sconto_max: null
+      }
     }
     setDettagli(nuoviDettagli)
+  }
+
+  // Reset prezzo al valore listino originale
+  const resetPrezzoListino = (index: number) => {
+    const dettaglio = dettagli[index]
+    if (dettaglio.prezzo_listino_originale !== undefined) {
+      const nuoviDettagli = [...dettagli]
+      nuoviDettagli[index].prezzo_unitario = dettaglio.prezzo_listino_originale
+      setDettagli(nuoviDettagli)
+    }
   }
 
   const aggiornaQuantita = (index: number, quantita: number) => {
@@ -90,7 +196,8 @@ export default function VenditaForm({
   const aggiornaSconto = (index: number, sconto: number) => {
     const dettaglio = dettagli[index]
     const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
-    const scontoMassimo = prodotto?.sconto_massimo || 100
+    // Priorità: sconto_max dal listino > sconto_massimo prodotto > 100
+    const scontoMassimo = dettaglio.listino_info?.sconto_max ?? prodotto?.sconto_massimo ?? 100
 
     const nuoviDettagli = [...dettagli]
     nuoviDettagli[index].sconto_percentuale = Math.min(Math.max(sconto, 0), scontoMassimo)
@@ -151,6 +258,8 @@ export default function VenditaForm({
             name="cliente_id"
             id="cliente_id"
             required
+            value={selectedClienteId}
+            onChange={(e) => setSelectedClienteId(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
           >
             <option value="">Seleziona un cliente</option>
@@ -160,6 +269,9 @@ export default function VenditaForm({
               </option>
             ))}
           </select>
+          {loadingPrezzi && (
+            <p className="mt-1 text-xs text-blue-600">Aggiornamento prezzi listino...</p>
+          )}
         </div>
 
         <div>
@@ -202,7 +314,8 @@ export default function VenditaForm({
           {dettagli.map((dettaglio, index) => {
             const prodotto = prodotti.find(p => p.id.toString() === dettaglio.prodotto_id)
             const giacenzaDisponibile = prodotto?.quantita_magazzino || 0
-            const scontoMassimo = prodotto?.sconto_massimo || 100
+            // Priorità: sconto_max dal listino > sconto_massimo prodotto > 100
+            const scontoMassimo = dettaglio.listino_info?.sconto_max ?? prodotto?.sconto_massimo ?? 100
             const sconto = dettaglio.quantita * dettaglio.prezzo_unitario * (dettaglio.sconto_percentuale / 100)
             const giacenzaInsufficiente = dettaglio.quantita > giacenzaDisponibile
 
@@ -252,17 +365,39 @@ export default function VenditaForm({
                   <div className="col-span-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Prezzo € *
+                      {dettaglio.prezzo_listino_originale !== undefined &&
+                       dettaglio.prezzo_unitario !== dettaglio.prezzo_listino_originale && (
+                        <span className="ml-1 text-orange-600 font-normal">(modificato)</span>
+                      )}
                     </label>
-                    <input
-                      type="number"
-                      name={`dettagli[${index}][prezzo_unitario]`}
-                      value={dettaglio.prezzo_unitario}
-                      onChange={(e) => aggiornaPrezzo(index, parseFloat(e.target.value) || 0)}
-                      min="0"
-                      step="0.01"
-                      required
-                      className="block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                    />
+                    <div className="flex gap-1">
+                      <input
+                        type="number"
+                        name={`dettagli[${index}][prezzo_unitario]`}
+                        value={dettaglio.prezzo_unitario}
+                        onChange={(e) => aggiornaPrezzo(index, parseFloat(e.target.value) || 0)}
+                        min="0"
+                        step="0.01"
+                        required
+                        className={`block w-full rounded-md border px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500 ${
+                          dettaglio.prezzo_listino_originale !== undefined &&
+                          dettaglio.prezzo_unitario !== dettaglio.prezzo_listino_originale
+                            ? 'border-orange-400 bg-orange-50'
+                            : 'border-gray-300'
+                        }`}
+                      />
+                      {dettaglio.prezzo_listino_originale !== undefined &&
+                       dettaglio.prezzo_unitario !== dettaglio.prezzo_listino_originale && (
+                        <button
+                          type="button"
+                          onClick={() => resetPrezzoListino(index)}
+                          className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-colors"
+                          title={`Ripristina €${dettaglio.prezzo_listino_originale.toFixed(2)}`}
+                        >
+                          ↺
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="col-span-1">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -307,10 +442,37 @@ export default function VenditaForm({
                       </span>
                     </div>
 
+                    {/* Info Listino applicato */}
+                    {dettaglio.listino_info && (
+                      <div className={`flex items-center gap-2 p-2 rounded ${
+                        dettaglio.listino_info.fonte === 'listino_cliente' ? 'bg-green-50 text-green-800' :
+                        dettaglio.listino_info.fonte === 'listino_categoria' ? 'bg-blue-50 text-blue-800' :
+                        dettaglio.listino_info.fonte === 'listino_default' ? 'bg-yellow-50 text-yellow-800' :
+                        'bg-gray-50 text-gray-700'
+                      }`}>
+                        <span className="font-medium">Prezzo da:</span>
+                        {dettaglio.listino_info.fonte === 'listino_cliente' && (
+                          <span>Listino Cliente {dettaglio.listino_info.listino_codice && `(${dettaglio.listino_info.listino_codice})`}</span>
+                        )}
+                        {dettaglio.listino_info.fonte === 'listino_categoria' && (
+                          <span>Listino Categoria {dettaglio.listino_info.listino_codice && `(${dettaglio.listino_info.listino_codice})`}</span>
+                        )}
+                        {dettaglio.listino_info.fonte === 'listino_default' && (
+                          <span>Listino Predefinito {dettaglio.listino_info.listino_codice && `(${dettaglio.listino_info.listino_codice})`}</span>
+                        )}
+                        {dettaglio.listino_info.fonte === 'prezzo_base' && (
+                          <span>Prezzo Base Prodotto</span>
+                        )}
+                        {dettaglio.listino_info.sconto_max !== null && (
+                          <span className="ml-auto">Sconto Max: {dettaglio.listino_info.sconto_max}%</span>
+                        )}
+                      </div>
+                    )}
+
                     {/* Prezzi disponibili */}
                     <div className="flex gap-4 p-2 bg-blue-50 rounded text-blue-900">
-                      <span className="font-medium">Prezzi:</span>
-                      <span>Vendita: €{prodotto.prezzo_vendita.toFixed(2)}</span>
+                      <span className="font-medium">Riferimenti:</span>
+                      <span>Prezzo Base: €{prodotto.prezzo_vendita.toFixed(2)}</span>
                       {prodotto.prezzo_acquisto && <span>Acquisto: €{prodotto.prezzo_acquisto.toFixed(2)}</span>}
                       {prodotto.costo_ultimo && <span>Costo Ultimo: €{prodotto.costo_ultimo.toFixed(2)}</span>}
                       {prodotto.margine_percentuale && <span>Margine: {prodotto.margine_percentuale}%</span>}

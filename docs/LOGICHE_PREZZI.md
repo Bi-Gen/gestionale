@@ -8,6 +8,8 @@ Documento di riferimento per le logiche di pricing del gestionale.
 
 ### Funzione DB: `get_prezzo_cliente(p_prodotto_id, p_cliente_id)`
 
+**Server Action:** `getPrezzoCliente(prodottoId, clienteId)` in `app/actions/ordini.ts`
+
 **Logica di priorità (cascade):**
 
 ```
@@ -129,6 +131,24 @@ listino_prodotto
 - Modificare `listino_prodotto` aggiorna automaticamente i prezzi futuri
 - Gli ordini già creati mantengono il prezzo storico (snapshot)
 - La tabella `storico_prezzi_prodotto` traccia le variazioni
+
+---
+
+## 6. NOTE UI - ORDINE VENDITA
+
+Nel form vendita (`VenditaForm.tsx`):
+
+1. **Selezione Cliente**: Quando si seleziona un cliente, il sistema aggiorna automaticamente i prezzi di tutti i prodotti già inseriti
+2. **Selezione Prodotto**: Quando si aggiunge un prodotto, il prezzo viene recuperato automaticamente dal listino appropriato
+3. **Prezzo Override**: L'utente può sempre modificare manualmente il prezzo
+   - Il campo si evidenzia in arancione quando il prezzo è stato modificato
+   - Un bottone "↺" permette di ripristinare il prezzo originale dal listino
+4. **Info Listino**: Per ogni prodotto viene mostrata l'origine del prezzo con colori diversi:
+   - Verde: Listino Cliente
+   - Blu: Listino Categoria
+   - Giallo: Listino Predefinito
+   - Grigio: Prezzo Base Prodotto
+5. **Sconto Massimo**: Il limite di sconto viene preso dal listino (se presente) altrimenti dal prodotto
 
 ---
 

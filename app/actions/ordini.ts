@@ -5,6 +5,95 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { validateOrdineFormData } from '@/lib/validations/ordini'
 
+// =====================================================
+// TIPI PER PREZZI CLIENTE
+// =====================================================
+
+export type PrezzoCliente = {
+  prezzo: number | null
+  listino_id: number | null
+  listino_codice: string | null
+  provvigione: number | null
+  sconto_max: number | null
+  fonte: 'listino_cliente' | 'listino_categoria' | 'listino_default' | 'prezzo_base'
+}
+
+// =====================================================
+// FUNZIONE RECUPERO PREZZO CLIENTE
+// =====================================================
+
+/**
+ * Recupera il prezzo di vendita per un prodotto/cliente
+ * seguendo la logica cascade:
+ * 1. Listino diretto del cliente
+ * 2. Listino della categoria cliente
+ * 3. Listino predefinito aziendale
+ * 4. Prezzo base prodotto
+ */
+export async function getPrezzoCliente(
+  prodottoId: number,
+  clienteId: number
+): Promise<PrezzoCliente | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return null
+  }
+
+  const { data, error } = await supabase
+    .rpc('get_prezzo_cliente', {
+      p_prodotto_id: prodottoId,
+      p_cliente_id: clienteId
+    })
+
+  if (error) {
+    console.error('Error fetching prezzo cliente:', error)
+    return null
+  }
+
+  // La funzione RPC ritorna un array (RETURNS TABLE)
+  if (data && data.length > 0) {
+    const row = data[0]
+    return {
+      prezzo: row.prezzo,
+      listino_id: row.listino_id,
+      listino_codice: row.listino_codice,
+      provvigione: row.provvigione,
+      sconto_max: row.sconto_max,
+      fonte: row.fonte
+    }
+  }
+
+  return null
+}
+
+/**
+ * Recupera i prezzi per più prodotti in una sola chiamata
+ * Utile per caricare prezzi di tutti i prodotti in un ordine
+ */
+export async function getPrezziClienteBulk(
+  prodottiIds: number[],
+  clienteId: number
+): Promise<Map<number, PrezzoCliente>> {
+  const results = new Map<number, PrezzoCliente>()
+
+  // Esegui le chiamate in parallelo
+  const promises = prodottiIds.map(async (prodottoId) => {
+    const prezzo = await getPrezzoCliente(prodottoId, clienteId)
+    if (prezzo) {
+      results.set(prodottoId, prezzo)
+    }
+  })
+
+  await Promise.all(promises)
+  return results
+}
+
+// =====================================================
+// TIPI ORDINE
+// =====================================================
+
 export type Ordine = {
   id: string
   numero_ordine: string
