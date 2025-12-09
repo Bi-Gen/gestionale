@@ -284,6 +284,10 @@ export type Ordine = {
   cliente_id?: string
   fornitore_id?: string
   magazzino_id?: number
+  trasportatore_id?: number
+  incoterm_id?: number
+  costo_trasporto?: number
+  peso_totale_kg?: number
   stato: string
   totale: number
   note?: string
@@ -299,6 +303,17 @@ export type Ordine = {
     id: number
     nome: string
     codice: string
+  }
+  trasportatore?: {
+    id: number
+    ragione_sociale: string
+    costo_trasporto_kg?: number
+  }
+  incoterm?: {
+    id: number
+    codice: string
+    nome: string
+    trasporto_a_carico: 'venditore' | 'compratore' | 'condiviso'
   }
 }
 
@@ -330,7 +345,9 @@ export async function getOrdini(tipo?: 'vendita' | 'acquisto'): Promise<Ordine[]
       *,
       cliente:soggetto!cliente_id(ragione_sociale),
       fornitore:soggetto!fornitore_id(ragione_sociale),
-      magazzino(id, nome, codice)
+      magazzino(id, nome, codice),
+      trasportatore:soggetto!trasportatore_id(id, ragione_sociale, costo_trasporto_kg),
+      incoterm(id, codice, nome, trasporto_a_carico)
     `)
     .order('data_ordine', { ascending: false })
 
@@ -362,7 +379,9 @@ export async function getOrdine(id: string) {
       *,
       cliente:soggetto!cliente_id(ragione_sociale),
       fornitore:soggetto!fornitore_id(ragione_sociale),
-      magazzino(id, nome, codice)
+      magazzino(id, nome, codice),
+      trasportatore:soggetto!trasportatore_id(id, ragione_sociale, costo_trasporto_kg),
+      incoterm(id, codice, nome, trasporto_a_carico)
     `)
     .eq('id', id)
     .single()
@@ -489,6 +508,20 @@ export async function createOrdine(formData: FormData) {
     }
   }
 
+  // Trasportatore e incoterm
+  const trasportatoreId = formData.get('trasportatore_id')
+    ? parseInt(formData.get('trasportatore_id') as string)
+    : null
+  const incotermId = formData.get('incoterm_id')
+    ? parseInt(formData.get('incoterm_id') as string)
+    : null
+  const costoTrasporto = formData.get('costo_trasporto')
+    ? parseFloat(formData.get('costo_trasporto') as string)
+    : 0
+  const pesoTotaleKg = formData.get('peso_totale_kg')
+    ? parseFloat(formData.get('peso_totale_kg') as string)
+    : 0
+
   const ordine = {
     azienda_id: utenteAzienda.azienda_id,
     numero_ordine: validation.data.numero_ordine,
@@ -497,6 +530,10 @@ export async function createOrdine(formData: FormData) {
     cliente_id: validation.data.cliente_id || null,
     fornitore_id: validation.data.fornitore_id || null,
     magazzino_id: magazzinoId,
+    trasportatore_id: trasportatoreId,
+    incoterm_id: incotermId,
+    costo_trasporto: costoTrasporto,
+    peso_totale_kg: pesoTotaleKg,
     stato: validation.data.stato || 'bozza',
     totale,
     note: validation.data.note || null,
@@ -607,12 +644,30 @@ export async function updateOrdine(id: string, formData: FormData) {
     ? parseInt(formData.get('magazzino_id') as string)
     : undefined
 
+  // Trasportatore e incoterm
+  const trasportatoreId = formData.get('trasportatore_id')
+    ? parseInt(formData.get('trasportatore_id') as string)
+    : null
+  const incotermId = formData.get('incoterm_id')
+    ? parseInt(formData.get('incoterm_id') as string)
+    : null
+  const costoTrasporto = formData.get('costo_trasporto')
+    ? parseFloat(formData.get('costo_trasporto') as string)
+    : 0
+  const pesoTotaleKg = formData.get('peso_totale_kg')
+    ? parseFloat(formData.get('peso_totale_kg') as string)
+    : 0
+
   const updates = {
     numero_ordine: validation.data.numero_ordine,
     data_ordine: validation.data.data_ordine,
     cliente_id: validation.data.cliente_id || null,
     fornitore_id: validation.data.fornitore_id || null,
     magazzino_id: magazzinoId,
+    trasportatore_id: trasportatoreId,
+    incoterm_id: incotermId,
+    costo_trasporto: costoTrasporto,
+    peso_totale_kg: pesoTotaleKg,
     stato: validation.data.stato || 'bozza',
     totale,
     note: validation.data.note || null,

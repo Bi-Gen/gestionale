@@ -46,6 +46,9 @@ export type Cliente = {
   referente_telefono?: string
   referente_email?: string
   note?: string
+  // Trasporto
+  trasportatore_id?: number
+  incoterm_default_id?: number
   created_at: string
   updated_at: string
   agente?: {
@@ -53,6 +56,19 @@ export type Cliente = {
     codice_agente?: string
     ragione_sociale: string
     email?: string
+  }
+  trasportatore?: {
+    id: number
+    ragione_sociale: string
+    costo_trasporto_kg?: number
+    peso_minimo_fatturabile?: number
+    costo_minimo_trasporto?: number
+  }
+  incoterm?: {
+    id: number
+    codice: string
+    nome: string
+    trasporto_a_carico: 'venditore' | 'compratore' | 'condiviso'
   }
 }
 
@@ -78,7 +94,22 @@ export async function getClienti(): Promise<Cliente[]> {
 
   const { data, error } = await supabase
     .from('soggetto')
-    .select('*')
+    .select(`
+      *,
+      trasportatore:trasportatore_id(
+        id,
+        ragione_sociale,
+        costo_trasporto_kg,
+        peso_minimo_fatturabile,
+        costo_minimo_trasporto
+      ),
+      incoterm:incoterm_default_id(
+        id,
+        codice,
+        nome,
+        trasporto_a_carico
+      )
+    `)
     .eq('tipo_soggetto_id', tipoCliente.id)
     .order('ragione_sociale', { ascending: true })
 

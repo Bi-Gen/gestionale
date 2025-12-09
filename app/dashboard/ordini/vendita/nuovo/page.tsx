@@ -1,6 +1,8 @@
 import { getClienti } from '@/app/actions/clienti'
 import { getProdotti } from '@/app/actions/prodotti'
 import { getMagazzini } from '@/app/actions/magazzino'
+import { getTrasportatori } from '@/app/actions/soggetti'
+import { getIncotermsAttivi } from '@/app/actions/incoterm'
 import Link from 'next/link'
 import VenditaForm from './VenditaForm'
 
@@ -10,9 +12,13 @@ export default async function NuovoOrdineVenditaPage({
   searchParams: Promise<{ error?: string }>
 }) {
   const params = await searchParams
-  const clienti = await getClienti()
-  const prodotti = await getProdotti()
-  const magazzini = await getMagazzini()
+  const [clienti, prodotti, magazzini, trasportatori, incoterms] = await Promise.all([
+    getClienti(),
+    getProdotti(),
+    getMagazzini(),
+    getTrasportatori(),
+    getIncotermsAttivi()
+  ])
 
   // Genera numero ordine automatico
   const numeroOrdine = `ORD-V-${Date.now()}`
@@ -21,6 +27,8 @@ export default async function NuovoOrdineVenditaPage({
   const clientiSerialized = JSON.parse(JSON.stringify(clienti))
   const prodottiSerialized = JSON.parse(JSON.stringify(prodotti))
   const magazziniSerialized = JSON.parse(JSON.stringify(magazzini))
+  const trasportatoriSerialized = JSON.parse(JSON.stringify(trasportatori))
+  const incotermsSerialized = JSON.parse(JSON.stringify(incoterms))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,6 +56,8 @@ export default async function NuovoOrdineVenditaPage({
             clienti={clientiSerialized}
             prodotti={prodottiSerialized}
             magazzini={magazziniSerialized}
+            trasportatori={trasportatoriSerialized}
+            incoterms={incotermsSerialized}
             numeroOrdine={numeroOrdine}
           />
         </div>

@@ -14,6 +14,19 @@ import { type Fornitore } from '@/app/actions/fornitori'
 import { type Prodotto } from '@/app/actions/prodotti'
 import { useState, useEffect, useCallback } from 'react'
 
+type TrasportatoreOption = {
+  id: number
+  ragione_sociale: string
+  costo_trasporto_kg?: number
+}
+
+type IncotermOption = {
+  id: number
+  codice: string
+  nome: string
+  trasporto_a_carico: 'venditore' | 'compratore' | 'condiviso'
+}
+
 type DettaglioRiga = {
   id?: string
   prodotto_id: string
@@ -36,17 +49,24 @@ export default function ModificaOrdineCompleto({
   clienti,
   fornitori,
   prodotti,
+  trasportatori = [],
+  incoterms = [],
   dettagliEsistenti
 }: {
   ordine: Ordine
   clienti: Cliente[]
   fornitori: Fornitore[]
   prodotti: Prodotto[]
+  trasportatori?: TrasportatoreOption[]
+  incoterms?: IncotermOption[]
   dettagliEsistenti: any[]
 }) {
   const [fornitoreSelezionato, setFornitoreSelezionato] = useState<string>(ordine.fornitore_id || '')
   const [selectedClienteId, setSelectedClienteId] = useState<string>(ordine.cliente_id || '')
   const [loadingPrezzi, setLoadingPrezzi] = useState(false)
+  // Trasporto - inizializza dai dati ordine esistente
+  const [trasportatoreId, setTrasportatoreId] = useState<string>(ordine.trasportatore_id?.toString() || '')
+  const [incotermId, setIncotermId] = useState<string>(ordine.incoterm_id?.toString() || '')
   const [dettagli, setDettagli] = useState<DettaglioRiga[]>(
     dettagliEsistenti.length > 0
       ? dettagliEsistenti.map(d => ({
@@ -343,6 +363,73 @@ export default function ModificaOrdineCompleto({
               Mostrando solo prodotti di questo fornitore
             </p>
           )}
+        </div>
+      )}
+
+      {/* Sezione Trasporto (solo per vendita) */}
+      {ordine.tipo === 'vendita' && selectedClienteId && (trasportatori.length > 0 || incoterms.length > 0) && (
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Trasporto</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Incoterm - Chi paga */}
+            {incoterms.length > 0 && (
+              <div>
+                <label htmlFor="incoterm_id" className="block text-sm font-medium text-gray-700">
+                  Chi paga il trasporto
+                </label>
+                <select
+                  name="incoterm_id"
+                  id="incoterm_id"
+                  value={incotermId}
+                  onChange={(e) => setIncotermId(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                >
+                  <option value="">Seleziona...</option>
+                  {incoterms.map((inc) => (
+                    <option key={inc.id} value={inc.id}>
+                      {inc.nome}
+                    </option>
+                  ))}
+                </select>
+                {incotermId && (() => {
+                  const selectedIncoterm = incoterms.find(i => i.id.toString() === incotermId)
+                  if (!selectedIncoterm) return null
+                  const isClientePaga = selectedIncoterm.trasporto_a_carico === 'compratore'
+                  return (
+                    <p className={`mt-1 text-xs px-2 py-1 rounded ${
+                      isClientePaga ? 'text-green-700 bg-green-100' : 'text-orange-700 bg-orange-100'
+                    }`}>
+                      {isClientePaga ? 'Il cliente paga il trasporto' : 'Noi paghiamo il trasporto'}
+                    </p>
+                  )
+                })()}
+              </div>
+            )}
+
+            {/* Trasportatore */}
+            {trasportatori.length > 0 && (
+              <div>
+                <label htmlFor="trasportatore_id" className="block text-sm font-medium text-gray-700">
+                  Trasportatore
+                </label>
+                <select
+                  name="trasportatore_id"
+                  id="trasportatore_id"
+                  value={trasportatoreId}
+                  onChange={(e) => setTrasportatoreId(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                >
+                  <option value="">Nessun trasportatore</option>
+                  {trasportatori.map((trasp) => (
+                    <option key={trasp.id} value={trasp.id}>
+                      {trasp.ragione_sociale}
+                      {trasp.costo_trasporto_kg ? ` (${trasp.costo_trasporto_kg.toFixed(2)} €/kg)` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

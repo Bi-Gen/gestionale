@@ -126,6 +126,39 @@ export default async function DettaglioOrdinePage({
                   </div>
                 )}
               </dl>
+
+              {/* Info Trasporto (solo vendita) */}
+              {ordine.tipo === 'vendita' && (ordine.trasportatore || ordine.incoterm) && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Trasporto</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {ordine.incoterm && (
+                      <div>
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
+                          ordine.incoterm.trasporto_a_carico === 'compratore'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {ordine.incoterm.nome}
+                        </span>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {ordine.incoterm.trasporto_a_carico === 'compratore'
+                            ? 'Cliente paga il trasporto'
+                            : 'Noi paghiamo il trasporto'}
+                        </p>
+                      </div>
+                    )}
+                    {ordine.trasportatore && (
+                      <div>
+                        <dt className="text-xs text-gray-500">Trasportatore</dt>
+                        <dd className="text-sm font-medium text-gray-900">
+                          {ordine.trasportatore.ragione_sociale}
+                        </dd>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               {ordine.note && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <dt className="text-xs font-medium text-gray-500 uppercase mb-1">Note</dt>
