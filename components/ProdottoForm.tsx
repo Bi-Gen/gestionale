@@ -55,6 +55,21 @@ export default function ProdottoForm({
   const [eanError, setEanError] = useState('')
   const [selectedMacrofamiglia, setSelectedMacrofamiglia] = useState<number | undefined>(initialData?.macrofamiglia_id)
 
+  // Stati per calcolo Packaging in tempo reale
+  const [pkgPezziPerConfezione, setPkgPezziPerConfezione] = useState<number>(initialData?.pkg_pezzi_per_confezione || 1)
+  const [pkgConfezioniPerCartone, setPkgConfezioniPerCartone] = useState<number>(initialData?.pkg_confezioni_per_cartone || 1)
+  const [pkgCartoniPerPallet, setPkgCartoniPerPallet] = useState<number>(initialData?.pkg_cartoni_per_pallet || 0)
+  const [pkgCartonePesoKg, setPkgCartonePesoKg] = useState<number>(initialData?.pkg_cartone_peso_kg || 0)
+  const [pkgCartoneLunghezza, setPkgCartoneLunghezza] = useState<number>(initialData?.pkg_cartone_lunghezza_cm || 0)
+  const [pkgCartoneLarghezza, setPkgCartoneLarghezza] = useState<number>(initialData?.pkg_cartone_larghezza_cm || 0)
+  const [pkgCartoneAltezza, setPkgCartoneAltezza] = useState<number>(initialData?.pkg_cartone_altezza_cm || 0)
+
+  // Calcoli derivati Packaging
+  const pezziPerCartone = pkgPezziPerConfezione * pkgConfezioniPerCartone
+  const pezziPerPallet = pkgCartoniPerPallet > 0 ? pezziPerCartone * pkgCartoniPerPallet : 0
+  const volumeCartoneM3 = (pkgCartoneLunghezza * pkgCartoneLarghezza * pkgCartoneAltezza) / 1000000
+  const pesoPerPallet = pkgCartoniPerPallet > 0 && pkgCartonePesoKg > 0 ? pkgCartoniPerPallet * pkgCartonePesoKg : 0
+
   // Estrai prezzi dai listini associati (priorità più alta = primo)
   const prezziAcquisto = prezziListino
     .filter(p => p.listino?.tipo === 'acquisto')
@@ -841,117 +856,7 @@ export default function ProdottoForm({
       </div>
 
       {/* ========================================= */}
-      {/* SEZIONE 5: MISURE E DIMENSIONI */}
-      {/* ========================================= */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-          📏 Misure e Dimensioni
-        </h2>
-
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div>
-              <label htmlFor="peso_kg" className="block text-sm font-medium text-gray-700">
-                Peso (kg)
-              </label>
-              <input
-                type="number"
-                name="peso_kg"
-                id="peso_kg"
-                step="0.001"
-                min="0"
-                placeholder="0.000"
-                defaultValue={initialData?.peso_kg}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="volume_m3" className="block text-sm font-medium text-gray-700">
-                Volume (m³)
-              </label>
-              <input
-                type="number"
-                name="volume_m3"
-                id="volume_m3"
-                step="0.0001"
-                min="0"
-                placeholder="0.0000"
-                defaultValue={initialData?.volume_m3}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="colli" className="block text-sm font-medium text-gray-700">
-                N° Colli
-              </label>
-              <input
-                type="number"
-                name="colli"
-                id="colli"
-                min="1"
-                placeholder="1"
-                defaultValue={initialData?.colli || '1'}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label htmlFor="lunghezza_cm" className="block text-sm font-medium text-gray-700">
-                Lunghezza (cm)
-              </label>
-              <input
-                type="number"
-                name="lunghezza_cm"
-                id="lunghezza_cm"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                defaultValue={initialData?.lunghezza_cm}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="larghezza_cm" className="block text-sm font-medium text-gray-700">
-                Larghezza (cm)
-              </label>
-              <input
-                type="number"
-                name="larghezza_cm"
-                id="larghezza_cm"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                defaultValue={initialData?.larghezza_cm}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="altezza_cm" className="block text-sm font-medium text-gray-700">
-                Altezza (cm)
-              </label>
-              <input
-                type="number"
-                name="altezza_cm"
-                id="altezza_cm"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                defaultValue={initialData?.altezza_cm}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================= */}
-      {/* SEZIONE 6: PACKAGING / CONFEZIONAMENTO */}
+      {/* SEZIONE 5: PACKAGING / CONFEZIONAMENTO */}
       {/* ========================================= */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
@@ -975,7 +880,7 @@ export default function ProdottoForm({
                   name="pkg_nome_confezione"
                   id="pkg_nome_confezione"
                   placeholder="Busta, Scatola, Blister..."
-                  defaultValue={initialData?.packaging?.nome_confezione || 'Confezione'}
+                  defaultValue={initialData?.pkg_nome_confezione || 'Confezione'}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -989,7 +894,8 @@ export default function ProdottoForm({
                   id="pkg_pezzi_per_confezione"
                   min="1"
                   placeholder="25"
-                  defaultValue={initialData?.packaging?.pezzi_per_confezione || '1'}
+                  defaultValue={initialData?.pkg_pezzi_per_confezione || '1'}
+                  onChange={(e) => setPkgPezziPerConfezione(parseInt(e.target.value) || 1)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1004,7 +910,7 @@ export default function ProdottoForm({
                   step="0.001"
                   min="0"
                   placeholder="0.5"
-                  defaultValue={initialData?.packaging?.confezione_peso_kg}
+                  defaultValue={initialData?.pkg_confezione_peso_kg}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1025,7 +931,8 @@ export default function ProdottoForm({
                   id="pkg_confezioni_per_cartone"
                   min="1"
                   placeholder="4"
-                  defaultValue={initialData?.packaging?.confezioni_per_cartone || '1'}
+                  defaultValue={initialData?.pkg_confezioni_per_cartone || '1'}
+                  onChange={(e) => setPkgConfezioniPerCartone(parseInt(e.target.value) || 1)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1040,7 +947,8 @@ export default function ProdottoForm({
                   step="0.1"
                   min="0"
                   placeholder="51"
-                  defaultValue={initialData?.packaging?.cartone_lunghezza_cm}
+                  defaultValue={initialData?.pkg_cartone_lunghezza_cm}
+                  onChange={(e) => setPkgCartoneLunghezza(parseFloat(e.target.value) || 0)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1055,7 +963,8 @@ export default function ProdottoForm({
                   step="0.1"
                   min="0"
                   placeholder="27"
-                  defaultValue={initialData?.packaging?.cartone_larghezza_cm}
+                  defaultValue={initialData?.pkg_cartone_larghezza_cm}
+                  onChange={(e) => setPkgCartoneLarghezza(parseFloat(e.target.value) || 0)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1070,7 +979,8 @@ export default function ProdottoForm({
                   step="0.1"
                   min="0"
                   placeholder="25"
-                  defaultValue={initialData?.packaging?.cartone_altezza_cm}
+                  defaultValue={initialData?.pkg_cartone_altezza_cm}
+                  onChange={(e) => setPkgCartoneAltezza(parseFloat(e.target.value) || 0)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1085,7 +995,8 @@ export default function ProdottoForm({
                   step="0.1"
                   min="0"
                   placeholder="5.5"
-                  defaultValue={initialData?.packaging?.cartone_peso_kg}
+                  defaultValue={initialData?.pkg_cartone_peso_kg}
+                  onChange={(e) => setPkgCartonePesoKg(parseFloat(e.target.value) || 0)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1106,7 +1017,8 @@ export default function ProdottoForm({
                   id="pkg_cartoni_per_pallet"
                   min="1"
                   placeholder="54"
-                  defaultValue={initialData?.packaging?.cartoni_per_pallet}
+                  defaultValue={initialData?.pkg_cartoni_per_pallet}
+                  onChange={(e) => setPkgCartoniPerPallet(parseInt(e.target.value) || 0)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1120,7 +1032,7 @@ export default function ProdottoForm({
                   id="pkg_cartoni_per_strato"
                   min="1"
                   placeholder="6"
-                  defaultValue={initialData?.packaging?.cartoni_per_strato}
+                  defaultValue={initialData?.pkg_cartoni_per_strato}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1134,7 +1046,7 @@ export default function ProdottoForm({
                   id="pkg_strati_per_pallet"
                   min="1"
                   placeholder="9"
-                  defaultValue={initialData?.packaging?.strati_per_pallet}
+                  defaultValue={initialData?.pkg_strati_per_pallet}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1155,7 +1067,7 @@ export default function ProdottoForm({
                   id="pkg_pallet_per_container_20ft"
                   min="1"
                   placeholder="10"
-                  defaultValue={initialData?.packaging?.pallet_per_container_20ft}
+                  defaultValue={initialData?.pkg_pallet_per_container_20ft}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1169,7 +1081,7 @@ export default function ProdottoForm({
                   id="pkg_pallet_per_container_40ft"
                   min="1"
                   placeholder="20"
-                  defaultValue={initialData?.packaging?.pallet_per_container_40ft}
+                  defaultValue={initialData?.pkg_pallet_per_container_40ft}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -1178,22 +1090,28 @@ export default function ProdottoForm({
 
           {/* Riepilogo Calcolato */}
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-purple-800 mb-2">Riepilogo Calcolato</h3>
+            <h3 className="text-sm font-medium text-purple-800 mb-3">Riepilogo Calcolato</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-purple-600">Pezzi/Cartone:</span>
-                <span className="ml-2 font-medium text-purple-900">
-                  {(parseInt(String(initialData?.packaging?.pezzi_per_confezione || 1)) *
-                    parseInt(String(initialData?.packaging?.confezioni_per_cartone || 1)))}
+              <div className="bg-white rounded-md p-3 border border-purple-100">
+                <span className="block text-xs text-purple-600 mb-1">Pezzi/Cartone</span>
+                <span className="text-lg font-bold text-purple-900">{pezziPerCartone}</span>
+              </div>
+              <div className="bg-white rounded-md p-3 border border-purple-100">
+                <span className="block text-xs text-purple-600 mb-1">Pezzi/Pallet</span>
+                <span className="text-lg font-bold text-purple-900">
+                  {pezziPerPallet > 0 ? pezziPerPallet : '-'}
                 </span>
               </div>
-              <div>
-                <span className="text-purple-600">Pezzi/Pallet:</span>
-                <span className="ml-2 font-medium text-purple-900">
-                  {initialData?.packaging?.cartoni_per_pallet ?
-                    (parseInt(String(initialData?.packaging?.pezzi_per_confezione || 1)) *
-                     parseInt(String(initialData?.packaging?.confezioni_per_cartone || 1)) *
-                     parseInt(String(initialData?.packaging?.cartoni_per_pallet))) : '-'}
+              <div className="bg-white rounded-md p-3 border border-purple-100">
+                <span className="block text-xs text-purple-600 mb-1">Volume Cartone</span>
+                <span className="text-lg font-bold text-purple-900">
+                  {volumeCartoneM3 > 0 ? `${volumeCartoneM3.toFixed(4)} m³` : '-'}
+                </span>
+              </div>
+              <div className="bg-white rounded-md p-3 border border-purple-100">
+                <span className="block text-xs text-purple-600 mb-1">Peso Pallet</span>
+                <span className="text-lg font-bold text-purple-900">
+                  {pesoPerPallet > 0 ? `${pesoPerPallet.toFixed(1)} kg` : '-'}
                 </span>
               </div>
             </div>
