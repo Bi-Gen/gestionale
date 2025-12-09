@@ -3,6 +3,7 @@ import { getFornitori } from '@/app/actions/fornitori'
 import { getMacrofamiglie } from '@/app/actions/macrofamiglie'
 import { getFamiglie } from '@/app/actions/famiglie'
 import { getLinee } from '@/app/actions/linee'
+import { getPrezziListinoProdotto, getListiniAttivi } from '@/app/actions/listini'
 import ProdottoForm from '@/components/ProdottoForm'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -18,12 +19,14 @@ export default async function ModificaProdottoPage({
   const query = await searchParams
 
   // Carica tutti i dati necessari in parallelo
-  const [prodotto, fornitori, macrofamiglie, famiglie, linee] = await Promise.all([
+  const [prodotto, fornitori, macrofamiglie, famiglie, linee, prezziListino, listini] = await Promise.all([
     getProdotto(id),
     getFornitori(),
     getMacrofamiglie(),
     getFamiglie(),
     getLinee(),
+    getPrezziListinoProdotto(parseInt(id)),
+    getListiniAttivi(),
   ])
 
   if (!prodotto) {
@@ -31,6 +34,14 @@ export default async function ModificaProdottoPage({
   }
 
   const updateProdottoWithId = updateProdotto.bind(null, id)
+
+  // Prepara listini per il componente
+  const listiniDisponibili = listini.map(l => ({
+    id: l.id,
+    codice: l.codice,
+    nome: l.nome,
+    tipo: l.tipo as 'vendita' | 'acquisto',
+  }))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,6 +72,8 @@ export default async function ModificaProdottoPage({
           linee={linee}
           initialData={prodotto}
           submitLabel="Salva Modifiche"
+          prezziListino={prezziListino}
+          listiniDisponibili={listiniDisponibili}
         />
       </main>
     </div>

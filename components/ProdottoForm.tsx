@@ -6,7 +6,16 @@ import type { Fornitore } from '@/app/actions/fornitori'
 import type { Macrofamiglia } from '@/app/actions/macrofamiglie'
 import type { Famiglia } from '@/app/actions/famiglie'
 import type { LineaProdotto } from '@/app/actions/linee'
+import type { PrezzoListinoProdotto } from '@/app/actions/listini'
 import SelectConCreazione from './SelectConCreazione'
+import PrezziListinoProdotto from './PrezziListinoProdotto'
+
+type ListinoOption = {
+  id: number
+  codice: string
+  nome: string
+  tipo: 'vendita' | 'acquisto'
+}
 
 interface ProdottoFormProps {
   action: any
@@ -16,6 +25,8 @@ interface ProdottoFormProps {
   linee?: LineaProdotto[]
   initialData?: any
   submitLabel?: string
+  prezziListino?: PrezzoListinoProdotto[]
+  listiniDisponibili?: ListinoOption[]
 }
 
 export default function ProdottoForm({
@@ -25,7 +36,9 @@ export default function ProdottoForm({
   famiglie = [],
   linee = [],
   initialData,
-  submitLabel = 'Salva Prodotto'
+  submitLabel = 'Salva Prodotto',
+  prezziListino = [],
+  listiniDisponibili = [],
 }: ProdottoFormProps) {
   // Stati per validazione client-side
   const [eanError, setEanError] = useState('')
@@ -443,12 +456,19 @@ export default function ProdottoForm({
             </div>
           </div>
 
-          {/* Nota: I listini si gestiscono da Configurazioni > Listini */}
-          <p className="text-xs text-gray-500 border-t border-gray-200 pt-4">
-            💡 I listini prezzi si gestiscono da <span className="font-medium">Configurazioni → Listini</span>
-          </p>
         </div>
       </div>
+
+      {/* ========================================= */}
+      {/* SEZIONE PREZZI LISTINO (solo in modifica) */}
+      {/* ========================================= */}
+      {initialData?.id && (
+        <PrezziListinoProdotto
+          prodottoId={initialData.id}
+          prezzi={prezziListino}
+          listiniDisponibili={listiniDisponibili}
+        />
+      )}
 
       {/* ========================================= */}
       {/* SEZIONE 3: FORNITORE */}
