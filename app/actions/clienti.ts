@@ -107,7 +107,7 @@ export async function getClienti(): Promise<Cliente[]> {
     redirect('/login')
   }
 
-  // Query clienti con relazioni base (usando tipo array come getCliente)
+  // Query clienti con relazioni base e sedi
   const { data, error } = await supabase
     .from('soggetto')
     .select(`
@@ -130,6 +130,25 @@ export async function getClienti(): Promise<Cliente[]> {
         codice,
         nome,
         giorni_scadenza
+      ),
+      sedi:sede_cliente(
+        id,
+        codice,
+        denominazione,
+        indirizzo,
+        civico,
+        cap,
+        citta,
+        provincia,
+        trasportatore_id,
+        predefinito,
+        per_spedizione,
+        per_fatturazione,
+        trasportatore:trasportatore_id(
+          id,
+          ragione_sociale,
+          costo_trasporto_kg
+        )
       )
     `)
     .contains('tipo', ['cliente'])
