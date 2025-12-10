@@ -11,7 +11,12 @@ export default async function LoginPage({
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <img
+            src="https://artbclzfaccheonngkbe.supabase.co/storage/v1/object/public/avatars/3473677f-6c55-45ea-b191-dd43057febf7/avatar-1764921945394.png"
+            alt="All in One Logo"
+            className="mx-auto h-24 w-auto mb-4"
+          />
+          <h2 className="text-center text-3xl font-extrabold text-gray-900">
             Accedi a All in One
           </h2>
         </div>

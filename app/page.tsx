@@ -13,12 +13,14 @@ export default async function Home() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-4xl mx-auto px-8 text-center">
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">
+        <img
+          src="https://artbclzfaccheonngkbe.supabase.co/storage/v1/object/public/avatars/3473677f-6c55-45ea-b191-dd43057febf7/avatar-1764921945394.png"
+          alt="All in One Logo"
+          className="mx-auto h-32 w-auto mb-8"
+        />
+        <h1 className="text-5xl font-bold text-gray-900 mb-8">
           All in One
         </h1>
-        <p className="text-xl text-gray-600 mb-8">
-          Il tuo gestionale aziendale completo
-        </p>
 
         <div className="flex justify-center">
           <Link
