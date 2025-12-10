@@ -14,6 +14,7 @@ export type MetodoPagamento = {
   richiede_iban: boolean
   predefinito: boolean
   attivo: boolean
+  di_sistema: boolean
   created_at: string
 }
 

@@ -15,6 +15,7 @@ export type CausaleMovimento = {
   richiede_documento: boolean
   visibile: boolean
   attivo: boolean
+  di_sistema: boolean
   created_at: string
 }
 

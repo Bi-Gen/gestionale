@@ -11,6 +11,7 @@ export type AliquotaIva = {
   percentuale: number
   predefinita: boolean
   attiva: boolean
+  di_sistema: boolean
   created_at: string
 }
 

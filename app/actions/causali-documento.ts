@@ -16,6 +16,7 @@ export type CausaleDocumento = {
   genera_movimento_contabile: boolean
   numerazione_separata: boolean
   attivo: boolean
+  di_sistema: boolean
   created_at: string
 }
 

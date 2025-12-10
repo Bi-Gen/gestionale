@@ -14,6 +14,7 @@ export type Valuta = {
   data_aggiornamento: string
   predefinita: boolean
   attiva: boolean
+  di_sistema: boolean
   created_at: string
   updated_at: string
 }
