@@ -20,18 +20,12 @@ export default async function Home() {
           Il tuo gestionale aziendale completo
         </p>
 
-        <div className="flex gap-4 justify-center">
+        <div className="flex justify-center">
           <Link
             href="/login"
             className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
           >
             Accedi
-          </Link>
-          <Link
-            href="/signup"
-            className="px-6 py-3 bg-white text-blue-600 font-medium rounded-md border border-blue-600 hover:bg-blue-50 transition-colors"
-          >
-            Registrati
           </Link>
         </div>
       </div>

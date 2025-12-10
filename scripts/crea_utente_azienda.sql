@@ -14,9 +14,9 @@
 DO $$
 DECLARE
   -- ⚠️ MODIFICA QUESTI VALORI ⚠️
-  v_user_id UUID := 'INSERISCI-UUID-UTENTE-QUI';  -- UUID dell'utente da Authentication
-  v_nome_azienda VARCHAR := 'Nome Azienda Test';
-  v_email_azienda VARCHAR := 'test@esempio.com';
+  v_user_id UUID := 'c741887b-30eb-4419-ba7f-08beda201278';  -- UUID dell'utente da Authentication
+  v_nome_azienda VARCHAR := 'Ricciolio Test';
+  v_email_azienda VARCHAR := 'mricciolio@test.it';
   v_ragione_sociale VARCHAR := NULL;  -- Opzionale
   v_partita_iva VARCHAR := NULL;      -- Opzionale
   v_piano VARCHAR := 'premium';       -- 'light', 'premium', 'enterprise'
