@@ -1,5 +1,4 @@
 import { login } from '@/app/actions/auth'
-import Link from 'next/link'
 
 export default async function LoginPage({
   searchParams,
@@ -15,12 +14,6 @@ export default async function LoginPage({
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Accedi a All in One
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Oppure{' '}
-            <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-              registrati qui
-            </Link>
-          </p>
         </div>
 
         {params.error && (
